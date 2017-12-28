@@ -38,7 +38,7 @@ namespace AssetCalendarApi.Controllers
             return NotFound($"Worker with Id {id} not found");
         }
 
-        [HttpPost()]
+        [HttpGet]
         [Route("getAvailableWorkers")]
         public IActionResult GetAvailableWorkers(DateTime date)
         {

@@ -39,6 +39,13 @@ namespace AssetCalendarApi.Controllers
             return SuccessResult(job);
         }
 
+        [HttpGet]
+        [Route("getJobsForDay")]
+        public IActionResult GetJobsForDay(DateTime date)
+        {
+            return SuccessResult(_repository.GetJobsForDay(date));
+        }
+
         // POST api/values
         [HttpPost]
         public IActionResult Post([FromBody]AddJobModel model)
