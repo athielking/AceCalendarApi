@@ -11,52 +11,45 @@ using AssetCalendarApi.Models;
 namespace AssetCalendarApi.Controllers
 {
     [Route("api/[controller]")]
-    public class WorkerController : ApiBaseController
+    public class JobController : ApiBaseController
     {
-        private WorkerRepository _repository;
+        private JobRepository _repository;
 
-        public WorkerController(WorkerRepository workerRepository)
+        public JobController(JobRepository repository)
         {
-            _repository = workerRepository;
+            _repository = repository;
         }
 
         // GET: api/values
         [HttpGet]
         public IActionResult Get()
         {
-            return SuccessResult(_repository.GetAllWorkers().ToList());
+            return SuccessResult(_repository.GetAllJobs());
         }
 
         // GET api/values/5
         [HttpGet("{id}")]
         public IActionResult Get(Guid id)
         {
-            var worker = _repository.GetWorker(id);
-            if (worker != null)
-                return SuccessResult(worker);
+            var job = _repository.GetJob(id);
+            if (job == null)
+                return NotFound($"Job with Id {id} not found");
 
-            return NotFound($"Worker with Id {id} not found");
-        }
-
-        [HttpPost()]
-        [Route("getAvailableWorkers")]
-        public IActionResult GetAvailableWorkers(DateTime date)
-        {
-            return SuccessResult(_repository.GetAvailableWorkers(date).ToList());
+            return SuccessResult(job);
         }
 
         // POST api/values
         [HttpPost]
-        public IActionResult Post([FromBody]Worker value)
+        public IActionResult Post([FromBody]Job value)
         {
             try
             {
-                _repository.AddWorker(value);
-                return Ok("Worker Added Successfully");
+                _repository.AddJob(value, null);
+                return Ok("Job Successfully added.");
             }
-            catch(Exception ex )
+            catch
             {
-                return BadRequest("Failed To Add Worker");
+                return BadRequest("Failed to add Job");
             }
         }
 

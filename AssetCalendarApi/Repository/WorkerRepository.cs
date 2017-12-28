@@ -37,5 +37,30 @@ namespace AssetCalendarApi.Repository
                             (dayJob, dayJobWorker) => dayJobWorker.Worker)
                 );
         }
+
+        public IQueryable<Worker> GetWorkersForJob(Guid idJob)
+        {
+            return 
+                _dbContext.Workers
+                    .Join(_dbContext.DaysJobsWorkers, 
+                        w => w.Id, 
+                        d => d.IdWorker, 
+                        (worker, d) => new { d.IdDayJob, worker })
+                    .Join(_dbContext.DaysJobs, 
+                        m => m.IdDayJob, 
+                        j => j.IdJob, 
+                        (m, j) => new { j.IdJob, m.worker })
+                    .Where(x => x.IdJob == idJob)
+                    .Select(x => x.worker);
+        }
+
+        public void AddWorker(Worker worker)
+        {
+            worker.Id = Guid.NewGuid();
+
+            _dbContext.Workers.Add(worker);
+            _dbContext.SaveChanges();
+
+        }
     }
 }

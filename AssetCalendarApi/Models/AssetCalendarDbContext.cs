@@ -46,6 +46,7 @@ namespace AssetCalendarApi.Models
                     .HasForeignKey(d => d.IdDayJob)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_DaysJobsWorkers_DaysJobs");
+
             });
 
             modelBuilder.Entity<DayJob>(entity =>
@@ -60,6 +61,10 @@ namespace AssetCalendarApi.Models
                     .HasForeignKey(d => d.IdJob)
                     .OnDelete(DeleteBehavior.ClientSetNull)
                     .HasConstraintName("FK_DaysJobs_Job");
+
+                entity.HasIndex(i => new { i.Date, i.IdJob })
+                    .IsUnique(true)
+                    .HasName("IX_Date_IdJob");
             });
 
             modelBuilder.Entity<Job>(entity =>
@@ -72,7 +77,10 @@ namespace AssetCalendarApi.Models
                     .HasMaxLength(50)
                     .IsUnicode(false);
 
-                entity.Property(e => e.StartDate).HasColumnType("datetime");
+                entity.Property(e => e.Type)
+                    .HasMaxLength(25)
+                    .IsUnicode(false);
+               
             });
 
             modelBuilder.Entity<Worker>(entity =>

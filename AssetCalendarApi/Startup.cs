@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using AssetCalendarApi.Models;
 using Microsoft.EntityFrameworkCore;
+using AssetCalendarApi.Repository;
 
 namespace AssetCalendarApi
 {
@@ -28,6 +29,10 @@ namespace AssetCalendarApi
             services.AddMvc();
             services.AddDbContext<AssetCalendarDbContext>(options => 
                 options.UseSqlServer(Configuration.GetConnectionString("AssetDatabase")));
+
+            services.AddScoped<WorkerRepository>();
+            services.AddScoped<JobRepository>();
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

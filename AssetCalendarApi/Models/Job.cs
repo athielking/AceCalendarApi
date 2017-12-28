@@ -17,7 +17,7 @@ namespace AssetCalendarApi.Models
         public Guid Id { get; set; }
         public int Number { get; set; }
         public string Name { get; set; }
-        public DateTime StartDate { get; set; }
+        public string Type { get; set; }
 
         public ICollection<DayJob> DaysJobs { get; set; }
     }
