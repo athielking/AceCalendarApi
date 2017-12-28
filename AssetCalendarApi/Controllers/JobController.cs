@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using AssetCalendarApi.Repository;
 using AssetCalendarApi.Models;
+using AssetCalendarApi.ViewModels;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -40,11 +41,11 @@ namespace AssetCalendarApi.Controllers
 
         // POST api/values
         [HttpPost]
-        public IActionResult Post([FromBody]Job value)
+        public IActionResult Post([FromBody]AddJobModel model)
         {
             try
             {
-                _repository.AddJob(value, null);
+                _repository.AddJob(model);
                 return Ok("Job Successfully added.");
             }
             catch

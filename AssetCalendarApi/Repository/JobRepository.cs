@@ -38,7 +38,7 @@ namespace AssetCalendarApi.Repository
                     .Select(m => m.job);
         }
 
-        public void AddJob(AddJobModel model )
+        public void AddJob(AddJobModel model)
         {
             Job job = new Job()
             {
@@ -50,7 +50,7 @@ namespace AssetCalendarApi.Repository
 
             _dbContext.Jobs.Add(job);
 
-            for (DateTime date = model.StartDate; date <= (model.EndDate.HasValue ? model.EndDate : model.StartDate); date.AddDays(1) )
+            for (DateTime date = model.StartDate; date <= (model.EndDate.HasValue ? model.EndDate : model.StartDate); date = date.AddDays(1) )
             {
                 _dbContext.DaysJobs.Add(new DayJob() { IdJob = job.Id, Date = date });
             }
