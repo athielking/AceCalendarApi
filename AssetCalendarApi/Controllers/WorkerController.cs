@@ -42,7 +42,7 @@ namespace AssetCalendarApi.Controllers
         [Route("getAvailableWorkers")]
         public IActionResult GetAvailableWorkers(DateTime date)
         {
-            return SuccessResult(_repository.GetAvailableWorkers(date).ToList());
+            return SuccessResult(_repository.GetAvailableWorkersForDay(date).ToList());
         }
 
         // POST api/values

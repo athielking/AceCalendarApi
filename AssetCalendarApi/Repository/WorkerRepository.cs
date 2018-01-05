@@ -25,7 +25,7 @@ namespace AssetCalendarApi.Repository
             return _dbContext.Workers.FirstOrDefault(w => w.Id == id);
         }
 
-        public IQueryable<Worker> GetAvailableWorkers( DateTime date )
+        public IQueryable<Worker> GetAvailableWorkersForDay( DateTime date )
         {
             return
                 _dbContext.Workers.Except(
@@ -36,6 +36,55 @@ namespace AssetCalendarApi.Repository
                             djw => djw.IdDayJob,
                             (dayJob, dayJobWorker) => dayJobWorker.Worker)
                 );
+        }
+
+        public Dictionary<DateTime, IEnumerable<Worker>> GetAvailableWorkersForMonth(DateTime month)
+        {
+            var allWorkers = _dbContext.Workers.AsEnumerable();
+            var allDates = month.GetDatesInMonth();
+
+            //Get the cartesian product for all dates + all workers
+            var available =
+                from worker in allWorkers
+                from date in allDates
+                select new { date, worker };
+
+            //Get a dictionary of who is working on what day
+            var working = _dbContext.DaysJobs
+                    .Where(dj => dj.Date.Month == month.Month)
+                    .Join(_dbContext.DaysJobsWorkers,
+                        dj => dj.Id,
+                        djw => djw.IdDayJob,
+                        (dayJob, dayJobWorker) => new { dayJob.Date, dayJobWorker.IdWorker })
+                    .GroupBy(m => m.Date)
+                    .ToDictionary(
+                        group => group.Key,
+                        group => group.Select(m => m.IdWorker));
+
+            //Get a dictionary of dates, and who is not already working
+            var availableWorkers = available
+                .GroupBy(m => m.date)
+                .ToDictionary(
+                    group => group.Key,
+                    group => group.Where(m => !working.ContainsKey(group.Key) || (working.ContainsKey(group.Key) && !working[group.Key].Contains(m.worker.Id)))
+                                  .Select(m => m.worker));
+
+            return availableWorkers;
+        }
+
+        public Dictionary<DateTime, IEnumerable<Worker>> GetAvailableWorkersForWeek(DateTime week)
+        {
+            return
+                _dbContext.DaysJobs
+                    .Where(dj => dj.Date >= week.StartOfWeek() && dj.Date <= week.EndOfWeek())
+                    .Join(_dbContext.DaysJobsWorkers,
+                        dj => dj.Id,
+                        djw => djw.IdDayJob,
+                        (dayJob, dayJobWorker) => new { dayJob.Date, dayJobWorker.Worker })
+                    .GroupBy(m => m.Date)
+                    .ToDictionary(
+                        group => group.Key,
+                        group => _dbContext.Workers.Except(group.Select(m => m.Worker)).AsEnumerable());
         }
 
         public IQueryable<Worker> GetWorkersForJob(Guid idJob)

@@ -24,5 +24,24 @@ namespace System
 
             return saturday;
         }
+
+        public static IEnumerable<DateTime> GetDatesInMonth( this DateTime date )
+        {
+            var start = new DateTime(date.Year, date.Month, 1);
+            var end = new DateTime(date.Year, date.Month + 1, 1).AddDays(-1);
+
+            for(DateTime d = start; d <= end; d = d.AddDays(1))
+            {
+                yield return d;
+            }
+        }
+
+        public static IEnumerable<DateTime> GetDatesInWeek(this DateTime date )
+        {
+            for (DateTime d = date.StartOfWeek(); d <= date.EndOfWeek(); d = d.AddDays(1))
+            {
+                yield return d;
+            }
+        }
     }
 }
