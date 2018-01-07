@@ -1,4 +1,5 @@
 ﻿using AssetCalendarApi.Models;
+using AssetCalendarApi.ViewModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -103,13 +104,23 @@ namespace AssetCalendarApi.Repository
                     .Select(x => x.worker);
         }
 
-        public void AddWorker(Worker worker)
+        public WorkerViewModel AddWorker(WorkerViewModel worker)
         {
-            worker.Id = Guid.NewGuid();
+            var dbWorker = new Worker()
+            {
+                Id = Guid.NewGuid(),
+                FirstName = worker.FirstName,
+                LastName = worker.LastName,
+                Email = worker.Email,
+                Phone = worker.Phone
+            };
 
-            _dbContext.Workers.Add(worker);
+            _dbContext.Workers.Add(dbWorker);
             _dbContext.SaveChanges();
 
+            worker.Id = dbWorker.Id.ToString();
+
+            return worker;
         }
     }
 }
