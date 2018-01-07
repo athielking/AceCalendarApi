@@ -47,11 +47,11 @@ namespace AssetCalendarApi.Controllers
 
         // POST api/values
         [HttpPost]
-        public IActionResult Post([FromBody]Worker value)
+        public IActionResult Post([FromBody]Worker worker)
         {
             try
             {
-                _repository.AddWorker(value);
+                _repository.AddWorker(worker);
                 return Ok("Worker Added Successfully");
             }
             catch(Exception ex )

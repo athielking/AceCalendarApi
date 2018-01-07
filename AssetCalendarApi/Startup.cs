@@ -11,6 +11,7 @@ using Microsoft.Extensions.Options;
 using AssetCalendarApi.Models;
 using Microsoft.EntityFrameworkCore;
 using AssetCalendarApi.Repository;
+using Newtonsoft.Json.Serialization;
 
 namespace AssetCalendarApi
 {
@@ -28,7 +29,9 @@ namespace AssetCalendarApi
         {
             services.AddCors();
 
-            services.AddMvc();
+            services.AddMvc()
+                .AddJsonOptions(jsonOptions => jsonOptions.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver());
+
             services.AddDbContext<AssetCalendarDbContext>(options => 
                 options.UseSqlServer(Configuration.GetConnectionString("AssetDatabase")));
 
@@ -43,7 +46,9 @@ namespace AssetCalendarApi
             if (env.IsDevelopment())
             {
                 app.UseCors(
-                    options => options.WithOrigins("http://localhost:4200").AllowAnyMethod());
+                    options => options.WithOrigins("http://localhost:4200")
+                        .AllowAnyHeader()
+                        .AllowAnyMethod());
 
                 app.UseDeveloperExceptionPage();
             }

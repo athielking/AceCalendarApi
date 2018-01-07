@@ -10,7 +10,7 @@ using AssetCalendarApi.Models;
 namespace AssetCalendarApi.Controllers
 {
     [Route("api/[controller]")]
-    public class CalendarController : ApiBaseController
+    public class CalendarController : ApiBaseController 
     {
         private JobRepository _jobRepository;
         private WorkerRepository _workerRepository;
