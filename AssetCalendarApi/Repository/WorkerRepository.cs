@@ -73,6 +73,18 @@ namespace AssetCalendarApi.Repository
             return availableWorkers;
         }
 
+        public void DeleteWorker(string id)
+        {
+            var guid = new Guid(id);
+
+            var worker = _dbContext.Workers.FirstOrDefault(w => w.Id == guid);
+            if (worker == null)
+                throw new Exception("Worker not Found");
+
+            _dbContext.Workers.Remove(worker);
+            _dbContext.SaveChanges();
+        }
+
         public Dictionary<DateTime, IEnumerable<Worker>> GetAvailableWorkersForWeek(DateTime week)
         {
             return

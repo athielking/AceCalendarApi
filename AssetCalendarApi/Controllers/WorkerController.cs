@@ -69,8 +69,9 @@ namespace AssetCalendarApi.Controllers
 
         // DELETE api/values/5
         [HttpDelete("{id}")]
-        public void Delete(int id)
+        public void Delete(string id)
         {
+            _repository.DeleteWorker(id);
         }
     }
 }
