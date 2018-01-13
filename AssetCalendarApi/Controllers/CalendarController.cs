@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using AssetCalendarApi.Repository;
 using AssetCalendarApi.ViewModels;
 using AssetCalendarApi.Models;
+using AssetCalendarApi.Data.Models;
 
 namespace AssetCalendarApi.Controllers
 {
@@ -90,7 +91,7 @@ namespace AssetCalendarApi.Controllers
                 return BadRequest("Invalid Date");
 
             var jobs = _jobRepository.GetJobsForDay(date);
-            var workers = _workerRepository.GetAvailableWorkersForDay(date);
+            var workers = _workerRepository.GetAvailableWorkers(date);
 
             return SuccessResult(
                 new DayViewModel()
