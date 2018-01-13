@@ -38,13 +38,13 @@ namespace AssetCalendarApi.Models
                entity.HasOne(d => d.Worker)
                     .WithMany(w => w.DayJobWorkers)
                     .HasForeignKey(d => d.IdWorker)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .OnDelete(DeleteBehavior.Cascade)
                     .HasConstraintName("FK_DaysJobsWorkers_Worker");
 
                entity.HasOne(d => d.DayJob)
                     .WithMany(j => j.DayJobWorkers)
                     .HasForeignKey(d => d.IdDayJob)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .OnDelete(DeleteBehavior.Cascade)
                     .HasConstraintName("FK_DaysJobsWorkers_DaysJobs");
 
             });
@@ -59,7 +59,7 @@ namespace AssetCalendarApi.Models
                 entity.HasOne(d => d.Job)
                     .WithMany(p => p.DaysJobs)
                     .HasForeignKey(d => d.IdJob)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .OnDelete(DeleteBehavior.Cascade)
                     .HasConstraintName("FK_DaysJobs_Job");
 
                 entity.HasIndex(i => new { i.Date, i.IdJob })

@@ -90,7 +90,7 @@ namespace AssetCalendarApi.Controllers
                 return BadRequest("Invalid Date");
 
             var jobs = _jobRepository.GetJobsForDay(date);
-            var workers = _workerRepository.GetAvailableWorkersForDay(date);
+            var workers = _workerRepository.GetAvailableWorkers(date);
 
             return SuccessResult(
                 new DayViewModel()

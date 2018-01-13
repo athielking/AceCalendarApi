@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using AssetCalendarApi.Repository;
 using AssetCalendarApi.Models;
 using AssetCalendarApi.ViewModels;
+using AssetCalendarApi.Validators;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -14,25 +15,27 @@ namespace AssetCalendarApi.Controllers
     [Route("api/[controller]")]
     public class JobController : ApiBaseController
     {
-        private JobRepository _repository;
+        private JobRepository _jobRepository;
+        private WorkerValidator _validator;
 
-        public JobController(JobRepository repository)
+        public JobController(JobRepository jobRepository, WorkerValidator validator)
         {
-            _repository = repository;
+            _jobRepository = jobRepository;
+            _validator = validator;
         }
 
         // GET: api/values
         [HttpGet]
         public IActionResult Get()
         {
-            return SuccessResult(_repository.GetAllJobs());
+            return SuccessResult(_jobRepository.GetAllJobs());
         }
 
         // GET api/values/5
         [HttpGet("{id}")]
         public IActionResult Get(Guid id)
         {
-            var job = _repository.GetJob(id);
+            var job = _jobRepository.GetJob(id);
             if (job == null)
                 return NotFound($"Job with Id {id} not found");
 
@@ -43,21 +46,21 @@ namespace AssetCalendarApi.Controllers
         [Route("getJobsForDay")]
         public IActionResult GetJobsForDay(DateTime date)
         {
-            return SuccessResult(_repository.GetJobsForDay(date));
+            return SuccessResult(_jobRepository.GetJobsForDay(date));
         }
 
         [HttpGet]
         [Route("getJobsForWeek")]
         public IActionResult GetJobsForWeek(DateTime date)
         {
-            return SuccessResult(_repository.GetJobsForWeek(date));
+            return SuccessResult(_jobRepository.GetJobsForWeek(date));
         }
 
         [HttpGet]
         [Route("getJobsForMonth")]
         public IActionResult GetJobsForMonth(DateTime date)
         {
-            return SuccessResult(_repository.GetJobsForMonth(date));
+            return SuccessResult(_jobRepository.GetJobsForMonth(date));
         }
 
         // POST api/values
@@ -66,8 +69,25 @@ namespace AssetCalendarApi.Controllers
         {
             try
             {
-                _repository.AddJob(model);
-                return Ok("Job Successfully added.");
+                Dictionary<Guid,IEnumerable<DateTime>> daysNotAvailable = new Dictionary<Guid, IEnumerable<DateTime>>();
+                foreach( var guid in model.WorkerIds.Select(id => new Guid(id)))
+                {
+                    var working = _validator.GetDaysWorking(guid, model.StartDate, model.EndDate);
+                    if (working.Any())
+                        daysNotAvailable.Add(guid, working);
+                }
+
+                if( daysNotAvailable.Any())
+                {
+                    return BadRequest(new
+                    {
+                        message = "Failed to add job: Workers Unavailable",
+                        data = daysNotAvailable
+                    });
+                }
+
+                var job =_jobRepository.AddJob(model);
+                return Ok(job);
             }
             catch
             {
@@ -83,8 +103,9 @@ namespace AssetCalendarApi.Controllers
 
         // DELETE api/values/5
         [HttpDelete("{id}")]
-        public void Delete(int id)
+        public void Delete(string id)
         {
+            _jobRepository.DeleteJob(id);
         }
     }
 }

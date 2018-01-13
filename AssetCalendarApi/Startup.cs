@@ -12,6 +12,7 @@ using AssetCalendarApi.Models;
 using Microsoft.EntityFrameworkCore;
 using AssetCalendarApi.Repository;
 using Newtonsoft.Json.Serialization;
+using AssetCalendarApi.Validators;
 
 namespace AssetCalendarApi
 {
@@ -37,6 +38,7 @@ namespace AssetCalendarApi
 
             services.AddScoped<WorkerRepository>();
             services.AddScoped<JobRepository>();
+            services.AddScoped<WorkerValidator>();
 
         }
 

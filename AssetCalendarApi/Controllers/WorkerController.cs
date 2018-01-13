@@ -41,9 +41,9 @@ namespace AssetCalendarApi.Controllers
 
         [HttpGet]
         [Route("getAvailableWorkers")]
-        public IActionResult GetAvailableWorkers(DateTime date)
+        public IActionResult GetAvailableWorkers(DateTime start, DateTime? end)
         {
-            return SuccessResult(_repository.GetAvailableWorkersForDay(date).ToList());
+            return SuccessResult(_repository.GetAvailableWorkers(start, end).ToList());
         }
 
         // POST api/values
