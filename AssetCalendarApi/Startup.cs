@@ -14,6 +14,8 @@ using AssetCalendarApi.Data;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Newtonsoft.Json.Serialization;
+using AssetCalendarApi.Validators;
 
 namespace AssetCalendarApi
 {
@@ -52,6 +54,7 @@ namespace AssetCalendarApi
 
             services.AddScoped<WorkerRepository>();
             services.AddScoped<JobRepository>();
+            services.AddScoped<WorkerValidator>();
 
         }
 
@@ -61,7 +64,9 @@ namespace AssetCalendarApi
             if (env.IsDevelopment())
             {
                 app.UseCors(
-                    options => options.WithOrigins("http://localhost:4200").AllowAnyMethod());
+                    options => options.WithOrigins("http://localhost:4200")
+                        .AllowAnyHeader()
+                        .AllowAnyMethod());
 
                 app.UseDeveloperExceptionPage();
             }

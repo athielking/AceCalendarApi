@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using AssetCalendarApi.Repository;
 using AssetCalendarApi.Models;
-using AssetCalendarApi.Data.Models;
+using AssetCalendarApi.ViewModels;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -41,19 +41,19 @@ namespace AssetCalendarApi.Controllers
 
         [HttpGet]
         [Route("getAvailableWorkers")]
-        public IActionResult GetAvailableWorkers(DateTime date)
+        public IActionResult GetAvailableWorkers(DateTime start, DateTime? end)
         {
-            return SuccessResult(_repository.GetAvailableWorkersForDay(date).ToList());
+            return SuccessResult(_repository.GetAvailableWorkers(start, end).ToList());
         }
 
         // POST api/values
         [HttpPost]
-        public IActionResult Post([FromBody]Worker value)
+        public IActionResult Post([FromBody]WorkerViewModel worker)
         {
             try
             {
-                _repository.AddWorker(value);
-                return Ok("Worker Added Successfully");
+                worker = _repository.AddWorker(worker);
+                return Ok( worker );
             }
             catch(Exception ex )
             {
@@ -69,8 +69,9 @@ namespace AssetCalendarApi.Controllers
 
         // DELETE api/values/5
         [HttpDelete("{id}")]
-        public void Delete(int id)
+        public void Delete(string id)
         {
+            _repository.DeleteWorker(id);
         }
     }
 }

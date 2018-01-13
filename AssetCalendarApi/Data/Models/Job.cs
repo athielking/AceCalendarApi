@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -19,6 +20,7 @@ namespace AssetCalendarApi.Data.Models
         public string Name { get; set; }
         public string Type { get; set; }
 
+        [JsonIgnore]
         public ICollection<DayJob> DaysJobs { get; set; }
     }
 }

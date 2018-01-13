@@ -66,7 +66,7 @@ namespace AssetCalendarApi.Repository
                     .ToDictionary(group => group.Key, group => group.Select(g => g.job));
         }
 
-        public void AddJob(AddJobModel model)
+        public Job AddJob(AddJobModel model)
         {
             Job job = new Job()
             {
@@ -78,11 +78,33 @@ namespace AssetCalendarApi.Repository
 
             _dbContext.Jobs.Add(job);
 
-            for (DateTime date = model.StartDate; date <= (model.EndDate.HasValue ? model.EndDate : model.StartDate); date = date.AddDays(1))
+            for (DateTime date = model.StartDate.Date; date <= (model.EndDate.HasValue ? model.EndDate.Value.Date : model.StartDate.Date); date = date.AddDays(1))
             {
-                _dbContext.DaysJobs.Add(new DayJob() { IdJob = job.Id, Date = date });
+                var dj = new DayJob()
+                {
+                    Id = Guid.NewGuid(),
+                    IdJob = job.Id,
+                    Date = date
+                };
+
+                _dbContext.DaysJobs.Add(dj);
+
+                foreach( var id in model.WorkerIds)
+                {
+                    var djw = new DayJobWorker()
+                    {
+                        Id = Guid.NewGuid(),
+                        IdDayJob = dj.Id,
+                        IdWorker = new Guid(id)
+                    };
+
+                    _dbContext.DaysJobsWorkers.Add(djw);
+                }
             }
+
             _dbContext.SaveChanges();
+
+            return job;
         }
 
         public void AddJobToDay(Guid idJob, DateTime date)
@@ -134,5 +156,13 @@ namespace AssetCalendarApi.Repository
             _dbContext.SaveChanges();
         }
 
+        public void DeleteJob( string idJob)
+        {
+            var job = GetJob(new Guid(idJob));
+
+            _dbContext.Jobs.Remove(job);
+
+            _dbContext.SaveChanges();
+        }
     }
 }
