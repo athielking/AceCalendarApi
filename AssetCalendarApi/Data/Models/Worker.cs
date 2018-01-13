@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace AssetCalendarApi.Models
+namespace AssetCalendarApi.Data.Models
 {
     public partial class Worker
     {

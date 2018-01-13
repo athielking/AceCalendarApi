@@ -1,4 +1,6 @@
-﻿using AssetCalendarApi.Models;
+﻿using AssetCalendarApi.Data;
+using AssetCalendarApi.Data.Models;
+using AssetCalendarApi.Models;
 using AssetCalendarApi.ViewModels;
 using System;
 using System.Collections.Generic;

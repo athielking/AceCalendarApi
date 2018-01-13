@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace AssetCalendarApi.Models
+namespace AssetCalendarApi.Data.Models
 {
     public class DayJobWorker
     {

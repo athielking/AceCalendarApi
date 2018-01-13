@@ -8,9 +8,12 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using AssetCalendarApi.Models;
 using Microsoft.EntityFrameworkCore;
 using AssetCalendarApi.Repository;
+using AssetCalendarApi.Data;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 namespace AssetCalendarApi
 {
@@ -27,6 +30,21 @@ namespace AssetCalendarApi
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddCors();
+
+            services.AddAuthentication()
+              .AddJwtBearer(cfg =>
+              {
+                  cfg.RequireHttpsMetadata = false;
+                  cfg.SaveToken = true;
+
+                  cfg.TokenValidationParameters = new TokenValidationParameters()
+                  {
+                      ValidIssuer = Configuration["Tokens:Issuer"],
+                      ValidAudience = Configuration["Tokens:Audience"],
+                      IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["Tokens:Key"]))
+                  };
+
+              });
 
             services.AddMvc();
             services.AddDbContext<AssetCalendarDbContext>(options => 
@@ -47,6 +65,8 @@ namespace AssetCalendarApi
 
                 app.UseDeveloperExceptionPage();
             }
+
+            app.UseAuthentication();
 
             app.UseMvc();
         }

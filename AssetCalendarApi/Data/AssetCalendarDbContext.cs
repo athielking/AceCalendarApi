@@ -2,8 +2,9 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.Configuration;
+using AssetCalendarApi.Data.Models;
 
-namespace AssetCalendarApi.Models
+namespace AssetCalendarApi.Data
 {
     public partial class AssetCalendarDbContext : DbContext
     {

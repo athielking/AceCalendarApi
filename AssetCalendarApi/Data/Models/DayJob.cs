@@ -5,7 +5,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace AssetCalendarApi.Models
+namespace AssetCalendarApi.Data.Models
 {
     public partial class DayJob
     {
