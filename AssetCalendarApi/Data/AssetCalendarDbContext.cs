@@ -3,23 +3,38 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.Configuration;
 using AssetCalendarApi.Data.Models;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace AssetCalendarApi.Data
 {
-    public partial class AssetCalendarDbContext : DbContext
+    public partial class AssetCalendarDbContext : IdentityDbContext<CalendarUser>
     {
+        #region Data Members
+
         private IConfiguration _configuration;
+
+        #endregion
+
+        #region Properties
 
         public virtual DbSet<DayJob> DaysJobs { get; set; }
         public virtual DbSet<Job> Jobs { get; set; }
         public virtual DbSet<Worker> Workers { get; set; }
         public virtual DbSet<DayJobWorker> DaysJobsWorkers { get; set; }
 
+        #endregion
+
+        #region Constructor
+
         public AssetCalendarDbContext(IConfiguration configuration, DbContextOptions dbContextOptions)
             : base(dbContextOptions)
         {
             _configuration = configuration;
         }
+
+        #endregion
+        
+        #region Overrides
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -31,22 +46,24 @@ namespace AssetCalendarApi.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            base.OnModelCreating(modelBuilder);
+
             modelBuilder.Entity<DayJobWorker>(entity =>
             {
-               entity.ToTable("DaysJobsWorkers");
-               entity.HasKey(e => e.Id);
+                entity.ToTable("DaysJobsWorkers");
+                entity.HasKey(e => e.Id);
 
-               entity.HasOne(d => d.Worker)
-                    .WithMany(w => w.DayJobWorkers)
-                    .HasForeignKey(d => d.IdWorker)
-                    .OnDelete(DeleteBehavior.Cascade)
-                    .HasConstraintName("FK_DaysJobsWorkers_Worker");
+                entity.HasOne(d => d.Worker)
+                     .WithMany(w => w.DayJobWorkers)
+                     .HasForeignKey(d => d.IdWorker)
+                     .OnDelete(DeleteBehavior.Cascade)
+                     .HasConstraintName("FK_DaysJobsWorkers_Worker");
 
-               entity.HasOne(d => d.DayJob)
-                    .WithMany(j => j.DayJobWorkers)
-                    .HasForeignKey(d => d.IdDayJob)
-                    .OnDelete(DeleteBehavior.Cascade)
-                    .HasConstraintName("FK_DaysJobsWorkers_DaysJobs");
+                entity.HasOne(d => d.DayJob)
+                     .WithMany(j => j.DayJobWorkers)
+                     .HasForeignKey(d => d.IdDayJob)
+                     .OnDelete(DeleteBehavior.Cascade)
+                     .HasConstraintName("FK_DaysJobsWorkers_DaysJobs");
 
             });
 
@@ -81,7 +98,7 @@ namespace AssetCalendarApi.Data
                 entity.Property(e => e.Type)
                     .HasMaxLength(25)
                     .IsUnicode(false);
-               
+
             });
 
             modelBuilder.Entity<Worker>(entity =>
@@ -107,6 +124,8 @@ namespace AssetCalendarApi.Data
                     .HasMaxLength(10)
                     .IsUnicode(false);
             });
-        }
+        } 
+        
+        #endregion
     }
 }

@@ -16,22 +16,46 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Newtonsoft.Json.Serialization;
 using AssetCalendarApi.Validators;
+using AssetCalendarApi.Data.Models;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 
 namespace AssetCalendarApi
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
+        #region Data Members
+
+        private readonly IConfiguration _configuration;
+
+        private readonly IHostingEnvironment _hostingEnvironment;
+
+        #endregion
+
+        #region Properties
+
+
+        #endregion
+
+        #region Constructor
+
+        public Startup(IConfiguration configuration, IHostingEnvironment hostingEnvironment)
         {
-            Configuration = configuration;
+            _configuration = configuration;
+            _hostingEnvironment = hostingEnvironment;
         }
 
-        public IConfiguration Configuration { get; }
+        #endregion
+
+        #region Public Methods
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddCors();
+
+            services.AddIdentity<CalendarUser, IdentityRole>()
+                .AddEntityFrameworkStores<AssetCalendarDbContext>();
 
             services.AddAuthentication()
               .AddJwtBearer(cfg =>
@@ -41,21 +65,30 @@ namespace AssetCalendarApi
 
                   cfg.TokenValidationParameters = new TokenValidationParameters()
                   {
-                      ValidIssuer = Configuration["Tokens:Issuer"],
-                      ValidAudience = Configuration["Tokens:Audience"],
-                      IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["Tokens:Key"]))
+                      ValidIssuer = _configuration["Tokens:Issuer"],
+                      ValidAudience = _configuration["Tokens:Audience"],
+                      IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Tokens:Key"]))
                   };
 
               });
 
-            services.AddMvc();
-            services.AddDbContext<AssetCalendarDbContext>(options => 
-                options.UseSqlServer(Configuration.GetConnectionString("AssetDatabase")));
+            services.AddMvc(options =>
+            {
+                if (_hostingEnvironment.IsProduction())
+                    options.Filters.Add(new RequireHttpsAttribute());
+            }).AddJsonOptions(jsonOptions =>
+            {
+                jsonOptions.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
+            });
+
+            services.AddDbContext<AssetCalendarDbContext>(options =>
+                options.UseSqlServer(_configuration.GetConnectionString("AssetDatabase")));
 
             services.AddScoped<WorkerRepository>();
             services.AddScoped<JobRepository>();
             services.AddScoped<WorkerValidator>();
 
+            services.AddTransient<AssetCalendarSeeder>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -75,5 +108,7 @@ namespace AssetCalendarApi
 
             app.UseMvc();
         }
+
+        #endregion
     }
 }

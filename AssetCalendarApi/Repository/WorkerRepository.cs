@@ -1,6 +1,5 @@
 ﻿using AssetCalendarApi.Data;
 using AssetCalendarApi.Data.Models;
-using AssetCalendarApi.Models;
 using AssetCalendarApi.ViewModels;
 using Microsoft.EntityFrameworkCore;
 using System;

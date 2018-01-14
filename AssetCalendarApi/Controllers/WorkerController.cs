@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using AssetCalendarApi.Repository;
-using AssetCalendarApi.Models;
 using AssetCalendarApi.ViewModels;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
@@ -55,7 +54,7 @@ namespace AssetCalendarApi.Controllers
                 worker = _repository.AddWorker(worker);
                 return Ok( worker );
             }
-            catch(Exception ex )
+            catch
             {
                 return BadRequest("Failed To Add Worker");
             }

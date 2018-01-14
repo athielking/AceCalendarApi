@@ -4,7 +4,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using AssetCalendarApi.Repository;
-using AssetCalendarApi.Models;
 using AssetCalendarApi.ViewModels;
 using AssetCalendarApi.Validators;
 

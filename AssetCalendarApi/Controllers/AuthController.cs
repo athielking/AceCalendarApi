@@ -1,6 +1,6 @@
 ﻿using AssetCalendarApi.Data.Models;
 using AssetCalendarApi.Filters;
-using AssetCalendarApi.Models;
+using AssetCalendarApi.ViewModels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -22,9 +22,9 @@ namespace AssetCalendarApi.Controllers
 
         private ILogger<AuthController> _logger;
 
-        private SignInManager<CalendarUser> _signInMgr;
+        private SignInManager<CalendarUser> _signInManager;
 
-        private UserManager<CalendarUser> _userMgr;
+        private UserManager<CalendarUser> _userManager;
 
         private IPasswordHasher<CalendarUser> _hasher;
 
@@ -36,16 +36,16 @@ namespace AssetCalendarApi.Controllers
 
         public AuthController
         (
-            SignInManager<CalendarUser> signInMgr,
-            UserManager<CalendarUser> userMgr,
+            SignInManager<CalendarUser> signInManager,
+            UserManager<CalendarUser> userManager,
             IPasswordHasher<CalendarUser> hasher,
             ILogger<AuthController> logger,
             IConfigurationRoot config
         )
         {
-            _signInMgr = signInMgr;
+            _signInManager = signInManager;
             _logger = logger;
-            _userMgr = userMgr;
+            _userManager = userManager;
             _hasher = hasher;
             _config = config;
         }
@@ -54,13 +54,30 @@ namespace AssetCalendarApi.Controllers
 
         #region Public Methods
 
-        [HttpPost("api/auth/login")]
-        [ValidateModel]
-        public async Task<IActionResult> Login([FromBody] CredentialModel model)
+        [HttpPost("api/auth/logout")]
+        public async Task<IActionResult> Logout()
         {
             try
             {
-                var result = await _signInMgr.PasswordSignInAsync(model.UserName, model.Password, false, false);
+                await _signInManager.SignOutAsync();
+
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Exception thrown while logging out: {ex}");
+            }
+
+            return BadRequest("Failed to logout");
+        }
+
+        [HttpPost("api/auth/login")]
+        [ValidateModel]
+        public async Task<IActionResult> Login([FromBody] LoginViewModel model)
+        {
+            try
+            {
+                var result = await _signInManager.PasswordSignInAsync(model.UserName, model.Password, model.RememberMe, false);
                 if (result.Succeeded)
                 {
                     return Ok();
@@ -76,16 +93,16 @@ namespace AssetCalendarApi.Controllers
 
         [ValidateModel]
         [HttpPost("api/auth/token")]
-        public async Task<IActionResult> CreateToken([FromBody] CredentialModel model)
+        public async Task<IActionResult> CreateToken([FromBody] LoginViewModel model)
         {
             try
             {
-                var user = await _userMgr.FindByNameAsync(model.UserName);
+                var user = await _userManager.FindByNameAsync(model.UserName);
                 if (user != null)
                 {
                     if (_hasher.VerifyHashedPassword(user, user.PasswordHash, model.Password) == PasswordVerificationResult.Success)
                     {
-                        var userClaims = await _userMgr.GetClaimsAsync(user);
+                        var userClaims = await _userManager.GetClaimsAsync(user);
 
                         var claims = new[]
                         {

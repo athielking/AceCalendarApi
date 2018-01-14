@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using AssetCalendarApi.Repository;
 using AssetCalendarApi.ViewModels;
-using AssetCalendarApi.Models;
 using AssetCalendarApi.Data.Models;
 
 namespace AssetCalendarApi.Controllers
