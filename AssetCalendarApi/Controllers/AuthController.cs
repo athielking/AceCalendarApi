@@ -26,9 +26,7 @@ namespace AssetCalendarApi.Controllers
 
         private UserManager<CalendarUser> _userManager;
 
-        private IPasswordHasher<CalendarUser> _hasher;
-
-        private IConfigurationRoot _config;
+        private IConfiguration _configuration;
 
         #endregion
 
@@ -38,16 +36,14 @@ namespace AssetCalendarApi.Controllers
         (
             SignInManager<CalendarUser> signInManager,
             UserManager<CalendarUser> userManager,
-            IPasswordHasher<CalendarUser> hasher,
             ILogger<AuthController> logger,
-            IConfigurationRoot config
+            IConfiguration configuration
         )
         {
             _signInManager = signInManager;
             _logger = logger;
             _userManager = userManager;
-            _hasher = hasher;
-            _config = config;
+            _configuration = configuration;
         }
 
         #endregion
@@ -80,7 +76,8 @@ namespace AssetCalendarApi.Controllers
                 var result = await _signInManager.PasswordSignInAsync(model.UserName, model.Password, model.RememberMe, false);
                 if (result.Succeeded)
                 {
-                    return Ok();
+                    var user = await _userManager.FindByNameAsync(model.UserName);
+                    return GenerateJwtToken(user);
                 }
             }
             catch (Exception ex)
@@ -91,55 +88,40 @@ namespace AssetCalendarApi.Controllers
             return BadRequest("Failed to login");
         }
 
-        [ValidateModel]
-        [HttpPost("api/auth/token")]
-        public async Task<IActionResult> CreateToken([FromBody] LoginViewModel model)
+        #endregion
+
+        #region Private Methods
+
+        private IActionResult GenerateJwtToken( CalendarUser user)
         {
-            try
+            var claims = new List<Claim>
             {
-                var user = await _userManager.FindByNameAsync(model.UserName);
-                if (user != null)
-                {
-                    if (_hasher.VerifyHashedPassword(user, user.PasswordHash, model.Password) == PasswordVerificationResult.Success)
-                    {
-                        var userClaims = await _userManager.GetClaimsAsync(user);
+                new Claim(JwtRegisteredClaimNames.Sub, user.UserName),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                new Claim(JwtRegisteredClaimNames.GivenName, user.FirstName),
+                new Claim(JwtRegisteredClaimNames.FamilyName, user.LastName),
+                //new Claim(JwtRegisteredClaimNames.Email, user.Email)
+            };
 
-                        var claims = new[]
-                        {
-              new Claim(JwtRegisteredClaimNames.Sub, user.UserName),
-              new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-              new Claim(JwtRegisteredClaimNames.GivenName, user.FirstName),
-              new Claim(JwtRegisteredClaimNames.FamilyName, user.LastName),
-              new Claim(JwtRegisteredClaimNames.Email, user.Email)
-            }.Union(userClaims);
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JwtKey"]));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            var expires = DateTime.Now.AddDays(Convert.ToDouble(_configuration["JwtExpireDays"]));
 
-                        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Tokens:Key"]));
-                        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            var token = new JwtSecurityToken(
+                _configuration["JwtIssuer"],
+                _configuration["JwtIssuer"],
+                claims,
+                expires: expires,
+                signingCredentials: creds
+            );
 
-                        var token = new JwtSecurityToken(
-                          issuer: _config["Tokens:Issuer"],
-                          audience: _config["Tokens:Audience"],
-                          claims: claims,
-                          expires: DateTime.UtcNow.AddMinutes(15),
-                          signingCredentials: creds
-                          );
-
-                        return Ok(new
-                        {
-                            token = new JwtSecurityTokenHandler().WriteToken(token),
-                            expiration = token.ValidTo
-                        });
-                    }
-                }
-
-            }
-            catch (Exception ex)
+            return Ok(new
             {
-                _logger.LogError($"Exception thrown while creating JWT: {ex}");
-            }
-
-            return BadRequest("Failed to generate token");
-        } 
+                token = new JwtSecurityTokenHandler().WriteToken(token),
+                expiration = token.ValidTo,
+                user = user.UserName
+            });
+        }
 
         #endregion
     }

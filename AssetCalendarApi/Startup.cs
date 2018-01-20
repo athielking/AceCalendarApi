@@ -55,22 +55,29 @@ namespace AssetCalendarApi
             services.AddCors();
 
             services.AddIdentity<CalendarUser, IdentityRole>()
-                .AddEntityFrameworkStores<AssetCalendarDbContext>();
+                .AddEntityFrameworkStores<AssetCalendarDbContext>()
+                .AddDefaultTokenProviders();
 
-            services.AddAuthentication()
-              .AddJwtBearer(cfg =>
-              {
-                  cfg.RequireHttpsMetadata = false;
-                  cfg.SaveToken = true;
+            services
+                .AddAuthentication(options =>
+                {
+                    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+                    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 
-                  cfg.TokenValidationParameters = new TokenValidationParameters()
-                  {
-                      ValidIssuer = _configuration["Tokens:Issuer"],
-                      ValidAudience = _configuration["Tokens:Audience"],
-                      IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Tokens:Key"]))
-                  };
-
-              });
+                })
+                .AddJwtBearer(cfg =>
+                {
+                    cfg.RequireHttpsMetadata = false;
+                    cfg.SaveToken = true;
+                    cfg.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidIssuer = _configuration["JwtIssuer"],
+                        ValidAudience = _configuration["JwtIssuer"],
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JwtKey"])),
+                        ClockSkew = TimeSpan.Zero // remove delay of token when expire
+                    };
+                });
 
             services.AddMvc(options =>
             {
