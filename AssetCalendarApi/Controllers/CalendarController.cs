@@ -46,6 +46,15 @@ namespace AssetCalendarApi.Controllers
                     Jobs = jobsByDate.ContainsKey(d) ? jobsByDate[d] : Enumerable.Empty<Job>()
                 };
 
+                vm.WorkersByJob = vm.Jobs
+                    .Select(j => new
+                    {
+                        id = j.Id,
+                        workers = _workerRepository.GetWorkersForJob(j.Id)
+                    })
+                    .GroupBy(m => m.id)
+                    .ToDictionary(group => group.Key, group => group.SelectMany(g => g.workers));
+
                 monthData.Add(d, vm);
             }
 
@@ -75,6 +84,14 @@ namespace AssetCalendarApi.Controllers
                     AvailableWorkers = workersByDate.ContainsKey(d) ? workersByDate[d] : Enumerable.Empty<Worker>(),
                     Jobs = jobsByDate.ContainsKey(d) ? jobsByDate[d] : Enumerable.Empty<Job>()
                 };
+                vm.WorkersByJob = vm.Jobs
+                    .Select(j => new
+                        {
+                            id = j.Id,
+                            workers = _workerRepository.GetWorkersForJob(j.Id).ToArray()
+                        })
+                    .GroupBy(m => m.id)
+                    .ToDictionary(group => group.Key, group => group.SelectMany( g => g.workers));
 
                 monthData.Add(d, vm);
             }
@@ -91,14 +108,25 @@ namespace AssetCalendarApi.Controllers
 
             var jobs = _jobRepository.GetJobsForDay(date);
             var workers = _workerRepository.GetAvailableWorkers(date);
+            var workersByJob = jobs
+                    .Select(j => new
+                    {
+                        id = j.Id,
+                        workers = _workerRepository.GetWorkersForJob(j.Id)
+                    })
+                    .GroupBy(m => m.id)
+                    .ToDictionary(group => group.Key, group => group.SelectMany(g => g.workers));
 
-            return SuccessResult(
-                new DayViewModel()
-                {
-                    Date = date,
-                    AvailableWorkers = workers,
-                    Jobs = jobs
-                });
+            var dayData = new Dictionary<DateTime, DayViewModel>();
+            dayData.Add(date, new DayViewModel()
+            {
+                Date = date,
+                AvailableWorkers = workers,
+                Jobs = jobs,
+                WorkersByJob = workersByJob
+            });
+
+            return SuccessResult(dayData);
         }
 
     }

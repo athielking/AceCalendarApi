@@ -9,18 +9,18 @@ namespace System
     {
         public static DateTime StartOfWeek(this DateTime date)
         {
-            var sunday = date;
+            var sunday = date.Date;
             if (date.DayOfWeek != DayOfWeek.Sunday)
-                sunday = date.AddDays((-1 * (int)date.DayOfWeek));
+                sunday = date.Date.AddDays((-1 * (int)date.DayOfWeek));
 
             return sunday;
         }
 
         public static DateTime EndOfWeek(this DateTime date )
         {
-            var saturday = date;
+            var saturday = date.Date;
             if (date.DayOfWeek != DayOfWeek.Saturday)
-                saturday = date.AddDays((int)DayOfWeek.Saturday - (int)date.DayOfWeek);
+                saturday = date.Date.AddDays((int)DayOfWeek.Saturday - (int)date.DayOfWeek);
 
             return saturday;
         }
@@ -54,7 +54,7 @@ namespace System
                 throw new InvalidOperationException("End date must be larger than start date");
 
             if (end == null || end == date)
-                yield return date;
+                yield return date.Date;
             else
             {
                 for (DateTime d = date; d <= end; d = d.AddDays(1))
@@ -62,7 +62,7 @@ namespace System
                     if (d == end && !inclusive)
                         continue;
 
-                    yield return d;
+                    yield return d.Date;
                 }
             }
 

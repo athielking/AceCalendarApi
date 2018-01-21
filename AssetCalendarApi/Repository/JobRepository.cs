@@ -1,6 +1,7 @@
 ﻿using AssetCalendarApi.Data;
 using AssetCalendarApi.Data.Models;
 using AssetCalendarApi.ViewModels;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -131,11 +132,38 @@ namespace AssetCalendarApi.Repository
             AddWorkerToJobs(idJob, idWorker, null );
         }
 
+        public void DeleteJob(string idJob)
+        {
+            var job = GetJob(new Guid(idJob));
+
+            _dbContext.Jobs.Remove(job);
+
+            _dbContext.SaveChanges();
+        }
+
+        public void MoveWorkerToJob(Guid idJob, Guid idWorker, DateTime date)
+        {
+            var jobsOnDay = _dbContext.DaysJobs.Include(dj => dj.DayJobWorkers).Where(dj => dj.Date.Date == date.Date);
+            var fromJob = jobsOnDay.FirstOrDefault(dj => dj.DayJobWorkers.Any(djw => djw.IdWorker == idWorker));
+            var toJob = jobsOnDay.FirstOrDefault(j => j.IdJob == idJob);
+
+            if(fromJob != null)
+            {
+                var existingWorkerDay = fromJob.DayJobWorkers.FirstOrDefault(djw => djw.IdWorker == idWorker);
+                
+                existingWorkerDay.IdDayJob = toJob.Id;
+                _dbContext.SaveChanges();
+                return;
+            }
+
+            AddWorkerToJob(idJob, idWorker, date);
+        }
+
         private void AddWorkerToJobs( Guid idJob, Guid idWorker, DateTime? date )
         {
             var jobDays = _dbContext.DaysJobs.Where(d => d.IdJob == idJob);
             if (date.HasValue)
-                jobDays = jobDays.Where(d => d.Date == date.Value);
+                jobDays = jobDays.Where(d => d.Date.Date == date.Value.Date);
 
             var workerDays = _dbContext.DaysJobsWorkers.Where(w => w.IdWorker == idWorker);
 
@@ -151,15 +179,6 @@ namespace AssetCalendarApi.Repository
 
                 _dbContext.DaysJobsWorkers.Add(jobDayWorker);
             }
-
-            _dbContext.SaveChanges();
-        }
-
-        public void DeleteJob( string idJob)
-        {
-            var job = GetJob(new Guid(idJob));
-
-            _dbContext.Jobs.Remove(job);
 
             _dbContext.SaveChanges();
         }

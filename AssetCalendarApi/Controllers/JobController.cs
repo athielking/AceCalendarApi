@@ -94,6 +94,15 @@ namespace AssetCalendarApi.Controllers
             }
         }
 
+        [HttpPost]
+        [Route("moveWorkerToJob")]
+        public IActionResult MoveWorkerToJob([FromBody]MoveWorkerRequestModel model)
+        {
+            _jobRepository.MoveWorkerToJob(new Guid(model.IdJob), new Guid(model.IdWorker), model.Date.Value);
+
+            return SuccessResult( "Worker Successfully Moved");
+        }
+
         // PUT api/values/5
         [HttpPut("{id}")]
         public void Put(int id, [FromBody]string value)
