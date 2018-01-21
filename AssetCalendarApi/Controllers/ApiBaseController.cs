@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Authorization;
 
 namespace AssetCalendarApi.Controllers
 {
-    //[Authorize]
+    [Authorize]
     public class ApiBaseController : Controller
     {
         #region Protected Methods
