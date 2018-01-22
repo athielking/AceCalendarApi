@@ -40,7 +40,14 @@ namespace AssetCalendarApi.Data
         {
             if (!optionsBuilder.IsConfigured)
             {
-                optionsBuilder.UseSqlServer(@"Server=(localdb)\MSSqlLocalDB;Database=AssetCalendarDb;Trusted_Connection=True;");
+                var server = "snare.arvixe.com";
+                var db = "AssetCalendarDb";
+                var pw = "d70wIakr5oxP";
+                var user = "acecalendar";
+
+
+                var connectionString = $"Server={server}; Database={db}; User Id={user}; Password={pw}; MultipleActiveResultSets=true";
+                optionsBuilder.UseSqlServer(connectionString);
             }
         }
 
