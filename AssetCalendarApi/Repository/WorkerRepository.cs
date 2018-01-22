@@ -104,26 +104,14 @@ namespace AssetCalendarApi.Repository
             return availableWorkers;
         }
 
-        public IQueryable<Worker> GetWorkersForJob(Guid idJob)
+        public IQueryable<Worker> GetWorkersForJob(Guid idJob, DateTime? date)
         {
-            return
-            _dbContext.DaysJobs
-                .Where(dj => dj.IdJob == idJob)
-                .SelectMany(dj => dj.DayJobWorkers.Select(djw => djw.Worker))
-                .Distinct();
+            var dayJobs = _dbContext.DaysJobs.Where(dj => dj.IdJob == idJob);
 
-            //return
-            //    _dbContext.Workers
-            //        .Join(_dbContext.DaysJobsWorkers,
-            //            w => w.Id,
-            //            d => d.IdWorker,
-            //            (worker, d) => new { d.IdDayJob, worker })
-            //        .Join(_dbContext.DaysJobs,
-            //            m => m.IdDayJob,
-            //            j => j.IdJob,
-            //            (m, j) => new { j.IdJob, m.worker })
-            //        .Where(x => x.IdJob == idJob)
-            //        .Select(x => x.worker);
+            if (date.HasValue)
+                dayJobs = dayJobs.Where(dj => dj.Date.Date == date.Value.Date);
+
+            return dayJobs.SelectMany(dj => dj.DayJobWorkers.Select(djw => djw.Worker)).Distinct();
         }
 
         public WorkerViewModel AddWorker(WorkerViewModel worker)

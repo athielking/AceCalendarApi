@@ -50,7 +50,7 @@ namespace AssetCalendarApi.Controllers
                     .Select(j => new
                     {
                         id = j.Id,
-                        workers = _workerRepository.GetWorkersForJob(j.Id)
+                        workers = _workerRepository.GetWorkersForJob(j.Id, d)
                     })
                     .GroupBy(m => m.id)
                     .ToDictionary(group => group.Key, group => group.SelectMany(g => g.workers));
@@ -88,7 +88,7 @@ namespace AssetCalendarApi.Controllers
                     .Select(j => new
                         {
                             id = j.Id,
-                            workers = _workerRepository.GetWorkersForJob(j.Id).ToArray()
+                            workers = _workerRepository.GetWorkersForJob(j.Id, d).ToArray()
                         })
                     .GroupBy(m => m.id)
                     .ToDictionary(group => group.Key, group => group.SelectMany( g => g.workers));
@@ -112,7 +112,7 @@ namespace AssetCalendarApi.Controllers
                     .Select(j => new
                     {
                         id = j.Id,
-                        workers = _workerRepository.GetWorkersForJob(j.Id)
+                        workers = _workerRepository.GetWorkersForJob(j.Id, date)
                     })
                     .GroupBy(m => m.id)
                     .ToDictionary(group => group.Key, group => group.SelectMany(g => g.workers));
