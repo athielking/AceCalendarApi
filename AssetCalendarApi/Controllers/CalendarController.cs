@@ -34,7 +34,7 @@ namespace AssetCalendarApi.Controllers
 
             //Need the calendar to show from sunday to saturday regardless of month
             DateTime monthStart = new DateTime(date.Year, date.Month, 1).StartOfWeek();
-            DateTime monthEnd = new DateTime(date.Year, date.Month + 1, 1).AddDays(-1).EndOfWeek();
+            DateTime monthEnd = monthStart.AddMonths(1).AddDays(-1).EndOfWeek();
 
             Dictionary<DateTime, DayViewModel> monthData = new Dictionary<DateTime, DayViewModel>();
             for(DateTime d = monthStart; d <= monthEnd; d = d.AddDays(1))

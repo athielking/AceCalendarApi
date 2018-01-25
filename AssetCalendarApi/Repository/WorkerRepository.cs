@@ -61,7 +61,7 @@ namespace AssetCalendarApi.Repository
         public Dictionary<DateTime, IEnumerable<Worker>> GetAvailableWorkersForMonth(DateTime month)
         {
             var startOfMonth = new DateTime(month.Year, month.Month, 1);
-            var endOfMonth = new DateTime(month.Year, month.Month + 1, 1).AddDays(-1);
+            var endOfMonth = startOfMonth.AddMonths(1).AddDays(-1);
 
             return GetAvailableWorkersForDates(startOfMonth, endOfMonth);
         }
