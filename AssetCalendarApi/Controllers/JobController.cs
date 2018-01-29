@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 using AssetCalendarApi.Repository;
 using AssetCalendarApi.ViewModels;
 using AssetCalendarApi.Validators;
+using Microsoft.AspNetCore.Identity;
+using AssetCalendarApi.Data.Models;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -14,69 +16,136 @@ namespace AssetCalendarApi.Controllers
     [Route("api/[controller]")]
     public class JobController : ApiBaseController
     {
-        private JobRepository _jobRepository;
-        private WorkerValidator _validator;
+        #region Data Members
 
-        public JobController(JobRepository jobRepository, WorkerValidator validator)
+        private readonly JobRepository _jobRepository;
+
+        private readonly UserManager<CalendarUser> _userManager;
+
+        private readonly WorkerValidator _validator;
+
+        #endregion
+
+        #region Constructor
+
+        public JobController
+        (
+            JobRepository jobRepository,
+            WorkerValidator validator,
+            UserManager<CalendarUser> userManager
+        )
         {
             _jobRepository = jobRepository;
             _validator = validator;
+            _userManager = userManager;
         }
 
-        // GET: api/values
+        #endregion
+
+        #region Public Methods
+
         [HttpGet]
-        public IActionResult Get()
+        public async Task<IActionResult> Get()
         {
-            return SuccessResult(_jobRepository.GetAllJobs());
+            try
+            {
+                var calendarUser = await _userManager.FindByNameAsync(User.Identity.Name);
+
+                var jobs = _jobRepository.GetAllJobs(calendarUser.OrganizationId).ToList();
+
+                return SuccessResult(jobs);
+            }
+            catch
+            {
+                return BadRequest("Failed To Gset Jobs");
+            }
         }
 
-        // GET api/values/5
         [HttpGet("{id}")]
-        public IActionResult Get(Guid id)
+        public async Task<IActionResult> Get(Guid id)
         {
-            var job = _jobRepository.GetJob(id);
-            if (job == null)
-                return NotFound($"Job with Id {id} not found");
+            try
+            {
+                var calendarUser = await _userManager.FindByNameAsync(User.Identity.Name);
 
-            return SuccessResult(job);
+                var job = _jobRepository.GetJob(id, calendarUser.OrganizationId);
+
+                if (job == null)
+                    return NotFound($"Job with Id {id} not found");
+
+                return SuccessResult(job);
+            }
+            catch
+            {
+                return BadRequest("Failed To Get Job");
+            }
         }
 
         [HttpGet]
         [Route("getJobsForDay")]
-        public IActionResult GetJobsForDay(DateTime date)
+        public async Task<IActionResult> GetJobsForDay(DateTime date)
         {
-            return SuccessResult(_jobRepository.GetJobsForDay(date));
+            try
+            {
+                var calendarUser = await _userManager.FindByNameAsync(User.Identity.Name);
+
+                return SuccessResult(_jobRepository.GetJobsForDay(date, calendarUser.OrganizationId));
+            }
+            catch
+            {
+                return BadRequest("Failed Get Jobs for Day");
+            }
         }
 
         [HttpGet]
         [Route("getJobsForWeek")]
-        public IActionResult GetJobsForWeek(DateTime date)
+        public async Task<IActionResult> GetJobsForWeek(DateTime date)
         {
-            return SuccessResult(_jobRepository.GetJobsForWeek(date));
+            try
+            {
+                var calendarUser = await _userManager.FindByNameAsync(User.Identity.Name);
+
+                return SuccessResult(_jobRepository.GetJobsForWeek(date, calendarUser.OrganizationId));
+            }
+            catch
+            {
+                return BadRequest("Failed Get Jobs for Week");
+            }
         }
 
         [HttpGet]
         [Route("getJobsForMonth")]
-        public IActionResult GetJobsForMonth(DateTime date)
-        {
-            return SuccessResult(_jobRepository.GetJobsForMonth(date));
-        }
-
-        // POST api/values
-        [HttpPost]
-        public IActionResult Post([FromBody]AddJobModel model)
+        public async Task<IActionResult> GetJobsForMonth(DateTime date)
         {
             try
             {
-                Dictionary<Guid,IEnumerable<DateTime>> daysNotAvailable = new Dictionary<Guid, IEnumerable<DateTime>>();
-                foreach( var guid in model.WorkerIds.Select(id => new Guid(id)))
+                var calendarUser = await _userManager.FindByNameAsync(User.Identity.Name);
+
+                return SuccessResult(_jobRepository.GetJobsForMonth(date, calendarUser.OrganizationId));
+            }
+            catch
+            {
+                return BadRequest("Failed Get Jobs for Month");
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Post([FromBody]AddJobModel model)
+        {
+            try
+            {
+                var calendarUser = await _userManager.FindByNameAsync(User.Identity.Name);
+                
+                var daysNotAvailable = new Dictionary<Guid, IEnumerable<DateTime>>();
+
+                foreach (var guid in model.WorkerIds)
                 {
-                    var working = _validator.GetDaysWorking(guid, model.StartDate, model.EndDate);
+                    var working = _validator.GetDaysWorking(guid, calendarUser.OrganizationId, model.StartDate, model.EndDate);
                     if (working.Any())
                         daysNotAvailable.Add(guid, working);
                 }
 
-                if( daysNotAvailable.Any())
+                if (daysNotAvailable.Any())
                 {
                     return BadRequest(new
                     {
@@ -85,7 +154,7 @@ namespace AssetCalendarApi.Controllers
                     });
                 }
 
-                var job =_jobRepository.AddJob(model);
+                var job = _jobRepository.AddJob(model, calendarUser.OrganizationId);
                 return Ok(job);
             }
             catch
@@ -96,24 +165,39 @@ namespace AssetCalendarApi.Controllers
 
         [HttpPost]
         [Route("moveWorkerToJob")]
-        public IActionResult MoveWorkerToJob([FromBody]MoveWorkerRequestModel model)
+        public async Task<IActionResult> MoveWorkerToJob([FromBody]MoveWorkerRequestModel model)
         {
-            _jobRepository.MoveWorkerToJob(new Guid(model.IdJob), new Guid(model.IdWorker), model.Date.Value);
+            try
+            {
+                var calendarUser = await _userManager.FindByNameAsync(User.Identity.Name);
 
-            return SuccessResult( "Worker Successfully Moved");
+                _jobRepository.MoveWorkerToJob(model.IdJob, model.IdWorker, model.Date.Value, calendarUser.OrganizationId);
+
+                return SuccessResult("Worker Successfully Moved");
+            }
+            catch
+            {
+                return BadRequest("Failed To Move Worker to Job");
+            }
         }
 
-        // PUT api/values/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody]string value)
-        {
-        }
-
-        // DELETE api/values/5
         [HttpDelete("{id}")]
-        public void Delete(string id)
+        public async Task<IActionResult> Delete(Guid id)
         {
-            _jobRepository.DeleteJob(id);
+            try
+            {
+                var calendarUser = await _userManager.FindByNameAsync(User.Identity.Name);
+
+                _jobRepository.DeleteJob(id, calendarUser.OrganizationId);
+
+                return Ok();
+            }
+            catch
+            {
+                return BadRequest("Failed To Delete Job");
+            }
         }
+
+        #endregion
     }
 }

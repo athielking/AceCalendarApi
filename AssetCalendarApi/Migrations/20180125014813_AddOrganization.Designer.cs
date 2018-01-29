@@ -11,9 +11,10 @@ using System;
 namespace AssetCalendarApi.Migrations
 {
     [DbContext(typeof(AssetCalendarDbContext))]
-    partial class AssetCalendarDbContextModelSnapshot : ModelSnapshot
+    [Migration("20180125014813_AddOrganization")]
+    partial class AddOrganization
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

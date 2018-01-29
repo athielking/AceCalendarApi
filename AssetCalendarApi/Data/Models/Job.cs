@@ -10,10 +10,16 @@ namespace AssetCalendarApi.Data.Models
 {
     public partial class Job
     {
+        #region Constructor
+
         public Job()
         {
             DaysJobs = new HashSet<DayJob>();
         }
+        
+        #endregion
+
+        #region Properties
 
         public Guid Id { get; set; }
         public int Number { get; set; }
@@ -22,5 +28,15 @@ namespace AssetCalendarApi.Data.Models
 
         [JsonIgnore]
         public ICollection<DayJob> DaysJobs { get; set; }
+
+        public Organization Organization { get; set; }
+
+        public Guid OrganizationId
+        {
+            get;
+            set;
+        }
+
+        #endregion
     }
 }

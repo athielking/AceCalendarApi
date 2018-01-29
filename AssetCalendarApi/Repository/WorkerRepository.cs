@@ -6,75 +6,102 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using LinqKit;
 
 namespace AssetCalendarApi.Repository
 {
     public class WorkerRepository
     {
-        private AssetCalendarDbContext _dbContext;
+        #region Private Methods
 
-        public WorkerRepository(AssetCalendarDbContext dbContext)
+        private readonly AssetCalendarDbContext _dbContext;
+
+        #endregion
+
+        #region Constructor
+
+        public WorkerRepository
+        (
+            AssetCalendarDbContext dbContext
+        )
         {
             _dbContext = dbContext;
         }
 
-        public IQueryable<Worker> GetAllWorkers()
+        #endregion
+
+        #region Private Methods
+        
+        private IQueryable<Worker> GetWorkersByOrganization(Guid organizationId)
         {
-            return _dbContext.Workers;
+            return _dbContext.Workers
+                .Where(worker => worker.OrganizationId == organizationId);
         }
 
-        public Worker GetWorker(Guid id)
+        #endregion
+
+        #region Public Methods
+
+        public IQueryable<Worker> GetAllWorkers(Guid organizationId)
         {
-            return
-                _dbContext.Workers
-                    .Include(worker => worker.DayJobWorkers)
-                        .ThenInclude(djw => djw.DayJob)
-                    .FirstOrDefault(w => w.Id == id);
+            return GetWorkersByOrganization(organizationId);
         }
 
-        public IQueryable<Worker> GetAvailableWorkers(DateTime start, DateTime? end = null)
+        public Worker GetWorker(Guid id, Guid organizationId)
         {
-
-            if (end.HasValue)
-            {
-                return
-                    _dbContext.Workers.Except(
-                      _dbContext.DaysJobs
-                          .Where(dj => dj.Date >= start && dj.Date <= end.Value)
-                          .Join(_dbContext.DaysJobsWorkers,
-                              dj => dj.Id,
-                              djw => djw.IdDayJob,
-                              (dayJob, dayJobWorker) => dayJobWorker.Worker));
-            }
-
-            return
-                _dbContext.Workers.Except(
-                      _dbContext.DaysJobs
-                          .Where(dj => dj.Date == start)
-                          .Join(_dbContext.DaysJobsWorkers,
-                              dj => dj.Id,
-                              djw => djw.IdDayJob,
-                              (dayJob, dayJobWorker) => dayJobWorker.Worker));
-
+            return GetWorkersByOrganization(organizationId)
+                .AsExpandable()
+                .FirstOrDefault(w => w.Id == id);
         }
 
-        public Dictionary<DateTime, IEnumerable<Worker>> GetAvailableWorkersForMonth(DateTime month)
+        public Worker GetWorkerWithJobs(Guid id, Guid organizationId)
         {
-            var startOfMonth = new DateTime(month.Year, month.Month, 1);
+            return GetWorkersByOrganization(organizationId)
+                .AsExpandable()
+                .Include(worker => worker.DayJobWorkers)
+                .ThenInclude(djw => djw.DayJob)
+                .FirstOrDefault(w => w.Id == id);
+        }
+
+        public IQueryable<Worker> GetAvailableWorkers(Guid organizationId, DateTime startDate, DateTime? endDate = null)
+        {
+            endDate = endDate ?? startDate;
+
+            return GetWorkersByOrganization(organizationId)
+               .AsExpandable()
+               .Except
+               (
+                    _dbContext.DaysJobs
+                        .Where(dj => dj.Date.Date >= startDate.Date && dj.Date.Date <= endDate.Value.Date)
+                        .Join
+                        (
+                            _dbContext.DaysJobsWorkers,
+                            dj => dj.Id,
+                            djw => djw.IdDayJob,
+                            (dayJob, dayJobWorker) => dayJobWorker.Worker
+                        )
+                );
+        }
+
+        public Dictionary<DateTime, IEnumerable<Worker>> GetAvailableWorkersForMonth(Guid organizationId, DateTime dateInMonth)
+        {
+            var startOfMonth = new DateTime(dateInMonth.Year, dateInMonth.Month, 1);
             var endOfMonth = startOfMonth.AddMonths(1).AddDays(-1);
 
-            return GetAvailableWorkersForDates(startOfMonth, endOfMonth);
+            return GetAvailableWorkersForDates(organizationId, startOfMonth, endOfMonth);
         }
 
-        public Dictionary<DateTime, IEnumerable<Worker>> GetAvailableWorkersForWeek(DateTime week)
+        public Dictionary<DateTime, IEnumerable<Worker>> GetAvailableWorkersForWeek(Guid organizationId, DateTime dateInWeek)
         {
-            return GetAvailableWorkersForDates(week.StartOfWeek(), week.EndOfWeek());
+            return GetAvailableWorkersForDates(organizationId, dateInWeek.StartOfWeek(), dateInWeek.EndOfWeek());
         }
 
-        public Dictionary<DateTime, IEnumerable<Worker>> GetAvailableWorkersForDates(DateTime start, DateTime? end)
+        public Dictionary<DateTime, IEnumerable<Worker>> GetAvailableWorkersForDates(Guid organizationId, DateTime startDate, DateTime? endDate)
         {
-            var allWorkers = _dbContext.Workers.AsEnumerable();
-            var allDates = start.GetDatesTo(end);
+            endDate = endDate ?? startDate;
+
+            var allWorkers = GetWorkersByOrganization(organizationId);
+            var allDates = startDate.GetDatesTo(endDate);
 
             //Get the cartesian product for all dates + all workers
             var available =
@@ -83,7 +110,7 @@ namespace AssetCalendarApi.Repository
                 select new { date, worker };
 
             //Get a dictionary of who is working on what day
-            var working = _dbContext.DaysJobs.Where(dj => dj.Date >= start && dj.Date <= allDates.Last())
+            var working = _dbContext.DaysJobs.Where(dj => dj.Date >= startDate && dj.Date <= allDates.Last())
                     .Join(_dbContext.DaysJobsWorkers,
                         dj => dj.Id,
                         djw => djw.IdDayJob,
@@ -104,8 +131,15 @@ namespace AssetCalendarApi.Repository
             return availableWorkers;
         }
 
-        public IQueryable<Worker> GetWorkersForJob(Guid idJob, DateTime? date)
+        public IQueryable<Worker> GetWorkersForJob( Guid idJob, DateTime? date, Guid organizationId )
         {
+            //Make One Repository
+            //var job = _jobRepository.GetJob(idJob, organizationId);
+
+            //if (job == null)
+            //    throw new ApplicationException( "Unable to Locate Job" );
+
+            //Make this a repository method
             var dayJobs = _dbContext.DaysJobs.Where(dj => dj.IdJob == idJob);
 
             if (date.HasValue)
@@ -114,7 +148,7 @@ namespace AssetCalendarApi.Repository
             return dayJobs.SelectMany(dj => dj.DayJobWorkers.Select(djw => djw.Worker)).Distinct();
         }
 
-        public WorkerViewModel AddWorker(WorkerViewModel worker)
+        public Worker AddWorker(WorkerViewModel worker, Guid organizationId)
         {
             var dbWorker = new Worker()
             {
@@ -122,27 +156,27 @@ namespace AssetCalendarApi.Repository
                 FirstName = worker.FirstName,
                 LastName = worker.LastName,
                 Email = worker.Email,
-                Phone = worker.Phone
+                Phone = worker.Phone,
+                OrganizationId = organizationId
             };
 
             _dbContext.Workers.Add(dbWorker);
             _dbContext.SaveChanges();
 
-            worker.Id = dbWorker.Id.ToString();
-
-            return worker;
+            return dbWorker;
         }
 
-        public void DeleteWorker(string id)
+        public void DeleteWorker(Guid id, Guid organizationId)
         {
-            var guid = new Guid(id);
+            var worker = GetWorkersByOrganization(organizationId).FirstOrDefault(w => w.Id == id);
 
-            var worker = _dbContext.Workers.FirstOrDefault(w => w.Id == guid);
             if (worker == null)
-                throw new Exception("Worker not Found");
+                throw new ApplicationException("Worker not Found");
 
             _dbContext.Workers.Remove(worker);
             _dbContext.SaveChanges();
-        }
+        } 
+
+        #endregion
     }
 }

@@ -17,10 +17,11 @@ namespace AssetCalendarApi.Data
 
         #region Properties
 
-        public virtual DbSet<DayJob> DaysJobs { get; set; }
-        public virtual DbSet<Job> Jobs { get; set; }
-        public virtual DbSet<Worker> Workers { get; set; }
-        public virtual DbSet<DayJobWorker> DaysJobsWorkers { get; set; }
+        public DbSet<DayJob> DaysJobs { get; set; }
+        public DbSet<Job> Jobs { get; set; }
+        public DbSet<Worker> Workers { get; set; }
+        public DbSet<DayJobWorker> DaysJobsWorkers { get; set; }
+        public DbSet<Organization> Organizations { get; set; }
 
         #endregion
 
@@ -131,8 +132,21 @@ namespace AssetCalendarApi.Data
                     .HasMaxLength(10)
                     .IsUnicode(false);
             });
-        } 
-        
+
+            modelBuilder.Entity<Organization>(entity =>
+            {
+                entity.ToTable("Organization");
+
+                entity.Property(e => e.Id).ValueGeneratedNever();
+
+                entity.Property(e => e.Name)
+                    .HasMaxLength(200)
+                    .IsRequired()
+                    .IsUnicode(false);
+
+            });
+        }
+
         #endregion
     }
 }

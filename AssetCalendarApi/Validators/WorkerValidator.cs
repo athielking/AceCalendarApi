@@ -9,16 +9,26 @@ namespace AssetCalendarApi.Validators
 {
     public class WorkerValidator
     {
+        #region Data Members
+
         private WorkerRepository _repository;
+
+        #endregion
+        
+        #region Constructor
 
         public WorkerValidator(WorkerRepository repository)
         {
             _repository = repository;
         }
 
-        public IEnumerable<DateTime> GetDaysWorking(Guid id, DateTime startDate, DateTime? endDate)
+        #endregion
+
+        #region Public Methods
+
+        public IEnumerable<DateTime> GetDaysWorking(Guid id, Guid organizationId, DateTime startDate, DateTime? endDate)
         {
-            var worker = _repository.GetWorker(id);
+            var worker = _repository.GetWorkerWithJobs(id, organizationId);
             return GetDaysWorking(worker, startDate, endDate);
         }
 
@@ -36,9 +46,9 @@ namespace AssetCalendarApi.Validators
 
         }
 
-        public bool IsAvailable(Guid id, DateTime startDate, DateTime? endDate )
+        public bool IsAvailable(Guid id, Guid organizationId, DateTime startDate, DateTime? endDate)
         {
-            var worker = _repository.GetWorker(id);
+            var worker = _repository.GetWorkerWithJobs(id, organizationId);
             return IsAvailable(worker, startDate, endDate);
         }
 
@@ -47,7 +57,9 @@ namespace AssetCalendarApi.Validators
             return !worker.DayJobWorkers.Any(djw =>
                djw.DayJob.Date >= startDate &&
                (endDate.HasValue ? djw.DayJob.Date <= endDate.Value : true));
-               
-        }
+
+        } 
+        
+        #endregion
     }
 }

@@ -7,8 +7,26 @@ namespace AssetCalendarApi.ViewModels
 {
     public class MoveWorkerRequestModel
     {
-        public string IdWorker { get; set; }
-        public string IdJob { get; set; }
-        public DateTime? Date { get; set; }
+        #region Properties
+
+        public Guid IdWorker
+        {
+            get;
+            set;
+        }
+
+        public Guid IdJob
+        {
+            get;
+            set;
+        }
+
+        public DateTime? Date
+        {
+            get;
+            set;
+        } 
+        
+        #endregion
     }
 }

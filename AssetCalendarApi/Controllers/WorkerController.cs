@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using AssetCalendarApi.Repository;
 using AssetCalendarApi.ViewModels;
+using Microsoft.AspNetCore.Identity;
+using AssetCalendarApi.Data.Models;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -13,46 +15,73 @@ namespace AssetCalendarApi.Controllers
     [Route("api/[controller]")]
     public class WorkerController : ApiBaseController
     {
-        private WorkerRepository _repository;
+        #region Data Members
 
-        public WorkerController(WorkerRepository workerRepository)
+        private readonly UserManager<CalendarUser> _userManager;
+
+        private readonly WorkerRepository _workerRepository;
+
+        #endregion
+
+        #region Constructor
+
+        public WorkerController
+        (
+            WorkerRepository workerRepository, 
+            UserManager<CalendarUser> userManager
+        )
         {
-            _repository = workerRepository;
+            _workerRepository = workerRepository;
+            _userManager = userManager;
         }
 
-        // GET: api/values
+        #endregion
+
+        #region Public Methods
+
         [HttpGet]
-        public IActionResult Get()
+        public async Task<IActionResult> Get()
         {
-            return SuccessResult(_repository.GetAllWorkers().ToList());
-        }
+            try
+            {
+                var calendarUser = await _userManager.FindByNameAsync(User.Identity.Name);
 
-        // GET api/values/5
-        [HttpGet("{id}")]
-        public IActionResult Get(Guid id)
-        {
-            var worker = _repository.GetWorker(id);
-            if (worker != null)
-                return SuccessResult(worker);
+                var workers = _workerRepository.GetAllWorkers(calendarUser.OrganizationId).ToList();
 
-            return NotFound($"Worker with Id {id} not found");
+                return SuccessResult(workers);
+            }
+            catch
+            {
+                return BadRequest("Failed To Get Workers");
+            }
         }
 
         [HttpGet]
         [Route("getAvailableWorkers")]
-        public IActionResult GetAvailableWorkers(DateTime start, DateTime? end)
-        {
-            return SuccessResult(_repository.GetAvailableWorkers(start, end).ToList());
-        }
-
-        // POST api/values
-        [HttpPost]
-        public IActionResult Post([FromBody]WorkerViewModel worker)
+        public async Task<IActionResult> GetAvailableWorkers(DateTime start, DateTime? end)
         {
             try
             {
-                worker = _repository.AddWorker(worker);
-                return Ok( worker );
+                var calendarUser = await _userManager.FindByNameAsync(User.Identity.Name);
+
+                return SuccessResult(_workerRepository.GetAvailableWorkers(calendarUser.OrganizationId, start, end).ToList());
+            }
+            catch
+            {
+                return BadRequest("Failed To Get Available Workers");
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Post([FromBody]WorkerViewModel worker)
+        {
+            try
+            {
+                var calendarUser = await _userManager.FindByNameAsync(User.Identity.Name);
+
+                var addedWorker = _workerRepository.AddWorker(worker, calendarUser.OrganizationId);
+
+                return Ok(addedWorker);
             }
             catch
             {
@@ -60,17 +89,23 @@ namespace AssetCalendarApi.Controllers
             }
         }
 
-        // PUT api/values/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody]string value)
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete(Guid id)
         {
+            try
+            {
+                var calendarUser = await _userManager.FindByNameAsync(User.Identity.Name);
+
+                _workerRepository.DeleteWorker(id, calendarUser.OrganizationId);
+
+                return Ok();
+            }
+            catch
+            {
+                return BadRequest("Failed To Delete Worker");
+            }
         }
 
-        // DELETE api/values/5
-        [HttpDelete("{id}")]
-        public void Delete(string id)
-        {
-            _repository.DeleteWorker(id);
-        }
+        #endregion
     }
 }

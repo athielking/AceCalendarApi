@@ -93,6 +93,8 @@ namespace AssetCalendarApi
 
             services.AddScoped<WorkerRepository>();
             services.AddScoped<JobRepository>();
+            services.AddScoped<OrganizationRepository>();
+
             services.AddScoped<WorkerValidator>();
 
             services.AddTransient<AssetCalendarSeeder>();
