@@ -166,6 +166,22 @@ namespace AssetCalendarApi.Repository
             return dbWorker;
         }
 
+        public void EditWorker(Guid id, WorkerViewModel workerViewModel, Guid organizationId)
+        {
+            var worker = GetWorkersByOrganization(organizationId).FirstOrDefault(w => w.Id == id);
+
+            if (worker == null)
+                throw new ApplicationException("Worker not Found");
+
+            worker.FirstName = workerViewModel.FirstName;
+            worker.LastName = workerViewModel.LastName;
+            worker.Email = workerViewModel.Email;
+            worker.Phone = workerViewModel.Phone;
+
+            _dbContext.Workers.Update(worker);
+            _dbContext.SaveChanges();
+        }
+
         public void DeleteWorker(Guid id, Guid organizationId)
         {
             var worker = GetWorkersByOrganization(organizationId).FirstOrDefault(w => w.Id == id);

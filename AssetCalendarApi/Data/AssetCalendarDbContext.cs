@@ -107,6 +107,12 @@ namespace AssetCalendarApi.Data
                     .HasMaxLength(25)
                     .IsUnicode(false);
 
+                entity.HasOne(d => d.Organization)
+                     .WithMany(j => j.Jobs)
+                     .HasForeignKey(d => d.OrganizationId)
+                     .OnDelete(DeleteBehavior.Restrict)
+                     .HasConstraintName("FK_Jobs_Organization");
+
             });
 
             modelBuilder.Entity<Worker>(entity =>
@@ -129,8 +135,14 @@ namespace AssetCalendarApi.Data
                     .IsUnicode(false);
 
                 entity.Property(e => e.Phone)
-                    .HasMaxLength(10)
+                    .HasMaxLength(14)
                     .IsUnicode(false);
+
+                entity.HasOne(d => d.Organization)
+                     .WithMany(j => j.Workers)
+                     .HasForeignKey(d => d.OrganizationId)
+                     .OnDelete(DeleteBehavior.Restrict)
+                     .HasConstraintName("FK_Workers_Organization");
             });
 
             modelBuilder.Entity<Organization>(entity =>

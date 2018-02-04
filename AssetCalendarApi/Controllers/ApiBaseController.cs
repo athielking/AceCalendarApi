@@ -14,6 +14,19 @@ namespace AssetCalendarApi.Controllers
     {
         #region Protected Methods
 
+        protected object GetErrorMessageObject( string errorMessage )
+        {
+            return new
+            {
+                errorMessage = errorMessage
+            };
+        }
+
+        protected string GetModelStateErrors()
+        {
+            return String.Join(Environment.NewLine, ModelState.Values.SelectMany(value => value.Errors).Select(error => error.ErrorMessage));
+        }
+
         protected JsonResult PageOfDataJsonResult<TReturn>(int pageSize, IEnumerable<TReturn> data, int recordCount)
         {
             return new JsonResult(new
