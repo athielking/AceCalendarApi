@@ -10,6 +10,7 @@ namespace AssetCalendarApi.ViewModels
         public int Number { get; set; }
         public string Name { get; set; }
         public string Type { get; set; }
+        public string Notes { get; set; }
         public Guid[] WorkerIds { get; set; }
 
         public DateTime StartDate { get; set; }
