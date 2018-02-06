@@ -11,7 +11,7 @@ using System;
 namespace AssetCalendarApi.Migrations
 {
     [DbContext(typeof(AssetCalendarDbContext))]
-    [Migration("20180201101552_AddNotes")]
+    [Migration("20180206020706_AddNotes")]
     partial class AddNotes
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -127,8 +127,7 @@ namespace AssetCalendarApi.Migrations
                         .HasMaxLength(50)
                         .IsUnicode(false);
 
-                    b.Property<string>("Notes")
-                        .IsUnicode(false);
+                    b.Property<string>("Notes");
 
                     b.Property<int>("Number");
 
@@ -179,7 +178,7 @@ namespace AssetCalendarApi.Migrations
                     b.Property<Guid>("OrganizationId");
 
                     b.Property<string>("Phone")
-                        .HasMaxLength(10)
+                        .HasMaxLength(14)
                         .IsUnicode(false);
 
                     b.HasKey("Id");
@@ -334,7 +333,8 @@ namespace AssetCalendarApi.Migrations
                     b.HasOne("AssetCalendarApi.Data.Models.Organization", "Organization")
                         .WithMany("Jobs")
                         .HasForeignKey("OrganizationId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .HasConstraintName("FK_Jobs_Organization")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("AssetCalendarApi.Data.Models.Worker", b =>
@@ -342,7 +342,8 @@ namespace AssetCalendarApi.Migrations
                     b.HasOne("AssetCalendarApi.Data.Models.Organization", "Organization")
                         .WithMany("Workers")
                         .HasForeignKey("OrganizationId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .HasConstraintName("FK_Workers_Organization")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

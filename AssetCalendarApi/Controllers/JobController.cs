@@ -199,10 +199,8 @@ namespace AssetCalendarApi.Controllers
             }
         }
 
-        [AllowAnonymous]
-        [HttpPost]
-        [Route("saveJobNotes")]
-        public async Task<IActionResult> SaveNotes( [FromRoute]Guid id, [FromBody]string notes)
+        [HttpPost("saveNotes/{id}")]
+        public async Task<IActionResult> SaveNotes(Guid id, [FromBody]string notes)
         {
             var calendarUser = await _userManager.FindByNameAsync(User.Identity.Name);
             var job = _jobRepository.SaveNotes(id, calendarUser.OrganizationId, notes);

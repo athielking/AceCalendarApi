@@ -126,8 +126,7 @@ namespace AssetCalendarApi.Migrations
                         .HasMaxLength(50)
                         .IsUnicode(false);
 
-                    b.Property<string>("Notes")
-                        .IsUnicode(false);
+                    b.Property<string>("Notes");
 
                     b.Property<int>("Number");
 

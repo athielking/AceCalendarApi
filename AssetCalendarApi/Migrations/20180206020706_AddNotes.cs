@@ -8,12 +8,10 @@ namespace AssetCalendarApi.Migrations
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            
             migrationBuilder.AddColumn<string>(
                 name: "Notes",
                 table: "Jobs",
-                type: "varchar(max)",
-                unicode: false,
+                type: "nvarchar(max)",
                 nullable: true);
         }
 
