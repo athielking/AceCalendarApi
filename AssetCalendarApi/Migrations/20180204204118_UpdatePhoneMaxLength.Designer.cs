@@ -11,9 +11,10 @@ using System;
 namespace AssetCalendarApi.Migrations
 {
     [DbContext(typeof(AssetCalendarDbContext))]
-    partial class AssetCalendarDbContextModelSnapshot : ModelSnapshot
+    [Migration("20180204204118_UpdatePhoneMaxLength")]
+    partial class UpdatePhoneMaxLength
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -124,9 +125,6 @@ namespace AssetCalendarApi.Migrations
 
                     b.Property<string>("Name")
                         .HasMaxLength(50)
-                        .IsUnicode(false);
-
-                    b.Property<string>("Notes")
                         .IsUnicode(false);
 
                     b.Property<int>("Number");

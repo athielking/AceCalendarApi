@@ -52,7 +52,7 @@ namespace AssetCalendarApi.Controllers
             }
             catch
             {
-                return BadRequest("Failed To Get Workers");
+                return BadRequest(GetErrorMessageObject("Failed To Get Workers"));
             }
         }
 
@@ -68,7 +68,7 @@ namespace AssetCalendarApi.Controllers
             }
             catch
             {
-                return BadRequest("Failed To Get Available Workers");
+                return BadRequest(GetErrorMessageObject("Failed To Get Available Workers"));
             }
         }
 
@@ -77,6 +77,9 @@ namespace AssetCalendarApi.Controllers
         {
             try
             {
+                if (!ModelState.IsValid)
+                    return BadRequest(GetErrorMessageObject(GetModelStateErrors()));
+
                 var calendarUser = await _userManager.FindByNameAsync(User.Identity.Name);
 
                 var addedWorker = _workerRepository.AddWorker(worker, calendarUser.OrganizationId);
@@ -85,7 +88,27 @@ namespace AssetCalendarApi.Controllers
             }
             catch
             {
-                return BadRequest("Failed To Add Worker");
+                return BadRequest(GetErrorMessageObject("Failed To Add Worker"));
+            }
+        }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Put(Guid id, [FromBody]WorkerViewModel worker)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                    return BadRequest(GetErrorMessageObject(GetModelStateErrors()));
+
+                var calendarUser = await _userManager.FindByNameAsync(User.Identity.Name);
+
+                _workerRepository.EditWorker(id, worker, calendarUser.OrganizationId);
+
+                return Ok();
+            }
+            catch
+            {
+                return BadRequest(GetErrorMessageObject("Failed To Update Worker"));
             }
         }
 
@@ -102,7 +125,7 @@ namespace AssetCalendarApi.Controllers
             }
             catch
             {
-                return BadRequest("Failed To Delete Worker");
+                return BadRequest(GetErrorMessageObject("Failed To Delete Worker"));
             }
         }
 
