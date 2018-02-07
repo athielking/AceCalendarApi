@@ -15,7 +15,7 @@ namespace AssetCalendarApi.ViewModels
             set;
         }
 
-        public Guid IdJob
+        public Guid? IdJob
         {
             get;
             set;

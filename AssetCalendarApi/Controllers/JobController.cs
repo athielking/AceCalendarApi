@@ -172,7 +172,10 @@ namespace AssetCalendarApi.Controllers
             {
                 var calendarUser = await _userManager.FindByNameAsync(User.Identity.Name);
 
-                _jobRepository.MoveWorkerToJob(model.IdJob, model.IdWorker, model.Date.Value, calendarUser.OrganizationId);
+                if (model.IdJob == null)
+                    _jobRepository.MakeWorkerAvailable(model.IdWorker, model.Date.Value, calendarUser.OrganizationId);
+                else
+                    _jobRepository.MoveWorkerToJob(model.IdJob.Value, model.IdWorker, model.Date.Value, calendarUser.OrganizationId);
 
                 return SuccessResult("Worker Successfully Moved");
             }

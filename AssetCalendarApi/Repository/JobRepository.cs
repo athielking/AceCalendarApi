@@ -66,6 +66,14 @@ namespace AssetCalendarApi.Repository
                 .Select(m => m.job);
         }
 
+        public IQueryable<DayJob> GetDayJobsForDay(DateTime date, Guid organizationId)
+        {
+            return GetJobsByOrganization(organizationId)
+                .Include(j => j.DaysJobs)
+                .SelectMany(j => j.DaysJobs)
+                .Where(dj => dj.Date.Date == date.Date);
+        }
+
         public Dictionary<DateTime, IEnumerable<Job>> GetJobsForMonth(DateTime month, Guid organizationId)
         {
             return GetJobsByOrganization(organizationId)
@@ -187,6 +195,8 @@ namespace AssetCalendarApi.Repository
             _dbContext.SaveChanges();
         }
 
+        
+
         public void DeleteJob(Guid idJob, Guid organizationId)
         {
             var job = GetJob(idJob, organizationId);
@@ -214,6 +224,20 @@ namespace AssetCalendarApi.Repository
             }
 
             AddWorkerToJob(idJob, idWorker, organizationId, date);
+        }
+
+        internal void MakeWorkerAvailable(Guid idWorker, DateTime date, Guid organizationId)
+        {
+            var jobWorker = GetDayJobsForDay(date, organizationId)
+                .Include(dj => dj.DayJobWorkers)
+                .SelectMany(dj => dj.DayJobWorkers)
+                .FirstOrDefault(w => w.IdWorker == idWorker);
+
+            if (jobWorker != null)
+            {
+                _dbContext.Remove(jobWorker);
+                _dbContext.SaveChanges();
+            }
         }
 
         public Job SaveNotes(Guid idJob, Guid organizationId, string notes )

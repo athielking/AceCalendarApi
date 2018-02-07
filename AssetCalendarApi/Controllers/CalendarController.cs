@@ -55,12 +55,12 @@ namespace AssetCalendarApi.Controllers
                 var jobsByDate = _jobRepository.GetJobsForMonth(date, calendarUser.OrganizationId);
                 var workersByDate = _workerRepository.GetAvailableWorkersForMonth(calendarUser.OrganizationId, date);
 
-            //Need the calendar to show from sunday to saturday regardless of month
-            DateTime monthStart = new DateTime(date.Year, date.Month, 1).StartOfWeek();
-            DateTime monthEnd = monthStart.AddMonths(1).AddDays(-1).EndOfWeek();
+                //Need the calendar to show from sunday to saturday regardless of month
+                DateTime monthStart = new DateTime(date.Year, date.Month, 1);
+                DateTime monthEnd = monthStart.AddMonths(1).AddDays(-1).EndOfWeek();
 
                 Dictionary<DateTime, DayViewModel> monthData = new Dictionary<DateTime, DayViewModel>();
-                for (DateTime d = monthStart; d <= monthEnd; d = d.AddDays(1))
+                for (DateTime d = monthStart.StartOfWeek(); d <= monthEnd; d = d.AddDays(1))
                 {
                     DayViewModel vm = new DayViewModel()
                     {
@@ -102,9 +102,6 @@ namespace AssetCalendarApi.Controllers
 
                 var jobsByDate = _jobRepository.GetJobsForWeek(date, calendarUser.OrganizationId);
                 var workersByDate = _workerRepository.GetAvailableWorkersForWeek(calendarUser.OrganizationId, date);
-
-                DateTime monthStart = new DateTime(date.Year, date.Month, 1);
-                DateTime monthEnd = new DateTime(date.Year, date.Month + 1, 1).AddDays(-1);
 
                 Dictionary<DateTime, DayViewModel> monthData = new Dictionary<DateTime, DayViewModel>();
                 for (DateTime d = date.StartOfWeek(); d <= date.EndOfWeek(); d = d.AddDays(1))
