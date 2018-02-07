@@ -25,6 +25,7 @@ namespace AssetCalendarApi.Data.Models
         public int Number { get; set; }
         public string Name { get; set; }
         public string Type { get; set; }
+        public string Notes { get; set; }
 
         [JsonIgnore]
         public ICollection<DayJob> DaysJobs { get; set; }

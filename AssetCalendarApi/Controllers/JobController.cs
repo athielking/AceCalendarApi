@@ -8,6 +8,7 @@ using AssetCalendarApi.ViewModels;
 using AssetCalendarApi.Validators;
 using Microsoft.AspNetCore.Identity;
 using AssetCalendarApi.Data.Models;
+using Microsoft.AspNetCore.Authorization;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -198,6 +199,14 @@ namespace AssetCalendarApi.Controllers
             }
         }
 
+        [HttpPost("saveNotes/{id}")]
+        public async Task<IActionResult> SaveNotes(Guid id, [FromBody]string notes)
+        {
+            var calendarUser = await _userManager.FindByNameAsync(User.Identity.Name);
+            var job = _jobRepository.SaveNotes(id, calendarUser.OrganizationId, notes);
+
+            return SuccessResult(job);           
+        }
         #endregion
     }
 }

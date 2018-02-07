@@ -100,6 +100,7 @@ namespace AssetCalendarApi.Repository
                 Name = model.Name,
                 Number = model.Number,
                 Type = model.Type,
+                Notes = model.Notes,
                 OrganizationId = organizationId
             };
 
@@ -215,6 +216,17 @@ namespace AssetCalendarApi.Repository
             AddWorkerToJob(idJob, idWorker, organizationId, date);
         }
 
+        public Job SaveNotes(Guid idJob, Guid organizationId, string notes )
+        {
+            var job = GetJob(idJob, organizationId);
+            _dbContext.Attach(job);
+
+            job.Notes = notes;
+
+            _dbContext.SaveChanges();
+
+            return job;
+        }
         #endregion        
     }
 }
