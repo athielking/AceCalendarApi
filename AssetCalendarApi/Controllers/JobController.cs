@@ -185,6 +185,43 @@ namespace AssetCalendarApi.Controllers
             }
         }
 
+        [HttpPost]
+        [Route("moveWorkerToAvailable")]
+        public async Task<IActionResult> MoveWorkerToAvailable([FromBody]MoveWorkerRequestModel model)
+        {
+            try
+            {
+                var calendarUser = await _userManager.FindByNameAsync(User.Identity.Name);
+
+                _jobRepository.MakeWorkerAvailable(model.IdWorker, model.Date.Value, calendarUser.OrganizationId);
+
+                return SuccessResult("Worker Successfully Moved");
+            }
+            catch
+            {
+                return BadRequest("Failed to Move Worker to Available");
+            }
+        }
+
+        [HttpPost]
+        [Route("moveWorkerToOff")]
+        public async Task<IActionResult> MoveWorkerToOff([FromBody]MoveWorkerRequestModel model)
+        {
+            try
+            {
+                var calendarUser = await _userManager.FindByNameAsync(User.Identity.Name);
+
+                _jobRepository.MoveWorkerToOff(model.IdWorker, model.Date.Value, calendarUser.OrganizationId);
+
+                return SuccessResult("Worker Successfully Moved");
+            }
+            catch
+            {
+                return BadRequest("Failed to Move Worker to Available");
+            }
+        }
+
+
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {

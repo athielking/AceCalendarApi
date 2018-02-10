@@ -122,7 +122,7 @@ namespace AssetCalendarApi.Repository
 
             //Get a dictionary of who is off for what day
             var off = _dbContext.DayOffWorkers.Where(dow => dow.Date >= startDate && dow.Date <= allDates.Last())
-                .GroupBy(m => m.Date)
+                .GroupBy(m => m.Date.Date)
                 .ToDictionary(
                     group => group.Key,
                     group => group.Select(m => m.IdWorker));
@@ -159,8 +159,8 @@ namespace AssetCalendarApi.Repository
 
             return _dbContext.DayOffWorkers
                 .Include(dow => dow.Worker)
-                .Where(dow => dow.Date >= startDate && dow.Date <= endDate)
-                .GroupBy(dow => dow.Date)
+                .Where(dow => dow.Date.Date >= startDate.Date && dow.Date.Date <= endDate.Value.Date)
+                .GroupBy(dow => dow.Date.Date)
                 .ToDictionary(group => group.Key, group => group.Select( dow => dow.Worker));
         }
 
