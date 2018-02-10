@@ -102,6 +102,7 @@ namespace AssetCalendarApi.Controllers
 
                 var jobsByDate = _jobRepository.GetJobsForWeek(date, calendarUser.OrganizationId);
                 var workersByDate = _workerRepository.GetAvailableWorkersForWeek(calendarUser.OrganizationId, date);
+                var offByDate = _workerRepository.GetOffWorkersForWeek(calendarUser.OrganizationId, date);
 
                 Dictionary<DateTime, DayViewModel> monthData = new Dictionary<DateTime, DayViewModel>();
                 for (DateTime d = date.StartOfWeek(); d <= date.EndOfWeek(); d = d.AddDays(1))
@@ -110,6 +111,7 @@ namespace AssetCalendarApi.Controllers
                     {
                         Date = d,
                         AvailableWorkers = workersByDate.ContainsKey(d) ? workersByDate[d] : Enumerable.Empty<Worker>(),
+                        TimeOffWorkers = offByDate.ContainsKey(d) ? offByDate[d] : Enumerable.Empty<Worker>(),
                         Jobs = jobsByDate.ContainsKey(d) ? jobsByDate[d] : Enumerable.Empty<Job>()
                     };
                     vm.WorkersByJob = vm.Jobs

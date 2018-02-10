@@ -12,6 +12,7 @@ namespace AssetCalendarApi.ViewModels
 
         public IEnumerable<Job> Jobs { get; set; }
         public IEnumerable<Worker> AvailableWorkers { get; set; }
+        public IEnumerable<Worker> TimeOffWorkers { get; set; }
         public IDictionary<Guid, IEnumerable<Worker>> WorkersByJob { get; set; }
     }
 }

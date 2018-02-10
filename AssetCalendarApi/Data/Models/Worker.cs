@@ -11,6 +11,7 @@ namespace AssetCalendarApi.Data.Models
         public Worker()
         {
             DayJobWorkers = new HashSet<DayJobWorker>();
+            DayOffWorkers = new HashSet<DayOffWorker>();
         }
 
         #endregion
@@ -24,6 +25,7 @@ namespace AssetCalendarApi.Data.Models
         public string Phone { get; set; }
 
         public ICollection<DayJobWorker> DayJobWorkers { get; set; }
+        public ICollection<DayOffWorker> DayOffWorkers { get; set; }
 
         public Organization Organization { get; set; }
 
