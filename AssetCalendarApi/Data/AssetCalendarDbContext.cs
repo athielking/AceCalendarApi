@@ -22,7 +22,7 @@ namespace AssetCalendarApi.Data
         public DbSet<Worker> Workers { get; set; }
         public DbSet<DayJobWorker> DaysJobsWorkers { get; set; }
         public DbSet<Organization> Organizations { get; set; }
-
+        public DbSet<DayOffWorker> DayOffWorkers { get; set; }
         #endregion
 
         #region Constructor
@@ -34,7 +34,7 @@ namespace AssetCalendarApi.Data
         }
 
         #endregion
-        
+
         #region Overrides
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -156,6 +156,20 @@ namespace AssetCalendarApi.Data
                     .IsRequired()
                     .IsUnicode(false);
 
+            });
+
+            modelBuilder.Entity<DayOffWorker>(entity =>
+            {
+                entity.ToTable("DayOffWorker");
+
+                entity.Property(e => e.Id).ValueGeneratedNever();
+                entity.Property(e => e.Date).HasColumnType("datetime");
+
+                entity.HasOne(d => d.Worker)
+                    .WithMany(w => w.DayOffWorkers)
+                    .HasForeignKey(d => d.IdWorker)
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("FK_DayOffWorkers_Worker");
             });
         }
 

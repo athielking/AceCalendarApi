@@ -120,15 +120,48 @@ namespace AssetCalendarApi.Repository
                         group => group.Key,
                         group => group.Select(m => m.IdWorker));
 
+            //Get a dictionary of who is off for what day
+            var off = _dbContext.DayOffWorkers.Where(dow => dow.Date >= startDate && dow.Date <= allDates.Last())
+                .GroupBy(m => m.Date.Date)
+                .ToDictionary(
+                    group => group.Key,
+                    group => group.Select(m => m.IdWorker));
+
             //Get a dictionary of dates, and who is not already working
             var availableWorkers = available
                 .GroupBy(m => m.date)
                 .ToDictionary(
                     group => group.Key,
-                    group => group.Where(m => !working.ContainsKey(group.Key) || (working.ContainsKey(group.Key) && !working[group.Key].Contains(m.worker.Id)))
-                                  .Select(m => m.worker));
+                    group => group.Where(
+                        m => (!working.ContainsKey(group.Key) || (working.ContainsKey(group.Key) && !working[group.Key].Contains(m.worker.Id))) &&
+                            (!off.ContainsKey(group.Key) || (off.ContainsKey(group.Key) && !off[group.Key].Contains(m.worker.Id))))
+                .Select(m => m.worker));
 
             return availableWorkers;
+        }
+
+        public Dictionary<DateTime, IEnumerable<Worker>> GetOffWorkersForMonth( Guid organizationId, DateTime dateInMonth )
+        {
+            var startOfMonth = new DateTime(dateInMonth.Year, dateInMonth.Month, 1);
+            var endOfMonth = startOfMonth.AddMonths(1).AddDays(-1);
+
+            return GetOffWorkersForDates(organizationId, startOfMonth, endOfMonth);
+        }
+
+        public Dictionary<DateTime, IEnumerable<Worker>> GetOffWorkersForWeek(Guid organizationId, DateTime dateInWeek)
+        {
+            return GetOffWorkersForDates(organizationId, dateInWeek.StartOfWeek(), dateInWeek.EndOfWeek());
+        }
+
+        public Dictionary<DateTime, IEnumerable<Worker>> GetOffWorkersForDates( Guid organizationId, DateTime startDate, DateTime? endDate)
+        {
+            endDate = endDate ?? startDate;
+
+            return _dbContext.DayOffWorkers
+                .Include(dow => dow.Worker)
+                .Where(dow => dow.Date.Date >= startDate.Date && dow.Date.Date <= endDate.Value.Date)
+                .GroupBy(dow => dow.Date.Date)
+                .ToDictionary(group => group.Key, group => group.Select( dow => dow.Worker));
         }
 
         public IQueryable<Worker> GetWorkersForJob( Guid idJob, DateTime? date, Guid organizationId )

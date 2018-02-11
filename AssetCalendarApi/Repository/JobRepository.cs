@@ -195,8 +195,6 @@ namespace AssetCalendarApi.Repository
             _dbContext.SaveChanges();
         }
 
-        
-
         public void DeleteJob(Guid idJob, Guid organizationId)
         {
             var job = GetJob(idJob, organizationId);
@@ -214,6 +212,10 @@ namespace AssetCalendarApi.Repository
             var fromJob = jobsOnDay.FirstOrDefault(dj => dj.DayJobWorkers.Any(djw => djw.IdWorker == idWorker));
             var toJob = jobsOnDay.FirstOrDefault(j => j.IdJob == idJob);
 
+            var dayOff = _dbContext.DayOffWorkers.FirstOrDefault(dow => dow.IdWorker == idWorker && dow.Date.Date == date.Date);
+            if(dayOff != null)
+                _dbContext.DayOffWorkers.Remove(dayOff);
+
             if (fromJob != null)
             {
                 var existingWorkerDay = fromJob.DayJobWorkers.FirstOrDefault(djw => djw.IdWorker == idWorker);
@@ -224,6 +226,30 @@ namespace AssetCalendarApi.Repository
             }
 
             AddWorkerToJob(idJob, idWorker, organizationId, date);
+        }
+
+        public void MoveWorkerToOff(Guid idWorker, DateTime date, Guid organizationId)
+        {
+            //Make into repository method that only includes jobs for the given organization           
+            var jobsOnDay = _dbContext.DaysJobs.Include(dj => dj.DayJobWorkers).Where(dj => dj.Date.Date == date.Date);
+
+            var fromJob = jobsOnDay.FirstOrDefault(dj => dj.DayJobWorkers.Any(djw => djw.IdWorker == idWorker));
+          
+            if (fromJob != null)
+            {
+                var existingWorkerDay = fromJob.DayJobWorkers.FirstOrDefault(djw => djw.IdWorker == idWorker);
+                _dbContext.DaysJobsWorkers.Remove(existingWorkerDay);
+            }
+
+            var dayOff = new DayOffWorker()
+            {
+                Id = Guid.NewGuid(),
+                IdWorker = idWorker,
+                Date = date
+            };
+
+            _dbContext.DayOffWorkers.Add(dayOff);
+            _dbContext.SaveChanges();
         }
 
         internal void MakeWorkerAvailable(Guid idWorker, DateTime date, Guid organizationId)

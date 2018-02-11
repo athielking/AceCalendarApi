@@ -54,6 +54,7 @@ namespace AssetCalendarApi.Controllers
 
                 var jobsByDate = _jobRepository.GetJobsForMonth(date, calendarUser.OrganizationId);
                 var workersByDate = _workerRepository.GetAvailableWorkersForMonth(calendarUser.OrganizationId, date);
+                var timeOffWorkers = _workerRepository.GetOffWorkersForMonth(calendarUser.OrganizationId, date);
 
                 //Need the calendar to show from sunday to saturday regardless of month
                 DateTime monthStart = new DateTime(date.Year, date.Month, 1);
@@ -66,7 +67,8 @@ namespace AssetCalendarApi.Controllers
                     {
                         Date = d,
                         AvailableWorkers = workersByDate.ContainsKey(d) ? workersByDate[d] : Enumerable.Empty<Worker>(),
-                        Jobs = jobsByDate.ContainsKey(d) ? jobsByDate[d] : Enumerable.Empty<Job>()
+                        Jobs = jobsByDate.ContainsKey(d) ? jobsByDate[d] : Enumerable.Empty<Job>(),
+                        TimeOffWorkers = timeOffWorkers.ContainsKey(d) ? timeOffWorkers[d] : Enumerable.Empty<Worker>()
                     };
 
                     vm.WorkersByJob = vm.Jobs
@@ -102,6 +104,7 @@ namespace AssetCalendarApi.Controllers
 
                 var jobsByDate = _jobRepository.GetJobsForWeek(date, calendarUser.OrganizationId);
                 var workersByDate = _workerRepository.GetAvailableWorkersForWeek(calendarUser.OrganizationId, date);
+                var offByDate = _workerRepository.GetOffWorkersForWeek(calendarUser.OrganizationId, date);
 
                 Dictionary<DateTime, DayViewModel> monthData = new Dictionary<DateTime, DayViewModel>();
                 for (DateTime d = date.StartOfWeek(); d <= date.EndOfWeek(); d = d.AddDays(1))
@@ -110,6 +113,7 @@ namespace AssetCalendarApi.Controllers
                     {
                         Date = d,
                         AvailableWorkers = workersByDate.ContainsKey(d) ? workersByDate[d] : Enumerable.Empty<Worker>(),
+                        TimeOffWorkers = offByDate.ContainsKey(d) ? offByDate[d] : Enumerable.Empty<Worker>(),
                         Jobs = jobsByDate.ContainsKey(d) ? jobsByDate[d] : Enumerable.Empty<Job>()
                     };
                     vm.WorkersByJob = vm.Jobs
