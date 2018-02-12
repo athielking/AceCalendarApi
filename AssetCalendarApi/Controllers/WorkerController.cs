@@ -52,7 +52,7 @@ namespace AssetCalendarApi.Controllers
             }
             catch
             {
-                return BadRequest(GetErrorMessageObject("Failed To Get Workers"));
+                return BadRequest(GetErrorMessageObject("Failed to Get Workers"));
             }
         }
 
@@ -88,7 +88,7 @@ namespace AssetCalendarApi.Controllers
             }
             catch
             {
-                return BadRequest(GetErrorMessageObject("Failed To Add Worker"));
+                return BadRequest(GetErrorMessageObject("Failed to Add Worker"));
             }
         }
 
@@ -108,7 +108,7 @@ namespace AssetCalendarApi.Controllers
             }
             catch
             {
-                return BadRequest(GetErrorMessageObject("Failed To Update Worker"));
+                return BadRequest(GetErrorMessageObject("Failed to Update Worker"));
             }
         }
 
@@ -125,7 +125,7 @@ namespace AssetCalendarApi.Controllers
             }
             catch
             {
-                return BadRequest(GetErrorMessageObject("Failed To Delete Worker"));
+                return BadRequest(GetErrorMessageObject("Failed to Delete Worker"));
             }
         }
 

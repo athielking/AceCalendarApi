@@ -164,29 +164,24 @@ namespace AssetCalendarApi.Controllers
             }
         }
 
-        [HttpPost]
-        [Route("moveWorkerToJob")]
+        [HttpPost("moveWorkerToJob")]
         public async Task<IActionResult> MoveWorkerToJob([FromBody]MoveWorkerRequestModel model)
         {
             try
             {
                 var calendarUser = await _userManager.FindByNameAsync(User.Identity.Name);
 
-                if (model.IdJob == null)
-                    _jobRepository.MakeWorkerAvailable(model.IdWorker, model.Date.Value, calendarUser.OrganizationId);
-                else
-                    _jobRepository.MoveWorkerToJob(model.IdJob.Value, model.IdWorker, model.Date.Value, calendarUser.OrganizationId);
+                _jobRepository.MoveWorkerToJob(model.IdJob.Value, model.IdWorker, model.Date.Value, calendarUser.OrganizationId);
 
                 return SuccessResult("Worker Successfully Moved");
             }
             catch
             {
-                return BadRequest("Failed To Move Worker to Job");
+                return BadRequest(GetErrorMessageObject("Failed To Move Worker to Job"));
             }
         }
 
-        [HttpPost]
-        [Route("moveWorkerToAvailable")]
+        [HttpPost("moveWorkerToAvailable")]
         public async Task<IActionResult> MoveWorkerToAvailable([FromBody]MoveWorkerRequestModel model)
         {
             try
@@ -199,12 +194,11 @@ namespace AssetCalendarApi.Controllers
             }
             catch
             {
-                return BadRequest("Failed to Move Worker to Available");
+                return BadRequest(GetErrorMessageObject("Failed to Move Worker to Available"));
             }
         }
 
-        [HttpPost]
-        [Route("moveWorkerToOff")]
+        [HttpPost("moveWorkerToOff")]
         public async Task<IActionResult> MoveWorkerToOff([FromBody]MoveWorkerRequestModel model)
         {
             try
@@ -217,10 +211,9 @@ namespace AssetCalendarApi.Controllers
             }
             catch
             {
-                return BadRequest("Failed to Move Worker to Available");
+                return BadRequest(GetErrorMessageObject("Failed to Move Worker to Off"));
             }
         }
-
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
@@ -235,18 +228,27 @@ namespace AssetCalendarApi.Controllers
             }
             catch
             {
-                return BadRequest("Failed To Delete Job");
+                return BadRequest(GetErrorMessageObject("Failed To Delete Job"));
             }
         }
 
         [HttpPost("saveNotes/{id}")]
-        public async Task<IActionResult> SaveNotes(Guid id, [FromBody]string notes)
+        public async Task<IActionResult> SaveNotes(Guid id, [FromBody]SaveNotesRequestViewModel saveNotesRequestViewModel)
         {
-            var calendarUser = await _userManager.FindByNameAsync(User.Identity.Name);
-            var job = _jobRepository.SaveNotes(id, calendarUser.OrganizationId, notes);
+            try
+            {
+                var calendarUser = await _userManager.FindByNameAsync(User.Identity.Name);
 
-            return SuccessResult(job);           
+                _jobRepository.SaveNotes(id, calendarUser.OrganizationId, saveNotesRequestViewModel.Notes);
+
+                return Ok();
+            }
+            catch
+            {
+                return BadRequest(GetErrorMessageObject("Failed to Save Notes"));
+            }
         }
+
         #endregion
     }
 }

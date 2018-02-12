@@ -252,7 +252,7 @@ namespace AssetCalendarApi.Repository
             _dbContext.SaveChanges();
         }
 
-        internal void MakeWorkerAvailable(Guid idWorker, DateTime date, Guid organizationId)
+        public void MakeWorkerAvailable(Guid idWorker, DateTime date, Guid organizationId)
         {
             var jobWorker = GetDayJobsForDay(date, organizationId)
                 .Include(dj => dj.DayJobWorkers)
@@ -260,22 +260,25 @@ namespace AssetCalendarApi.Repository
                 .FirstOrDefault(w => w.IdWorker == idWorker);
 
             if (jobWorker != null)
-            {
                 _dbContext.Remove(jobWorker);
-                _dbContext.SaveChanges();
-            }
+
+            var dayOffWorker = _dbContext.DayOffWorkers.FirstOrDefault(dow => dow.IdWorker == idWorker && dow.Date.Date == date.Date);
+
+            if (dayOffWorker != null)
+                _dbContext.DayOffWorkers.Remove(dayOffWorker);
+
+            _dbContext.SaveChanges();
         }
 
-        public Job SaveNotes(Guid idJob, Guid organizationId, string notes )
+        public void SaveNotes(Guid idJob, Guid organizationId, string notes )
         {
             var job = GetJob(idJob, organizationId);
+
             _dbContext.Attach(job);
 
             job.Notes = notes;
 
             _dbContext.SaveChanges();
-
-            return job;
         }
         #endregion        
     }

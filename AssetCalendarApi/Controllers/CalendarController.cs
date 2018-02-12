@@ -87,7 +87,7 @@ namespace AssetCalendarApi.Controllers
             }
             catch
             {
-                return BadRequest("Failed To Get Data For Month");
+                return BadRequest(GetErrorMessageObject("Failed to Get Data for Month"));
             }
         }
 
@@ -132,7 +132,7 @@ namespace AssetCalendarApi.Controllers
             }
             catch
             {
-                return BadRequest("Get Data For Week");
+                return BadRequest(GetErrorMessageObject("Failed to Get Data for Week"));
             }
         }
 
@@ -171,7 +171,7 @@ namespace AssetCalendarApi.Controllers
             }
             catch
             {
-                return BadRequest("Get Data For Day");
+                return BadRequest(GetErrorMessageObject("Get Data For Day"));
             }
         }
 
