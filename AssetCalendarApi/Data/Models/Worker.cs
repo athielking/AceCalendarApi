@@ -1,6 +1,8 @@
-﻿using Newtonsoft.Json;
+﻿using AssetCalendarApi.ViewModels;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace AssetCalendarApi.Data.Models
 {
@@ -39,5 +41,19 @@ namespace AssetCalendarApi.Data.Models
         }
 
         #endregion
+
+        public WorkerViewModel GetViewModel()
+        {
+            return new WorkerViewModel()
+            {
+                Id = this.Id,
+                FirstName = this.FirstName,
+                LastName = this.LastName,
+                Email = this.Email,
+                Phone = this.Phone,
+                TimeOff = this.DayOffWorkers.OrderBy(d=> d.Date).Select(d => d.Date),
+                Jobs = this.DayJobWorkers.Select( djw => djw.DayJob ).Select( dj => dj.Job ).Distinct()
+            };
+        }
     }
 }

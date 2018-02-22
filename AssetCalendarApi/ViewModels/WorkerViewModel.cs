@@ -1,4 +1,5 @@
-﻿using System;
+﻿using AssetCalendarApi.Data.Models;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -9,6 +10,9 @@ namespace AssetCalendarApi.ViewModels
     public class WorkerViewModel
     {
         #region Properties
+
+        [Required]
+        public Guid Id { get; set; }
 
         [Required]
         public string FirstName
@@ -40,6 +44,13 @@ namespace AssetCalendarApi.ViewModels
             set;
         }
 
+        public IEnumerable<DateTime> TimeOff
+        {
+            get;
+            set;
+        }
+
+        public IEnumerable<Job> Jobs { get; set; }
         #endregion
     }
 }

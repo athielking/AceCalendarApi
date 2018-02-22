@@ -57,7 +57,7 @@ namespace System
                 yield return date.Date;
             else
             {
-                for (DateTime d = date; d <= end; d = d.AddDays(1))
+                for (DateTime d = date.Date; d.Date <= end.Value.Date; d = d.Date.AddDays(1))
                 {
                     if (d == end && !inclusive)
                         continue;

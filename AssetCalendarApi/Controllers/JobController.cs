@@ -21,8 +21,6 @@ namespace AssetCalendarApi.Controllers
 
         private readonly JobRepository _jobRepository;
 
-        private readonly UserManager<CalendarUser> _userManager;
-
         private readonly WorkerValidator _validator;
 
         #endregion
@@ -34,11 +32,10 @@ namespace AssetCalendarApi.Controllers
             JobRepository jobRepository,
             WorkerValidator validator,
             UserManager<CalendarUser> userManager
-        )
+        ): base(userManager)
         {
             _jobRepository = jobRepository;
             _validator = validator;
-            _userManager = userManager;
         }
 
         #endregion

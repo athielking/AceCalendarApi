@@ -17,8 +17,6 @@ namespace AssetCalendarApi.Controllers
     {
         #region Data Members
 
-        private readonly UserManager<CalendarUser> _userManager;
-
         private readonly WorkerRepository _workerRepository;
 
         #endregion
@@ -27,12 +25,11 @@ namespace AssetCalendarApi.Controllers
 
         public WorkerController
         (
-            WorkerRepository workerRepository, 
+            WorkerRepository workerRepository,
             UserManager<CalendarUser> userManager
-        )
+        ) : base(userManager)
         {
             _workerRepository = workerRepository;
-            _userManager = userManager;
         }
 
         #endregion
@@ -40,13 +37,11 @@ namespace AssetCalendarApi.Controllers
         #region Public Methods
 
         [HttpGet]
-        public async Task<IActionResult> Get()
+        public IActionResult Get()
         {
             try
             {
-                var calendarUser = await _userManager.FindByNameAsync(User.Identity.Name);
-
-                var workers = _workerRepository.GetAllWorkers(calendarUser.OrganizationId).ToList();
+                var workers = _workerRepository.GetAllWorkers(CalendarUser.OrganizationId).ToList();
 
                 return SuccessResult(workers);
             }
@@ -56,15 +51,28 @@ namespace AssetCalendarApi.Controllers
             }
         }
 
-        [HttpGet]
-        [Route("getAvailableWorkers")]
-        public async Task<IActionResult> GetAvailableWorkers(DateTime start, DateTime? end)
+        [HttpGet("{id}")]
+        public IActionResult Get(Guid id)
         {
             try
             {
-                var calendarUser = await _userManager.FindByNameAsync(User.Identity.Name);
+                var worker = _workerRepository.GetWorker(id, CalendarUser.OrganizationId);
 
-                return SuccessResult(_workerRepository.GetAvailableWorkers(calendarUser.OrganizationId, start, end).ToList());
+                return SuccessResult(worker.GetViewModel());
+            }
+            catch
+            {
+                return BadRequest(GetErrorMessageObject("Failed to Get Worker"));
+            }
+        }
+
+        [HttpGet]
+        [Route("getAvailableWorkers")]
+        public IActionResult GetAvailableWorkers(DateTime start, DateTime? end)
+        {
+            try
+            {
+                return SuccessResult(_workerRepository.GetAvailableWorkers(CalendarUser.OrganizationId, start, end).ToList());
             }
             catch
             {
@@ -73,16 +81,14 @@ namespace AssetCalendarApi.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Post([FromBody]WorkerViewModel worker)
+        public IActionResult Post([FromBody]WorkerViewModel worker)
         {
             try
             {
                 if (!ModelState.IsValid)
                     return BadRequest(GetErrorMessageObject(GetModelStateErrors()));
 
-                var calendarUser = await _userManager.FindByNameAsync(User.Identity.Name);
-
-                var addedWorker = _workerRepository.AddWorker(worker, calendarUser.OrganizationId);
+                var addedWorker = _workerRepository.AddWorker(worker, CalendarUser.OrganizationId);
 
                 return Ok(addedWorker);
             }
@@ -93,16 +99,14 @@ namespace AssetCalendarApi.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Put(Guid id, [FromBody]WorkerViewModel worker)
+        public IActionResult Put(Guid id, [FromBody]WorkerViewModel worker)
         {
             try
             {
                 if (!ModelState.IsValid)
                     return BadRequest(GetErrorMessageObject(GetModelStateErrors()));
 
-                var calendarUser = await _userManager.FindByNameAsync(User.Identity.Name);
-
-                _workerRepository.EditWorker(id, worker, calendarUser.OrganizationId);
+                _workerRepository.EditWorker(id, worker, CalendarUser.OrganizationId);
 
                 return Ok();
             }
@@ -113,13 +117,11 @@ namespace AssetCalendarApi.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(Guid id)
+        public IActionResult Delete(Guid id)
         {
             try
             {
-                var calendarUser = await _userManager.FindByNameAsync(User.Identity.Name);
-
-                _workerRepository.DeleteWorker(id, calendarUser.OrganizationId);
+                _workerRepository.DeleteWorker(id, CalendarUser.OrganizationId);
 
                 return Ok();
             }
@@ -129,6 +131,43 @@ namespace AssetCalendarApi.Controllers
             }
         }
 
+        [HttpPost("addTimeOff")]
+        public IActionResult AddTimeOff([FromBody]DateRangeViewModel model)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                    return BadRequest(GetErrorMessageObject(GetModelStateErrors()));
+
+                var worker = _workerRepository.AddTimeOff(model, CalendarUser.OrganizationId);
+
+                return SuccessResult(worker.GetViewModel());
+
+            }
+            catch
+            {
+                return BadRequest(GetErrorMessageObject("Failed to Add Time Off"));
+            }
+        }
+
+        [HttpPost("deleteTimeOff")]
+        public IActionResult DeleteTimeOff([FromBody]DateRangeViewModel model)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                    return BadRequest(GetErrorMessageObject(GetModelStateErrors()));
+
+                var worker = _workerRepository.DeleteTimeOff(model, CalendarUser.OrganizationId);
+
+                return SuccessResult(worker.GetViewModel());
+
+            }
+            catch
+            {
+                return BadRequest(GetErrorMessageObject("Failed to Add Time Off"));
+            }
+        }
         #endregion
     }
 }

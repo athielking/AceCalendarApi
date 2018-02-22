@@ -17,8 +17,6 @@ namespace AssetCalendarApi.Controllers
 
         private readonly JobRepository _jobRepository;
 
-        private readonly UserManager<CalendarUser> _userManager;
-
         private readonly WorkerRepository _workerRepository;
 
         #endregion
@@ -30,11 +28,10 @@ namespace AssetCalendarApi.Controllers
             JobRepository jobRepository,
             WorkerRepository workerRepository,
             UserManager<CalendarUser> userManager
-        )
+        ): base(userManager)
         {
             _jobRepository = jobRepository;
             _workerRepository = workerRepository;
-            _userManager = userManager;
         }
 
         #endregion
@@ -43,18 +40,16 @@ namespace AssetCalendarApi.Controllers
 
         [HttpGet]
         [Route("getMonth")]
-        public async Task<IActionResult> GetDataForMonth(DateTime date)
+        public IActionResult GetDataForMonth(DateTime date)
         {
             try
             {
-                var calendarUser = await _userManager.FindByNameAsync(User.Identity.Name);
-
                 if (date.Year < 1900)
                     return BadRequest("Invalid Date");
 
-                var jobsByDate = _jobRepository.GetJobsForMonth(date, calendarUser.OrganizationId);
-                var workersByDate = _workerRepository.GetAvailableWorkersForMonth(calendarUser.OrganizationId, date);
-                var timeOffWorkers = _workerRepository.GetOffWorkersForMonth(calendarUser.OrganizationId, date);
+                var jobsByDate = _jobRepository.GetJobsForMonth(date, CalendarUser.OrganizationId);
+                var workersByDate = _workerRepository.GetAvailableWorkersForMonth(CalendarUser.OrganizationId, date);
+                var timeOffWorkers = _workerRepository.GetOffWorkersForMonth(CalendarUser.OrganizationId, date);
 
                 //Need the calendar to show from sunday to saturday regardless of month
                 DateTime monthStart = new DateTime(date.Year, date.Month, 1);
@@ -75,7 +70,7 @@ namespace AssetCalendarApi.Controllers
                         .Select(j => new
                         {
                             id = j.Id,
-                            workers = _workerRepository.GetWorkersForJob(j.Id, d, calendarUser.OrganizationId)
+                            workers = _workerRepository.GetWorkersForJob(j.Id, d, CalendarUser.OrganizationId)
                         })
                         .GroupBy(m => m.id)
                         .ToDictionary(group => group.Key, group => group.SelectMany(g => g.workers));
@@ -93,18 +88,16 @@ namespace AssetCalendarApi.Controllers
 
         [HttpGet]
         [Route("getWeek")]
-        public async Task<IActionResult> GetDataForWeek(DateTime date)
+        public IActionResult GetDataForWeek(DateTime date)
         {
             try
             {
-                var calendarUser = await _userManager.FindByNameAsync(User.Identity.Name);
-
                 if (date.Year < 1900)
                     return BadRequest("Invalid Date");
 
-                var jobsByDate = _jobRepository.GetJobsForWeek(date, calendarUser.OrganizationId);
-                var workersByDate = _workerRepository.GetAvailableWorkersForWeek(calendarUser.OrganizationId, date);
-                var offByDate = _workerRepository.GetOffWorkersForWeek(calendarUser.OrganizationId, date);
+                var jobsByDate = _jobRepository.GetJobsForWeek(date, CalendarUser.OrganizationId);
+                var workersByDate = _workerRepository.GetAvailableWorkersForWeek(CalendarUser.OrganizationId, date);
+                var offByDate = _workerRepository.GetOffWorkersForWeek(CalendarUser.OrganizationId, date);
 
                 Dictionary<DateTime, DayViewModel> monthData = new Dictionary<DateTime, DayViewModel>();
                 for (DateTime d = date.StartOfWeek(); d <= date.EndOfWeek(); d = d.AddDays(1))
@@ -120,7 +113,7 @@ namespace AssetCalendarApi.Controllers
                         .Select(j => new
                         {
                             id = j.Id,
-                            workers = _workerRepository.GetWorkersForJob(j.Id, d, calendarUser.OrganizationId).ToArray()
+                            workers = _workerRepository.GetWorkersForJob(j.Id, d, CalendarUser.OrganizationId).ToArray()
                         })
                         .GroupBy(m => m.id)
                         .ToDictionary(group => group.Key, group => group.SelectMany(g => g.workers));
@@ -138,22 +131,20 @@ namespace AssetCalendarApi.Controllers
 
         [HttpGet]
         [Route("getDay")]
-        public async Task<IActionResult> GetDataForDay(DateTime date)
+        public IActionResult GetDataForDay(DateTime date)
         {
             try
             {
-                var calendarUser = await _userManager.FindByNameAsync(User.Identity.Name);
-
                 if (date.Year < 1900)
                     return BadRequest("Invalid Date");
 
-                var jobs = _jobRepository.GetJobsForDay(date, calendarUser.OrganizationId);
-                var workers = _workerRepository.GetAvailableWorkers(calendarUser.OrganizationId, date);
+                var jobs = _jobRepository.GetJobsForDay(date, CalendarUser.OrganizationId);
+                var workers = _workerRepository.GetAvailableWorkers(CalendarUser.OrganizationId, date);
                 var workersByJob = jobs
                         .Select(j => new
                         {
                             id = j.Id,
-                            workers = _workerRepository.GetWorkersForJob(j.Id, date, calendarUser.OrganizationId)
+                            workers = _workerRepository.GetWorkersForJob(j.Id, date, CalendarUser.OrganizationId)
                         })
                         .GroupBy(m => m.id)
                         .ToDictionary(group => group.Key, group => group.SelectMany(g => g.workers));
