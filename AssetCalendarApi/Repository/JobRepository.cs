@@ -100,42 +100,29 @@ namespace AssetCalendarApi.Repository
                 .ToDictionary(group => group.Key, group => group.Select(g => g.job));
         }
 
-        public Job AddJob(AddJobModel model, Guid organizationId)
+        public Job AddJob(AddJobModel addJobModel, Guid organizationId)
         {
             var job = new Job()
             {
                 Id = Guid.NewGuid(),
-                Name = model.Name,
-                Number = model.Number,
-                Type = model.Type,
-                Notes = model.Notes,
+                Name = addJobModel.Name,
+                Number = addJobModel.Number,
+                Notes = addJobModel.Notes,
                 OrganizationId = organizationId
             };
 
             _dbContext.Jobs.Add(job);
 
-            for (DateTime date = model.StartDate.Date; date <= (model.EndDate.HasValue ? model.EndDate.Value.Date : model.StartDate.Date); date = date.AddDays(1))
+            for (var date = addJobModel.StartDate.Date; date <= addJobModel.EndDate; date = date.AddDays(1))
             {
-                var dj = new DayJob()
+                var dayJob = new DayJob()
                 {
                     Id = Guid.NewGuid(),
                     IdJob = job.Id,
                     Date = date
                 };
 
-                _dbContext.DaysJobs.Add(dj);
-
-                foreach (var id in model.WorkerIds)
-                {
-                    var djw = new DayJobWorker()
-                    {
-                        Id = Guid.NewGuid(),
-                        IdDayJob = dj.Id,
-                        IdWorker = id
-                    };
-
-                    _dbContext.DaysJobsWorkers.Add(djw);
-                }
+                _dbContext.DaysJobs.Add(dayJob);
             }
 
             _dbContext.SaveChanges();

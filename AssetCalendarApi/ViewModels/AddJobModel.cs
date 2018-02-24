@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -7,49 +8,47 @@ namespace AssetCalendarApi.ViewModels
 {
     public class AddJobModel
     {
-        public int Number { get; set; }
-        public string Name { get; set; }
-        public string Type { get; set; }
-        public string Notes { get; set; }
-        public Guid[] WorkerIds { get; set; }
+        #region Properties
 
-        public DateTime StartDate { get; set; }
-
-        private int? _DurationDays;
-        public int? DurationDays
+        public string Number
         {
-            get => _DurationDays;
-            set
-            {
-                _DurationDays = value;
-
-                if(value.HasValue)
-                    EndDate = StartDate.AddDays(value.Value);
-            }
+            get;
+            set;
         }
 
-        private int? _DurationMonths;
-        public int? DurationMonths
+        [Required]
+        public string Name
         {
-            get => _DurationMonths;
-            set
-            {
-                _DurationMonths = value;
-                if (value.HasValue)
-                    EndDate = StartDate.AddMonths(value.Value);
-            }
+            get;
+            set;
         }
 
-        private DateTime? _EndDate;
+        public string Notes
+        {
+            get;
+            set;
+        }
+
+        [Required]
+        public DateTime StartDate
+        {
+            get;
+            set;
+        }
+
+        private DateTime? _endDate;
         public DateTime? EndDate
         {
-            get => _EndDate;
+            get
+            {
+                return _endDate ?? StartDate;
+            }
             set
             {
-                _EndDate = value;
-                _DurationDays = null;
-                _DurationMonths = null;
+                _endDate = value;
             }
-        }
+        } 
+
+        #endregion
     }
 }

@@ -128,47 +128,29 @@ namespace AssetCalendarApi.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Post([FromBody]AddJobModel model)
+        public IActionResult Post([FromBody]AddJobModel job)
         {
             try
             {
-                var calendarUser = await _userManager.FindByNameAsync(User.Identity.Name);
-                
-                var daysNotAvailable = new Dictionary<Guid, IEnumerable<DateTime>>();
+                if (!ModelState.IsValid)
+                    return BadRequest(GetErrorMessageObject(GetModelStateErrors()));
 
-                foreach (var guid in model.WorkerIds)
-                {
-                    var working = _validator.GetDaysWorking(guid, calendarUser.OrganizationId, model.StartDate, model.EndDate);
-                    if (working.Any())
-                        daysNotAvailable.Add(guid, working);
-                }
+                var addedJob = _jobRepository.AddJob(job, CalendarUser.OrganizationId);
 
-                if (daysNotAvailable.Any())
-                {
-                    return BadRequest(new
-                    {
-                        message = "Failed to add job: Workers Unavailable",
-                        data = daysNotAvailable
-                    });
-                }
-
-                var job = _jobRepository.AddJob(model, calendarUser.OrganizationId);
-                return Ok(job);
+                return Ok(addedJob);
             }
             catch
             {
-                return BadRequest("Failed to add Job");
+                return BadRequest(GetErrorMessageObject("Failed to Add Job"));
             }
         }
 
         [HttpPost("moveWorkerToJob")]
-        public async Task<IActionResult> MoveWorkerToJob([FromBody]MoveWorkerRequestModel model)
+        public IActionResult MoveWorkerToJob([FromBody]MoveWorkerRequestModel model)
         {
             try
             {
-                var calendarUser = await _userManager.FindByNameAsync(User.Identity.Name);
-
-                _jobRepository.MoveWorkerToJob(model.IdJob.Value, model.IdWorker, model.Date.Value, calendarUser.OrganizationId);
+                _jobRepository.MoveWorkerToJob(model.IdJob.Value, model.IdWorker, model.Date.Value, CalendarUser.OrganizationId);
 
                 return SuccessResult("Worker Successfully Moved");
             }
@@ -179,13 +161,11 @@ namespace AssetCalendarApi.Controllers
         }
 
         [HttpPost("moveWorkerToAvailable")]
-        public async Task<IActionResult> MoveWorkerToAvailable([FromBody]MoveWorkerRequestModel model)
+        public IActionResult MoveWorkerToAvailable([FromBody]MoveWorkerRequestModel model)
         {
             try
             {
-                var calendarUser = await _userManager.FindByNameAsync(User.Identity.Name);
-
-                _jobRepository.MakeWorkerAvailable(model.IdWorker, model.Date.Value, calendarUser.OrganizationId);
+                _jobRepository.MakeWorkerAvailable(model.IdWorker, model.Date.Value, CalendarUser.OrganizationId);
 
                 return SuccessResult("Worker Successfully Moved");
             }
@@ -196,13 +176,11 @@ namespace AssetCalendarApi.Controllers
         }
 
         [HttpPost("moveWorkerToOff")]
-        public async Task<IActionResult> MoveWorkerToOff([FromBody]MoveWorkerRequestModel model)
+        public IActionResult MoveWorkerToOff([FromBody]MoveWorkerRequestModel model)
         {
             try
             {
-                var calendarUser = await _userManager.FindByNameAsync(User.Identity.Name);
-
-                _jobRepository.MoveWorkerToOff(model.IdWorker, model.Date.Value, calendarUser.OrganizationId);
+                _jobRepository.MoveWorkerToOff(model.IdWorker, model.Date.Value, CalendarUser.OrganizationId);
 
                 return SuccessResult("Worker Successfully Moved");
             }
@@ -213,13 +191,11 @@ namespace AssetCalendarApi.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(Guid id)
+        public IActionResult Delete(Guid id)
         {
             try
             {
-                var calendarUser = await _userManager.FindByNameAsync(User.Identity.Name);
-
-                _jobRepository.DeleteJob(id, calendarUser.OrganizationId);
+                _jobRepository.DeleteJob(id, CalendarUser.OrganizationId);
 
                 return Ok();
             }
@@ -230,13 +206,11 @@ namespace AssetCalendarApi.Controllers
         }
 
         [HttpPost("saveNotes/{id}")]
-        public async Task<IActionResult> SaveNotes(Guid id, [FromBody]SaveNotesRequestViewModel saveNotesRequestViewModel)
+        public IActionResult SaveNotes(Guid id, [FromBody]SaveNotesRequestViewModel saveNotesRequestViewModel)
         {
             try
             {
-                var calendarUser = await _userManager.FindByNameAsync(User.Identity.Name);
-
-                _jobRepository.SaveNotes(id, calendarUser.OrganizationId, saveNotesRequestViewModel.Notes);
+                _jobRepository.SaveNotes(id, CalendarUser.OrganizationId, saveNotesRequestViewModel.Notes);
 
                 return Ok();
             }
