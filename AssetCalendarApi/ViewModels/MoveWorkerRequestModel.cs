@@ -27,6 +27,12 @@ namespace AssetCalendarApi.ViewModels
             set;
         } 
         
+        public bool AddWorkerToAllDaysOnAJob
+        {
+            get;
+            set;
+        }
+
         #endregion
     }
 }

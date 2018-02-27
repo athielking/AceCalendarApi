@@ -182,7 +182,10 @@ namespace AssetCalendarApi.Controllers
         {
             try
             {
-                _jobRepository.MoveWorkerToJob(model.IdJob.Value, model.IdWorker, model.Date.Value, CalendarUser.OrganizationId);
+                if (model.AddWorkerToAllDaysOnAJob)
+                    _jobRepository.MoveWorkerToAllDaysOnJob(model.IdJob.Value, model.IdWorker, CalendarUser.OrganizationId);
+                else
+                    _jobRepository.MoveWorkerToJob(model.IdJob.Value, model.IdWorker, model.Date.Value, CalendarUser.OrganizationId);
 
                 return SuccessResult("Worker Successfully Moved");
             }
