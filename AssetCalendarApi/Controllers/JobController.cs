@@ -127,6 +127,20 @@ namespace AssetCalendarApi.Controllers
             }
         }
 
+        [HttpGet]
+        [Route("getJobStartAndEndDate")]
+        public IActionResult GetJobStartAndEndDate(Guid jobId)
+        {
+            try
+            {
+                return SuccessResult(_jobRepository.GetJobStartAndEndDate(jobId, CalendarUser.OrganizationId));
+            }
+            catch
+            {
+                return BadRequest("Failed to Get Job Start and End Date");
+            }
+        }
+
         [HttpPost]
         public IActionResult Post([FromBody]AddJobModel job)
         {
@@ -142,6 +156,24 @@ namespace AssetCalendarApi.Controllers
             catch
             {
                 return BadRequest(GetErrorMessageObject("Failed to Add Job"));
+            }
+        }
+
+        [HttpPut("{id}")]
+        public IActionResult Put(Guid id, [FromBody]AddJobModel job)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                    return BadRequest(GetErrorMessageObject(GetModelStateErrors()));
+
+                _jobRepository.EditJob(id, job, CalendarUser.OrganizationId);
+
+                return Ok();
+            }
+            catch
+            {
+                return BadRequest(GetErrorMessageObject("Failed to Update Job"));
             }
         }
 

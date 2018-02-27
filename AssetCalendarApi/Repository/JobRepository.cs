@@ -38,6 +38,15 @@ namespace AssetCalendarApi.Repository
                 .Where(job => job.OrganizationId == organizationId);
         }
 
+        private IQueryable<DayJob> GetDayJobsForJob(Guid jobId, Guid organizationId)
+        {
+            return GetJobsByOrganization(organizationId)
+                .AsExpandable()
+                .Where(job => job.Id == jobId)
+                .Include(job => job.DaysJobs)
+                .SelectMany(job => job.DaysJobs);
+        }
+
         #endregion
 
         #region Public Methods
@@ -128,6 +137,63 @@ namespace AssetCalendarApi.Repository
             _dbContext.SaveChanges();
 
             return job;
+        }
+
+        public JobStartAndEndDate GetJobStartAndEndDate(Guid jobId, Guid organizationId)
+        {
+            var startDate = GetDayJobsForJob(jobId, organizationId).Min(dayJob => dayJob.Date);
+            var endDate = GetDayJobsForJob(jobId, organizationId).Max(dayJob => dayJob.Date);
+
+            return new JobStartAndEndDate()
+            {
+                StartDate = startDate,
+                EndDate = endDate
+            };
+        }
+
+        public void EditJob(Guid id, AddJobModel addJobModel, Guid organizationId)
+        {
+            var job = GetJobsByOrganization(organizationId).FirstOrDefault(w => w.Id == id);
+
+            if (job == null)
+                throw new ApplicationException("Job not Found");
+
+            job.Name = addJobModel.Name;
+            job.Number = addJobModel.Number;
+            job.Notes = addJobModel.Notes;
+
+            _dbContext.Jobs.Update(job);
+
+            var dayJobs = GetDayJobsForJob(id, organizationId);
+
+            //Delete Day Jobs that are not in the new range
+            foreach( var dayJob in dayJobs )
+            {
+                if (addJobModel.StartDate.Date <= dayJob.Date.Date && dayJob.Date.Date <= addJobModel.EndDate.Value.Date)
+                    continue;
+
+                _dbContext.DaysJobs.Remove(dayJob);
+            }
+
+            var dayJobDates = dayJobs.Select(dayJob => dayJob.Date.Date);
+
+            //Create Day Jobs for the new range
+            for (var date = addJobModel.StartDate.Date; date <= addJobModel.EndDate; date = date.AddDays(1))
+            {
+                if (dayJobDates.Contains(date.Date))
+                    continue;
+
+                var dayJob = new DayJob()
+                {
+                    Id = Guid.NewGuid(),
+                    IdJob = job.Id,
+                    Date = date
+                };
+
+                _dbContext.DaysJobs.Add(dayJob);
+            }
+
+            _dbContext.SaveChanges();
         }
 
         //public void AddJobToDay(Guid idJob, DateTime date, Guid organizationId)
