@@ -1,33 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace AssetCalendarApi.ViewModels
 {
-    public class MoveWorkerRequestModel
+    public class JobStartAndEndDate
     {
         #region Properties
 
-        public Guid IdWorker
+        public DateTime StartDate
         {
             get;
             set;
         }
 
-        public Guid? IdJob
-        {
-            get;
-            set;
-        }
-
-        public DateTime? Date
-        {
-            get;
-            set;
-        } 
-        
-        public bool AddWorkerToAllDaysOnAJob
+        public DateTime EndDate
         {
             get;
             set;
