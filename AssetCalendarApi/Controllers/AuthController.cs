@@ -103,6 +103,11 @@ namespace AssetCalendarApi.Controllers
                 new Claim(ClaimTypes.Name, user.UserName)
             };
 
+            var roles = _userManager.GetRolesAsync(user).Result;
+
+            foreach(var role in roles)
+                claims.Add(new Claim(ClaimTypes.Role, role));
+            
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JwtKey"]));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
             var expires = DateTime.Now.AddDays(Convert.ToDouble(_configuration["JwtExpireDays"]));
