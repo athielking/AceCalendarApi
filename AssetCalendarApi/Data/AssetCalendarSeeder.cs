@@ -19,6 +19,12 @@ namespace AssetCalendarApi.Data
 
         const string OrganizationTwoName = "Organization2";
 
+        private static class Roles
+        {
+            public static string Admin = "Admin";
+            public static string User = "User";
+            public static string Readonly = "Readonly";
+        }
         #endregion
 
         #region Data Members
@@ -28,6 +34,7 @@ namespace AssetCalendarApi.Data
         private readonly OrganizationRepository _organizationRepository;
 
         private readonly UserManager<CalendarUser> _userManager;
+        private readonly RoleManager<IdentityRole> _roleManager;
 
         #endregion
 
@@ -35,23 +42,27 @@ namespace AssetCalendarApi.Data
 
         public AssetCalendarSeeder
         (
-            AssetCalendarDbContext assetCalendarDbContext, 
+            AssetCalendarDbContext assetCalendarDbContext,
             UserManager<CalendarUser> userManager,
+            RoleManager<IdentityRole> roleManager,
             OrganizationRepository organizationRepository
         )
         {
             _assetCalendarDbContext = assetCalendarDbContext;
             _userManager = userManager;
+            _roleManager = roleManager;
             _organizationRepository = organizationRepository;
         }
 
         #endregion
 
         #region Public Methods
-        
+
         public async Task Seed()
         {
             _assetCalendarDbContext.Database.EnsureCreated();
+
+            await SeedRoles();
 
             SeedOrganizations();
 
@@ -62,11 +73,75 @@ namespace AssetCalendarApi.Data
 
         #region Private Methods
 
+        private async Task SeedRoles()
+        {
+            if (!_roleManager.RoleExistsAsync(Roles.Admin).Result)
+                await _roleManager.CreateAsync(new IdentityRole(Roles.Admin));
+
+            if (!_roleManager.RoleExistsAsync(Roles.User).Result)
+                await _roleManager.CreateAsync(new IdentityRole(Roles.User));
+
+            if (!_roleManager.RoleExistsAsync(Roles.Readonly).Result)
+                await _roleManager.CreateAsync(new IdentityRole(Roles.Readonly));
+        }
+
         private async Task SeedAdminUser()
         {
-            var user = await _userManager.FindByNameAsync("admin");
-
             var fiveZeroOneOrganization = _organizationRepository.GetOrganizationByName(FiveZeroOneOrganizationName);
+
+            var user = await _userManager.FindByNameAsync("athielking");
+            if( user == null )
+            {
+                user = new CalendarUser()
+                {
+                    FirstName = "Andrew",
+                    LastName = "Thielking",
+                    UserName = "athielking",
+                    Email = "athielking@501software.com",
+                    OrganizationId = fiveZeroOneOrganization.Id
+                };
+
+                var result = await _userManager.CreateAsync(user, "P@ssw0rd!");
+
+                if (result != IdentityResult.Success)
+                {
+                    throw new InvalidOperationException("Failed to create default user");
+                }
+
+                await _userManager.AddToRoleAsync(user, Roles.Admin);
+            }
+
+            if (!_userManager.IsInRoleAsync(user, Roles.Admin).Result)
+                await _userManager.AddToRoleAsync(user, Roles.Admin);
+
+
+            user = await _userManager.FindByNameAsync("dculham");
+            if (user == null)
+            {
+                user = new CalendarUser()
+                {
+                    FirstName = "David",
+                    LastName = "Culham",
+                    UserName = "dculham",
+                    Email = "dculham@501software.com",
+                    OrganizationId = fiveZeroOneOrganization.Id
+                };
+
+                var result = await _userManager.CreateAsync(user, "P@ssw0rd!");
+
+                if (result != IdentityResult.Success)
+                {
+                    throw new InvalidOperationException("Failed to create default user");
+                }
+
+                await _userManager.AddToRoleAsync(user, Roles.Admin);
+            }
+
+            if (!_userManager.IsInRoleAsync(user, Roles.Admin).Result)
+                await _userManager.AddToRoleAsync(user, Roles.Admin);
+
+
+            user = await _userManager.FindByNameAsync("admin");
 
             if (user == null)
             {
@@ -84,7 +159,12 @@ namespace AssetCalendarApi.Data
                 {
                     throw new InvalidOperationException("Failed to create default user");
                 }
+
+                await _userManager.AddToRoleAsync(user, Roles.Admin);
             }
+
+            if (!_userManager.IsInRoleAsync(user, Roles.Admin).Result)
+                await _userManager.AddToRoleAsync(user, Roles.Admin);
         }
 
         private void SeedOrganizations()
@@ -133,6 +213,9 @@ namespace AssetCalendarApi.Data
                     throw new InvalidOperationException("Failed to create default user1");
                 }
             }
+
+            if (!_userManager.IsInRoleAsync(user, Roles.User).Result)
+                await _userManager.AddToRoleAsync(user, Roles.User);
         }
 
         private async Task SeedUserTwo()
@@ -158,6 +241,10 @@ namespace AssetCalendarApi.Data
                     throw new InvalidOperationException("Failed to create default user2");
                 }
             }
+
+            if (!_userManager.IsInRoleAsync(user, Roles.Readonly).Result)
+                await _userManager.AddToRoleAsync(user, Roles.Readonly);
+
         }
 
         #endregion

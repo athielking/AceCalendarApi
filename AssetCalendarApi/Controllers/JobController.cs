@@ -128,6 +128,7 @@ namespace AssetCalendarApi.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin, User")]
         public async Task<IActionResult> Post([FromBody]AddJobModel model)
         {
             try
