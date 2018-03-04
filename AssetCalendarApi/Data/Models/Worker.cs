@@ -26,6 +26,14 @@ namespace AssetCalendarApi.Data.Models
         public string Email { get; set; }
         public string Phone { get; set; }
 
+        public string FullName
+        {
+            get
+            {
+                return $"{FirstName} {LastName}";
+            }
+        }
+
         [JsonIgnore()]
         public ICollection<DayJobWorker> DayJobWorkers { get; set; }
         

@@ -103,10 +103,6 @@ namespace AssetCalendarApi.Data
                     .HasMaxLength(50)
                     .IsUnicode(false);
 
-                entity.Property(e => e.Type)
-                    .HasMaxLength(25)
-                    .IsUnicode(false);
-
                 entity.HasOne(d => d.Organization)
                      .WithMany(j => j.Jobs)
                      .HasForeignKey(d => d.OrganizationId)

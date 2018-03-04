@@ -22,9 +22,8 @@ namespace AssetCalendarApi.Data.Models
         #region Properties
 
         public Guid Id { get; set; }
-        public int Number { get; set; }
+        public string Number { get; set; }
         public string Name { get; set; }
-        public string Type { get; set; }
         public string Notes { get; set; }
 
         [JsonIgnore]

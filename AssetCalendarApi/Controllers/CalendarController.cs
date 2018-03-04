@@ -105,15 +105,15 @@ namespace AssetCalendarApi.Controllers
                     DayViewModel vm = new DayViewModel()
                     {
                         Date = d,
-                        AvailableWorkers = workersByDate.ContainsKey(d) ? workersByDate[d] : Enumerable.Empty<Worker>(),
-                        TimeOffWorkers = offByDate.ContainsKey(d) ? offByDate[d] : Enumerable.Empty<Worker>(),
-                        Jobs = jobsByDate.ContainsKey(d) ? jobsByDate[d] : Enumerable.Empty<Job>()
+                        AvailableWorkers = ( workersByDate.ContainsKey(d) ? workersByDate[d] : Enumerable.Empty<Worker>() ).OrderBy(worker => worker.FullName),
+                        TimeOffWorkers = ( offByDate.ContainsKey(d) ? offByDate[d] : Enumerable.Empty<Worker>() ).OrderBy(worker => worker.FullName),
+                        Jobs = ( jobsByDate.ContainsKey(d) ? jobsByDate[d] : Enumerable.Empty<Job>() ).OrderBy( job => job.Name )
                     };
                     vm.WorkersByJob = vm.Jobs
                         .Select(j => new
                         {
                             id = j.Id,
-                            workers = _workerRepository.GetWorkersForJob(j.Id, d, CalendarUser.OrganizationId).ToArray()
+                            workers = _workerRepository.GetWorkersForJob(j.Id, d, CalendarUser.OrganizationId).ToArray().OrderBy(worker => worker.FullName)
                         })
                         .GroupBy(m => m.id)
                         .ToDictionary(group => group.Key, group => group.SelectMany(g => g.workers));
