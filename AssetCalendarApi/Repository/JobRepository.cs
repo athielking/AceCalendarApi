@@ -8,6 +8,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using LinqKit;
 
+
 namespace AssetCalendarApi.Repository
 {
     public class JobRepository
@@ -241,6 +242,19 @@ namespace AssetCalendarApi.Repository
             var jobDays = _dbContext.DaysJobs.Where(d => d.IdJob == jobId);
 
             foreach (var jobDay in jobDays)
+                MoveWorkerToJob(jobId, workerId, jobDay.Date, organizationId, false);
+
+            _dbContext.SaveChanges();
+        }
+
+        public void MoveWorkerToAllAvailableDaysOnJob(Guid jobId, Guid workerId, Guid organizationId)
+        {
+            var jobDays = _dbContext.DaysJobs.Where(d => d.IdJob == jobId);
+            var workingDays = _dbContext.DaysJobsWorkers.Include(djw => djw.DayJob).Where(djw => djw.IdWorker == workerId).Select(djw => djw.DayJob);
+
+            var availableDays = jobDays.Where(d => !workingDays.Any(wd => wd.Date.Date == d.Date.Date));
+
+            foreach (var jobDay in availableDays)
                 MoveWorkerToJob(jobId, workerId, jobDay.Date, organizationId, false);
 
             _dbContext.SaveChanges();

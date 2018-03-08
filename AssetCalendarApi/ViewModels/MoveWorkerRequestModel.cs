@@ -27,12 +27,19 @@ namespace AssetCalendarApi.ViewModels
             set;
         } 
         
-        public bool AddWorkerToAllDaysOnAJob
+        public AddWorkerOption AddWorkerOption
         {
             get;
             set;
         }
 
         #endregion
+    }
+
+    public enum AddWorkerOption
+    {
+        SingleDay = 0,
+        AllDays = 1,
+        AvailableDays = 2
     }
 }
