@@ -19,6 +19,7 @@ using AssetCalendarApi.Validators;
 using AssetCalendarApi.Data.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using AutoMapper;
 
 namespace AssetCalendarApi
 {
@@ -116,6 +117,16 @@ namespace AssetCalendarApi
             app.UseAuthentication();
 
             app.UseMvc();
+
+            Mapper.Initialize(config =>
+            {
+                config.CreateMap<JobsByDate, Job>();
+                config.CreateMap<JobsByDateWorker, Job>();
+                config.CreateMap<AvailableWorkers, Worker>();
+                config.CreateMap<TimeOffWorkers, Worker>();
+                config.CreateMap<WorkersByJob, Worker>();
+                config.CreateMap<WorkersByJobDate, Worker>();
+            });
         }
 
         #endregion

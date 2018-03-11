@@ -23,6 +23,14 @@ namespace AssetCalendarApi.Data
         public DbSet<DayJobWorker> DaysJobsWorkers { get; set; }
         public DbSet<Organization> Organizations { get; set; }
         public DbSet<DayOffWorker> DayOffWorkers { get; set; }
+
+        //Views
+        public DbSet<JobsByDate> JobsByDate { get; set; }
+        public DbSet<JobsByDateWorker> JobsByDateWorker { get; set; }
+        public DbSet<AvailableWorkers> AvailableWorkers { get; set; }
+        public DbSet<TimeOffWorkers> TimeOffWorkers { get; set; }
+        public DbSet<WorkersByJob> WorkersByJob { get; set; }
+        public DbSet<WorkersByJobDate> WorkersByJobDate { get; set; }
         #endregion
 
         #region Constructor
@@ -167,6 +175,34 @@ namespace AssetCalendarApi.Data
                     .OnDelete(DeleteBehavior.Cascade)
                     .HasConstraintName("FK_DayOffWorkers_Worker");
             });
+
+            modelBuilder.Entity<JobsByDate>(entity =>
+            {
+                entity.Property(e => e.Date).HasColumnType("datetime");
+            });
+
+            modelBuilder.Entity<JobsByDateWorker>(entity =>
+            {
+                entity.Property(e => e.Date).HasColumnType("datetime");
+            });
+
+            modelBuilder.Entity<AvailableWorkers>(entity =>
+            {
+                entity.Property(e => e.Date).HasColumnType("datetime");
+            });
+
+            modelBuilder.Entity<TimeOffWorkers>(entity =>
+            {
+                entity.Property(e => e.Date).HasColumnType("datetime");
+            });
+
+            modelBuilder.Entity<WorkersByJob>(entity => { });
+
+            modelBuilder.Entity<WorkersByJobDate>(entity => 
+            {
+                entity.Property(e => e.Date).HasColumnType("datetime");
+            });
+
         }
 
         #endregion
