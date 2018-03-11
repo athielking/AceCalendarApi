@@ -91,7 +91,10 @@ namespace AssetCalendarApi.Controllers
                 if (date.Year < 1900)
                     return BadRequest("Invalid Date");
 
-                var jobsByDate = _jobRepository.GetJobsForWeek(date, CalendarUser.OrganizationId);
+                var jobsByDate = idWorker == null ?
+                    _jobRepository.GetJobsForWeek(date, CalendarUser.OrganizationId) :
+                    _jobRepository.GetJobsForWeekByWorker(date, CalendarUser.OrganizationId, idWorker.Value);
+
                 var workersByDate = _workerRepository.GetAvailableWorkersForWeek(CalendarUser.OrganizationId, date);
                 var offByDate = _workerRepository.GetOffWorkersForWeek(CalendarUser.OrganizationId, date);
 
