@@ -140,6 +140,8 @@ namespace AssetCalendarApi.Controllers
 
                 var jobs = _jobRepository.GetJobsForDay(date, CalendarUser.OrganizationId);
                 var workers = _workerRepository.GetAvailableWorkers(CalendarUser.OrganizationId, date);
+                var offByDate = _workerRepository.GetOffWorkersForDates(CalendarUser.OrganizationId, date, date);
+
                 var workersByJob = jobs
                         .Select(j => new
                         {
@@ -155,7 +157,8 @@ namespace AssetCalendarApi.Controllers
                     Date = date,
                     AvailableWorkers = workers,
                     Jobs = jobs,
-                    WorkersByJob = workersByJob
+                    WorkersByJob = workersByJob,
+                    TimeOffWorkers = (offByDate.ContainsKey(date) ? offByDate[date] : Enumerable.Empty<Worker>()).OrderBy(worker => worker.FullName),
                 });
 
                 return SuccessResult(dayData);

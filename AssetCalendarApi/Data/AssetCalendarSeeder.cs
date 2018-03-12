@@ -188,6 +188,7 @@ namespace AssetCalendarApi.Data
             await SeedAdminUser();
             await SeedUserOne();
             await SeedUserTwo();
+            await SeedUserThree();
         }
 
         private async Task SeedUserOne()
@@ -246,6 +247,36 @@ namespace AssetCalendarApi.Data
                 await _userManager.AddToRoleAsync(user, Roles.Readonly);
 
         }
+
+        private async Task SeedUserThree()
+        {
+            var user = await _userManager.FindByNameAsync("user3");
+
+            var organizationOne = _organizationRepository.GetOrganizationByName(OrganizationOneName);
+
+            if (user == null)
+            {
+                user = new CalendarUser()
+                {
+                    FirstName = "User",
+                    LastName = "Three",
+                    UserName = "user3",
+                    OrganizationId = organizationOne.Id
+                };
+
+                var result = await _userManager.CreateAsync(user, "P@ssw0rd!");
+
+                if (result != IdentityResult.Success)
+                {
+                    throw new InvalidOperationException("Failed to create default user3");
+                }
+            }
+
+            if (!_userManager.IsInRoleAsync(user, Roles.Readonly).Result)
+                await _userManager.AddToRoleAsync(user, Roles.Readonly);
+
+        }
+
 
         #endregion
     }
