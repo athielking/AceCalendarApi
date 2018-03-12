@@ -40,14 +40,17 @@ namespace AssetCalendarApi.Controllers
 
         [HttpGet]
         [Route("getMonth")]
-        public IActionResult GetDataForMonth(DateTime date)
+        public IActionResult GetDataForMonth(DateTime date, Guid? idWorker)
         {
             try
             {
                 if (date.Year < 1900)
                     return BadRequest("Invalid Date");
 
-                var jobsByDate = _jobRepository.GetJobsForMonth(date, CalendarUser.OrganizationId);
+                var jobsByDate = idWorker == null ?
+                    _jobRepository.GetJobsForMonth(date, CalendarUser.OrganizationId) :
+                    _jobRepository.GetJobsForMonthByWorker(date, CalendarUser.OrganizationId, idWorker.Value);
+
                 var workersByDate = _workerRepository.GetAvailableWorkersForMonth(CalendarUser.OrganizationId, date);
                 var timeOffWorkers = _workerRepository.GetOffWorkersForMonth(CalendarUser.OrganizationId, date);
 
@@ -66,14 +69,7 @@ namespace AssetCalendarApi.Controllers
                         TimeOffWorkers = timeOffWorkers.ContainsKey(d) ? timeOffWorkers[d] : Enumerable.Empty<Worker>()
                     };
 
-                    vm.WorkersByJob = vm.Jobs
-                        .Select(j => new
-                        {
-                            id = j.Id,
-                            workers = _workerRepository.GetWorkersForJob(j.Id, d, CalendarUser.OrganizationId)
-                        })
-                        .GroupBy(m => m.id)
-                        .ToDictionary(group => group.Key, group => group.SelectMany(g => g.workers));
+                    vm.WorkersByJob = _workerRepository.GetWorkersByJob(d, CalendarUser.OrganizationId);
 
                     monthData.Add(d, vm);
                 }
@@ -88,14 +84,17 @@ namespace AssetCalendarApi.Controllers
 
         [HttpGet]
         [Route("getWeek")]
-        public IActionResult GetDataForWeek(DateTime date)
+        public IActionResult GetDataForWeek(DateTime date, Guid? idWorker)
         {
             try
             {
                 if (date.Year < 1900)
                     return BadRequest("Invalid Date");
 
-                var jobsByDate = _jobRepository.GetJobsForWeek(date, CalendarUser.OrganizationId);
+                var jobsByDate = idWorker == null ?
+                    _jobRepository.GetJobsForWeek(date, CalendarUser.OrganizationId) :
+                    _jobRepository.GetJobsForWeekByWorker(date, CalendarUser.OrganizationId, idWorker.Value);
+
                 var workersByDate = _workerRepository.GetAvailableWorkersForWeek(CalendarUser.OrganizationId, date);
                 var offByDate = _workerRepository.GetOffWorkersForWeek(CalendarUser.OrganizationId, date);
 
@@ -109,14 +108,7 @@ namespace AssetCalendarApi.Controllers
                         TimeOffWorkers = ( offByDate.ContainsKey(d) ? offByDate[d] : Enumerable.Empty<Worker>() ).OrderBy(worker => worker.FullName),
                         Jobs = ( jobsByDate.ContainsKey(d) ? jobsByDate[d] : Enumerable.Empty<Job>() ).OrderBy( job => job.Name )
                     };
-                    vm.WorkersByJob = vm.Jobs
-                        .Select(j => new
-                        {
-                            id = j.Id,
-                            workers = _workerRepository.GetWorkersForJob(j.Id, d, CalendarUser.OrganizationId).ToArray().OrderBy(worker => worker.FullName)
-                        })
-                        .GroupBy(m => m.id)
-                        .ToDictionary(group => group.Key, group => group.SelectMany(g => g.workers));
+                    vm.WorkersByJob = _workerRepository.GetWorkersByJob(d, CalendarUser.OrganizationId);
 
                     monthData.Add(d, vm);
                 }
@@ -131,25 +123,20 @@ namespace AssetCalendarApi.Controllers
 
         [HttpGet]
         [Route("getDay")]
-        public IActionResult GetDataForDay(DateTime date)
+        public IActionResult GetDataForDay(DateTime date, Guid? idWorker)
         {
             try
             {
                 if (date.Year < 1900)
                     return BadRequest("Invalid Date");
 
-                var jobs = _jobRepository.GetJobsForDay(date, CalendarUser.OrganizationId);
+                var jobs = idWorker == null ? 
+                    _jobRepository.GetJobsForDay(date, CalendarUser.OrganizationId) : 
+                    _jobRepository.GetJobsForDayByWorker(date, CalendarUser.OrganizationId, idWorker.Value);
+
                 var workers = _workerRepository.GetAvailableWorkers(CalendarUser.OrganizationId, date);
                 var offByDate = _workerRepository.GetOffWorkersForDates(CalendarUser.OrganizationId, date, date);
-
-                var workersByJob = jobs
-                        .Select(j => new
-                        {
-                            id = j.Id,
-                            workers = _workerRepository.GetWorkersForJob(j.Id, date, CalendarUser.OrganizationId)
-                        })
-                        .GroupBy(m => m.id)
-                        .ToDictionary(group => group.Key, group => group.SelectMany(g => g.workers));
+                var workersByJob = _workerRepository.GetWorkersByJob(date, CalendarUser.OrganizationId);
 
                 var dayData = new Dictionary<DateTime, DayViewModel>();
                 dayData.Add(date, new DayViewModel()

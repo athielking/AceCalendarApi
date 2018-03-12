@@ -86,28 +86,48 @@ namespace AssetCalendarApi.Repository
 
         public Dictionary<DateTime, IEnumerable<Job>> GetJobsForMonth(DateTime month, Guid organizationId)
         {
-            return GetJobsByOrganization(organizationId)
-                .AsExpandable()
-                .Join(_dbContext.DaysJobs,
-                    d => d.Id,
-                    j => j.IdJob,
-                    (job, dayJob) => new { dayJob.Date, job })
-                .Where(m => m.Date.Month == month.Month)
-                .GroupBy(m => m.Date)
-                .ToDictionary(group => group.Key, group => group.Select(g => g.job));
+            return _dbContext.JobsByDate
+                .Where(j => j.OrganizationId == organizationId && j.Date.Month == month.Month )
+                .GroupBy(j => j.Date)
+                .ToDictionary(group => group.Key, group => group.Select(g => AutoMapper.Mapper.Map<Job>(g)));
         }
 
         public Dictionary<DateTime, IEnumerable<Job>> GetJobsForWeek(DateTime week, Guid organizationId)
         {
-            return GetJobsByOrganization(organizationId)
-                .AsExpandable()
-                .Join(_dbContext.DaysJobs,
-                    d => d.Id,
-                    j => j.IdJob,
-                    (job, dayJob) => new { dayJob.Date, job })
-                .Where(m => m.Date >= week.StartOfWeek() && m.Date <= week.EndOfWeek())
-                .GroupBy(m => m.Date)
-                .ToDictionary(group => group.Key, group => group.Select(g => g.job));
+
+            return _dbContext.JobsByDate
+                .Where(j => j.OrganizationId == organizationId && j.Date >= week.StartOfWeek() && j.Date <= week.EndOfWeek())
+                .GroupBy(j => j.Date)
+                .ToDictionary(group => group.Key, group => group.Select(g => AutoMapper.Mapper.Map<Job>(g)));
+        }
+
+        public IQueryable<Job> GetJobsForDayByWorker(DateTime date, Guid organizationId, Guid idWorker)
+        {
+            return _dbContext.JobsByDateWorker
+                .Where(j => j.OrganizationId == organizationId && j.Date == date && j.IdWorker == idWorker)
+                .Select(j => AutoMapper.Mapper.Map<Job>(j));
+        }
+
+        public Dictionary<DateTime, IEnumerable<Job>> GetJobsForMonthByWorker(DateTime month, Guid organizationId, Guid idWorker)
+        {
+            return _dbContext.JobsByDateWorker.Where(
+               j => j.OrganizationId == organizationId &&
+                   j.Date.Month >= month.Month &&
+                   j.IdWorker == idWorker
+               )
+               .GroupBy(j => j.Date)
+               .ToDictionary(group => group.Key, group => group.Select(g => AutoMapper.Mapper.Map<Job>(g)));
+        }
+
+        public Dictionary<DateTime, IEnumerable<Job>> GetJobsForWeekByWorker(DateTime week, Guid organizationId, Guid idWorker)
+        {
+            return _dbContext.JobsByDateWorker.Where(
+                j => j.OrganizationId == organizationId && 
+                    j.Date >= week.StartOfWeek() && j.Date <= week.EndOfWeek() && 
+                    j.IdWorker == idWorker
+                )
+                .GroupBy(j => j.Date)
+                .ToDictionary(group => group.Key, group => group.Select(g => AutoMapper.Mapper.Map<Job>(g)));
         }
 
         public Job AddJob(AddJobModel addJobModel, Guid organizationId)

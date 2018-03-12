@@ -105,44 +105,14 @@ namespace AssetCalendarApi.Repository
         {
             endDate = endDate ?? startDate;
 
-            var allWorkers = GetWorkersByOrganization(organizationId);
-            var allDates = startDate.GetDatesTo(endDate);
-
-            //Get the cartesian product for all dates + all workers
-            var available =
-                from worker in allWorkers
-                from date in allDates
-                select new { date, worker };
-
-            //Get a dictionary of who is working on what day
-            var working = _dbContext.DaysJobs.Where(dj => dj.Date >= startDate && dj.Date <= allDates.Last())
-                    .Join(_dbContext.DaysJobsWorkers,
-                        dj => dj.Id,
-                        djw => djw.IdDayJob,
-                        (dayJob, dayJobWorker) => new { dayJob.Date, dayJobWorker.IdWorker })
-                    .GroupBy(m => m.Date)
-                    .ToDictionary(
-                        group => group.Key,
-                        group => group.Select(m => m.IdWorker));
-
-            //Get a dictionary of who is off for what day
-            var off = _dbContext.DayOffWorkers.Where(dow => dow.Date >= startDate && dow.Date <= allDates.Last())
-                .GroupBy(m => m.Date.Date)
+            var availView =_dbContext.AvailableWorkers
+                .Where(a => a.Date >= startDate && a.Date <= endDate && a.OrganizationId == organizationId)
+                .GroupBy(a => a.Date)
                 .ToDictionary(
                     group => group.Key,
-                    group => group.Select(m => m.IdWorker));
+                    group => group.Select(avail => AutoMapper.Mapper.Map<Worker>(avail)));
 
-            //Get a dictionary of dates, and who is not already working
-            var availableWorkers = available
-                .GroupBy(m => m.date)
-                .ToDictionary(
-                    group => group.Key,
-                    group => group.Where(
-                        m => (!working.ContainsKey(group.Key) || (working.ContainsKey(group.Key) && !working[group.Key].Contains(m.worker.Id))) &&
-                            (!off.ContainsKey(group.Key) || (off.ContainsKey(group.Key) && !off[group.Key].Contains(m.worker.Id))))
-                .Select(m => m.worker));
-
-            return availableWorkers;
+            return availView;
         }
 
         public Dictionary<DateTime, IEnumerable<Worker>> GetOffWorkersForMonth(Guid organizationId, DateTime dateInMonth)
@@ -162,28 +132,26 @@ namespace AssetCalendarApi.Repository
         {
             endDate = endDate ?? startDate;
 
-            return _dbContext.DayOffWorkers
-                .Include(dow => dow.Worker)
-                .Where(dow => dow.Date.Date >= startDate.Date && dow.Date.Date <= endDate.Value.Date)
-                .GroupBy(dow => dow.Date.Date)
-                .ToDictionary(group => group.Key, group => group.Select(dow => dow.Worker));
+            return _dbContext.TimeOffWorkers.Where( t => t.OrganizationId == organizationId && t.Date >= startDate.Date && t.Date <= endDate.Value.Date )
+                .GroupBy(t => t.Date.Date)
+                .ToDictionary(group => group.Key, group => group.Select( t => AutoMapper.Mapper.Map<Worker>(t) ));
         }
 
-        public IQueryable<Worker> GetWorkersForJob(Guid idJob, DateTime? date, Guid organizationId)
+        public Dictionary<Guid, IEnumerable<Worker>> GetWorkersByJob( DateTime? date, Guid organizationId)
         {
-            //Make One Repository
-            //var job = _jobRepository.GetJob(idJob, organizationId);
-
-            //if (job == null)
-            //    throw new ApplicationException( "Unable to Locate Job" );
-
-            //Make this a repository method
-            var dayJobs = _dbContext.DaysJobs.Where(dj => dj.IdJob == idJob);
-
+           
             if (date.HasValue)
-                dayJobs = dayJobs.Where(dj => dj.Date.Date == date.Value.Date);
+            {
+                return _dbContext.WorkersByJobDate
+                    .Where(w => w.OrganizationId == organizationId && w.Date.Date == date.Value.Date)
+                    .GroupBy(w => w.IdJob)
+                    .ToDictionary(group => group.Key, group => group.Select(w => AutoMapper.Mapper.Map<Worker>(w)));
+            }
 
-            return dayJobs.SelectMany(dj => dj.DayJobWorkers.Select(djw => djw.Worker)).Distinct();
+            return _dbContext.WorkersByJobDate
+                    .Where(w => w.OrganizationId == organizationId )
+                    .GroupBy(w => w.IdJob)
+                    .ToDictionary(group => group.Key, group => group.Select(w => AutoMapper.Mapper.Map<Worker>(w)));
         }
 
         public Worker AddWorker(WorkerViewModel worker, Guid organizationId)
