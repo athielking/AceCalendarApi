@@ -88,6 +88,30 @@ namespace AssetCalendarApi.Controllers
             return BadRequest("Failed to login");
         }
 
+        [HttpPost("api/auth/changePassword")]
+        [ValidateModel]
+        public async Task<IActionResult> ChangePassword([FromBody]ChangePasswordViewModel model)
+        {
+            try
+            {
+                var user = _userManager.FindByNameAsync(model.Username).Result;
+                var result = await _userManager.ChangePasswordAsync(user, model.CurrentPassword, model.NewPassword);
+                if (result.Succeeded)
+                {
+                    user = _userManager.FindByNameAsync(model.Username).Result;
+                    return GenerateJwtToken(user);
+                }
+
+                return BadRequest(result.Errors.FirstOrDefault().Description);
+            }
+            catch( Exception ex)
+            {
+                _logger.LogError($"Exception thrown while changing password: {ex}");
+            }
+
+            return BadRequest("Failed to Change Password");
+        }
+
         #endregion
 
         #region Private Methods
