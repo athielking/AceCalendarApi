@@ -267,10 +267,10 @@ namespace AssetCalendarApi.Repository
             _dbContext.SaveChanges();
         }
 
-        public void MoveWorkerToAllAvailableDaysOnJob(Guid jobId, Guid workerId, Guid organizationId)
+        public void MoveWorkerToAllAvailableDaysOnJob(Guid jobId, Guid workerId, DateTime date, Guid organizationId)
         {
             var jobDays = _dbContext.DaysJobs.Where(d => d.IdJob == jobId);
-            var workingDays = _dbContext.DaysJobsWorkers.Include(djw => djw.DayJob).Where(djw => djw.IdWorker == workerId).Select(djw => djw.DayJob);
+            var workingDays = _dbContext.DaysJobsWorkers.Include(djw => djw.DayJob).Where(djw => djw.IdWorker == workerId).Select(djw => djw.DayJob).Where(dj => dj.Date.Date != date.Date);
 
             var availableDays = jobDays.Where(d => !workingDays.Any(wd => wd.Date.Date == d.Date.Date));
 

@@ -186,7 +186,7 @@ namespace AssetCalendarApi.Controllers
                 if (model.AddWorkerOption == AddWorkerOption.AllDays)
                     _jobRepository.MoveWorkerToAllDaysOnJob(model.IdJob.Value, model.IdWorker, CalendarUser.OrganizationId);
                 else if (model.AddWorkerOption == AddWorkerOption.AvailableDays)
-                    _jobRepository.MoveWorkerToAllAvailableDaysOnJob(model.IdJob.Value, model.IdWorker, CalendarUser.OrganizationId);
+                    _jobRepository.MoveWorkerToAllAvailableDaysOnJob(model.IdJob.Value, model.IdWorker, model.Date.Value, CalendarUser.OrganizationId);
                 else
                     _jobRepository.MoveWorkerToJob(model.IdJob.Value, model.IdWorker, model.Date.Value, CalendarUser.OrganizationId);
 
