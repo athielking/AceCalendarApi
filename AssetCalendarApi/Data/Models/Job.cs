@@ -37,6 +37,7 @@ namespace AssetCalendarApi.Data.Models
             set;
         }
 
+        public ICollection<JobTags> Tags { get; set; }
         #endregion
     }
 }

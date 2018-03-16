@@ -126,6 +126,7 @@ namespace AssetCalendarApi
                 config.CreateMap<TimeOffWorkers, Worker>();
                 config.CreateMap<WorkersByJob, Worker>();
                 config.CreateMap<WorkersByJobDate, Worker>();
+                config.CreateMap<TagsByJobDate, Tag>();
             });
         }
 

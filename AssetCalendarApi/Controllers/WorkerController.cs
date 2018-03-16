@@ -70,14 +70,15 @@ namespace AssetCalendarApi.Controllers
         [Route("getAvailableWorkers")]
         public IActionResult GetAvailableWorkers(DateTime start, DateTime? end)
         {
-            try
-            {
-                return SuccessResult(_workerRepository.GetAvailableWorkers(CalendarUser.OrganizationId, start, end).ToList());
-            }
-            catch
-            {
-                return BadRequest(GetErrorMessageObject("Failed To Get Available Workers"));
-            }
+            throw new NotImplementedException();
+            //try
+            //{
+            //    //return SuccessResult(_workerRepository.GetAvailableWorkers(CalendarUser.OrganizationId, start, end).ToList());
+            //}
+            //catch
+            //{
+            //    return BadRequest(GetErrorMessageObject("Failed To Get Available Workers"));
+            //}
         }
 
         [HttpPost]

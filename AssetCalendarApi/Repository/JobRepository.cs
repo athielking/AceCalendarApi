@@ -64,16 +64,11 @@ namespace AssetCalendarApi.Repository
                 .FirstOrDefault(job => job.Id == id);
         }
 
-        public IQueryable<Job> GetJobsForDay(DateTime date, Guid organizationId)
+        public IEnumerable<Job> GetJobsForDay(DateTime date, Guid organizationId)
         {
-            return GetJobsByOrganization(organizationId)
-                .AsExpandable()
-                .Join(_dbContext.DaysJobs,
-                    d => d.Id,
-                    j => j.IdJob,
-                    (job, dayJob) => new { dayJob.Date, job })
-                .Where(m => m.Date == date)
-                .Select(m => m.job);
+            return _dbContext.JobsByDate
+                .Where(j => j.OrganizationId == organizationId && j.Date.Date == date.Date)
+                .Select(j => AutoMapper.Mapper.Map<Job>(j));
         }
 
         public IQueryable<DayJob> GetDayJobsForDay(DateTime date, Guid organizationId)

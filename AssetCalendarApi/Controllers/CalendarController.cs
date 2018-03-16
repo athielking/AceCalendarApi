@@ -134,7 +134,7 @@ namespace AssetCalendarApi.Controllers
                     _jobRepository.GetJobsForDay(date, CalendarUser.OrganizationId) : 
                     _jobRepository.GetJobsForDayByWorker(date, CalendarUser.OrganizationId, idWorker.Value);
 
-                var workers = _workerRepository.GetAvailableWorkers(CalendarUser.OrganizationId, date);
+                var workers = _workerRepository.GetAvailableWorkersForDay(CalendarUser.OrganizationId, date);
                 var offByDate = _workerRepository.GetOffWorkersForDates(CalendarUser.OrganizationId, date, date);
                 var workersByJob = _workerRepository.GetWorkersByJob(date, CalendarUser.OrganizationId);
 

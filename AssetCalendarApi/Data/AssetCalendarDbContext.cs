@@ -23,6 +23,8 @@ namespace AssetCalendarApi.Data
         public DbSet<DayJobWorker> DaysJobsWorkers { get; set; }
         public DbSet<Organization> Organizations { get; set; }
         public DbSet<DayOffWorker> DayOffWorkers { get; set; }
+        public DbSet<Tag> Tags { get; set; }
+        public DbSet<JobTags> JobTags { get; set; }
 
         //Views
         public DbSet<JobsByDate> JobsByDate { get; set; }
@@ -31,6 +33,8 @@ namespace AssetCalendarApi.Data
         public DbSet<TimeOffWorkers> TimeOffWorkers { get; set; }
         public DbSet<WorkersByJob> WorkersByJob { get; set; }
         public DbSet<WorkersByJobDate> WorkersByJobDate { get; set; }
+        public DbSet<TagsByJobDate> TagsByJobDate { get; set; }
+
         #endregion
 
         #region Constructor
@@ -116,7 +120,24 @@ namespace AssetCalendarApi.Data
                      .HasForeignKey(d => d.OrganizationId)
                      .OnDelete(DeleteBehavior.Restrict)
                      .HasConstraintName("FK_Jobs_Organization");
+            });
 
+            modelBuilder.Entity<JobTags>(entity =>
+            {
+                entity.ToTable("JobTags");
+                entity.Property(e => e.Id).ValueGeneratedNever();
+
+                entity.HasOne(t => t.Job)
+                    .WithMany(j => j.Tags)
+                    .HasForeignKey(j => j.IdJob)
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("FK_JobTags_Job");
+
+                entity.HasOne(t => t.Tag)
+                    .WithMany(t => t.JobTags)
+                    .HasForeignKey(t => t.IdTag)
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("FK_JobTags_Tag"); 
             });
 
             modelBuilder.Entity<Worker>(entity =>
@@ -176,6 +197,14 @@ namespace AssetCalendarApi.Data
                     .HasConstraintName("FK_DayOffWorkers_Worker");
             });
 
+            modelBuilder.Entity<Tag>(entity =>
+            {
+                entity.ToTable("Tags");
+                entity.Property(e => e.Id).ValueGeneratedNever();
+                entity.Property(e => e.Description).HasMaxLength(25);
+                entity.Property(e => e.Color).HasMaxLength(10);
+            });
+
             modelBuilder.Entity<JobsByDate>(entity =>
             {
                 entity.Property(e => e.Date).HasColumnType("datetime");
@@ -198,7 +227,7 @@ namespace AssetCalendarApi.Data
 
             modelBuilder.Entity<WorkersByJob>(entity => { });
 
-            modelBuilder.Entity<WorkersByJobDate>(entity => 
+            modelBuilder.Entity<WorkersByJobDate>(entity =>
             {
                 entity.Property(e => e.Date).HasColumnType("datetime");
             });

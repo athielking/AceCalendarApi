@@ -102,7 +102,7 @@ namespace AssetCalendarApi.Controllers
                     return GenerateJwtToken(user);
                 }
 
-                return BadRequest(result.Errors.FirstOrDefault().Description);
+                return BadRequest( result.Errors.FirstOrDefault().Description );
             }
             catch( Exception ex)
             {

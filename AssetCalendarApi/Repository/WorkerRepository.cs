@@ -68,24 +68,11 @@ namespace AssetCalendarApi.Repository
                 .FirstOrDefault(w => w.Id == id);
         }
 
-        public IQueryable<Worker> GetAvailableWorkers(Guid organizationId, DateTime startDate, DateTime? endDate = null)
+        public IEnumerable<Worker> GetAvailableWorkersForDay(Guid organizationId, DateTime startDate )
         {
-            endDate = endDate ?? startDate;
+            var avail = GetAvailableWorkersForDates(organizationId, startDate, null );
 
-            return GetWorkersByOrganization(organizationId)
-               .AsExpandable()
-               .Except
-               (
-                    _dbContext.DaysJobs
-                        .Where(dj => dj.Date.Date >= startDate.Date && dj.Date.Date <= endDate.Value.Date)
-                        .Join
-                        (
-                            _dbContext.DaysJobsWorkers,
-                            dj => dj.Id,
-                            djw => djw.IdDayJob,
-                            (dayJob, dayJobWorker) => dayJobWorker.Worker
-                        )
-                );
+            return avail[startDate];
         }
 
         public Dictionary<DateTime, IEnumerable<Worker>> GetAvailableWorkersForMonth(Guid organizationId, DateTime dateInMonth)

@@ -67,6 +67,8 @@ namespace AssetCalendarApi.Data
             SeedOrganizations();
 
             await SeedUsers();
+
+            SeedTags();
         }
 
         #endregion
@@ -277,6 +279,20 @@ namespace AssetCalendarApi.Data
 
         }
 
+        private void SeedTags()
+        {
+            var tag = _assetCalendarDbContext.Tags.FirstOrDefault(t => t.MatIcon == "airplanemode_active");
+            if (tag == null)
+            {
+                _assetCalendarDbContext.Tags.Add(new Tag()
+                {
+                    Id = Guid.NewGuid(),
+                    MatIcon = "airplanemode_active",
+                    Description = "Out of Town",
+                    Color = "#8BC34A"
+                });
+            }
+        }
 
         #endregion
     }
