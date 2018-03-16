@@ -72,7 +72,10 @@ namespace AssetCalendarApi.Repository
         {
             var avail = GetAvailableWorkersForDates(organizationId, startDate, null );
 
-            return avail[startDate];
+            if (avail.Keys.Count > 0)
+                return avail[avail.Keys.First()];
+
+            return Enumerable.Empty<Worker>();
         }
 
         public Dictionary<DateTime, IEnumerable<Worker>> GetAvailableWorkersForMonth(Guid organizationId, DateTime dateInMonth)
