@@ -145,7 +145,7 @@ namespace AssetCalendarApi.Controllers
                     AvailableWorkers = workers,
                     Jobs = jobs,
                     WorkersByJob = workersByJob,
-                    TimeOffWorkers = (offByDate.ContainsKey(date) ? offByDate[date] : Enumerable.Empty<Worker>()).OrderBy(worker => worker.FullName),
+                    TimeOffWorkers = (offByDate.ContainsKey(date.Date) ? offByDate[date.Date] : Enumerable.Empty<Worker>()).OrderBy(worker => worker.FullName),
                 });
 
                 return SuccessResult(dayData);
