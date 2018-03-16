@@ -96,8 +96,8 @@ namespace AssetCalendarApi.Repository
             endDate = endDate ?? startDate;
 
             var availView =_dbContext.AvailableWorkers
-                .Where(a => a.Date >= startDate && a.Date <= endDate && a.OrganizationId == organizationId)
-                .GroupBy(a => a.Date)
+                .Where(a => a.Date.Date >= startDate.Date && a.Date.Date <= endDate.Value.Date && a.OrganizationId == organizationId)
+                .GroupBy(a => a.Date.Date)
                 .ToDictionary(
                     group => group.Key,
                     group => group.Select(avail => AutoMapper.Mapper.Map<Worker>(avail)));
