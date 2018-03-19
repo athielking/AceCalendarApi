@@ -28,9 +28,9 @@ namespace AssetCalendarApi.Repository
 
         #endregion
 
-        public IEnumerable<Tag> GetAllTags(Guid organizationId)
+        public IEnumerable<TagViewModel> GetAllTags(Guid organizationId)
         {
-            return _dbContext.Tags.AsEnumerable();
+            return _dbContext.Tags.Select(t => t.GetViewModel());
         }
 
         public Tag GetTag( Guid id, Guid organizationId)

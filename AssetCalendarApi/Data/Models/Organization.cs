@@ -52,6 +52,12 @@ namespace AssetCalendarApi.Data.Models
             set;
         }
 
+        public ICollection<Tag> Tags
+        {
+            get;
+            set;
+        }
+
         #endregion
     }
 }

@@ -7,12 +7,14 @@ using AssetCalendarApi.Repository;
 using AssetCalendarApi.ViewModels;
 using Microsoft.AspNetCore.Identity;
 using AssetCalendarApi.Data.Models;
+using Microsoft.AspNetCore.Authorization;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace AssetCalendarApi.Controllers
 {
     [Route("api/[controller]")]
+    [AllowAnonymous]
     public class TagController : ApiBaseController
     {
         #region Data Members

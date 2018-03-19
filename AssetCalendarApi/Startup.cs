@@ -95,6 +95,7 @@ namespace AssetCalendarApi
             services.AddScoped<WorkerRepository>();
             services.AddScoped<JobRepository>();
             services.AddScoped<OrganizationRepository>();
+            services.AddScoped<TagRepository>();
 
             services.AddScoped<WorkerValidator>();
 

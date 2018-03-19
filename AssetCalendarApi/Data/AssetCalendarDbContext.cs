@@ -203,34 +203,40 @@ namespace AssetCalendarApi.Data
                 entity.Property(e => e.Id).ValueGeneratedNever();
                 entity.Property(e => e.Description).HasMaxLength(25);
                 entity.Property(e => e.Color).HasMaxLength(10);
+
+                entity.HasOne(d => d.Organization)
+                     .WithMany(t => t.Tags)
+                     .HasForeignKey(d => d.OrganizationId)
+                     .OnDelete(DeleteBehavior.Restrict)
+                     .HasConstraintName("FK_Tags_Organization");
             });
 
-            modelBuilder.Entity<JobsByDate>(entity =>
-            {
-                entity.Property(e => e.Date).HasColumnType("datetime");
-            });
+            //modelBuilder.Entity<JobsByDate>(entity =>
+            //{
+            //    entity.Property(e => e.Date).HasColumnType("datetime");
+            //});
 
-            modelBuilder.Entity<JobsByDateWorker>(entity =>
-            {
-                entity.Property(e => e.Date).HasColumnType("datetime");
-            });
+            //modelBuilder.Entity<JobsByDateWorker>(entity =>
+            //{
+            //    entity.Property(e => e.Date).HasColumnType("datetime");
+            //});
 
-            modelBuilder.Entity<AvailableWorkers>(entity =>
-            {
-                entity.Property(e => e.Date).HasColumnType("datetime");
-            });
+            //modelBuilder.Entity<AvailableWorkers>(entity =>
+            //{
+            //    entity.Property(e => e.Date).HasColumnType("datetime");
+            //});
 
-            modelBuilder.Entity<TimeOffWorkers>(entity =>
-            {
-                entity.Property(e => e.Date).HasColumnType("datetime");
-            });
+            //modelBuilder.Entity<TimeOffWorkers>(entity =>
+            //{
+            //    entity.Property(e => e.Date).HasColumnType("datetime");
+            //});
 
-            modelBuilder.Entity<WorkersByJob>(entity => { });
+            //modelBuilder.Entity<WorkersByJob>(entity => { });
 
-            modelBuilder.Entity<WorkersByJobDate>(entity =>
-            {
-                entity.Property(e => e.Date).HasColumnType("datetime");
-            });
+            //modelBuilder.Entity<WorkersByJobDate>(entity =>
+            //{
+            //    entity.Property(e => e.Date).HasColumnType("datetime");
+            //});
 
         }
 
