@@ -15,6 +15,7 @@ namespace AssetCalendarApi.Data.Models
         public Job()
         {
             DaysJobs = new HashSet<DayJob>();
+            Tags = new HashSet<JobTags>();
         }
         
         #endregion
@@ -37,6 +38,7 @@ namespace AssetCalendarApi.Data.Models
             set;
         }
 
+        [JsonIgnore]
         public ICollection<JobTags> Tags { get; set; }
         #endregion
     }

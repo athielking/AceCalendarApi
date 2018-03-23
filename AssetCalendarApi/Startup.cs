@@ -20,6 +20,7 @@ using AssetCalendarApi.Data.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using AutoMapper;
+using AssetCalendarApi.ViewModels;
 
 namespace AssetCalendarApi
 {
@@ -127,7 +128,8 @@ namespace AssetCalendarApi
                 config.CreateMap<TimeOffWorkers, Worker>();
                 config.CreateMap<WorkersByJob, Worker>();
                 config.CreateMap<WorkersByJobDate, Worker>();
-                config.CreateMap<TagsByJobDate, Tag>();
+                config.CreateMap<TagsByJob, TagViewModel>();
+                config.CreateMap<TagsByJobDate, TagViewModel>();
             });
         }
 

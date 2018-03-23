@@ -21,6 +21,8 @@ namespace AssetCalendarApi.Controllers
 
         private readonly JobRepository _jobRepository;
 
+        private readonly TagRepository _tagRepository;
+
         private readonly WorkerValidator _validator;
 
         #endregion
@@ -30,11 +32,13 @@ namespace AssetCalendarApi.Controllers
         public JobController
         (
             JobRepository jobRepository,
+            TagRepository tagRepository,
             WorkerValidator validator,
             UserManager<CalendarUser> userManager
         ): base(userManager)
         {
             _jobRepository = jobRepository;
+            _tagRepository = tagRepository;
             _validator = validator;
         }
 
@@ -152,7 +156,7 @@ namespace AssetCalendarApi.Controllers
 
                 var addedJob = _jobRepository.AddJob(job, CalendarUser.OrganizationId);
 
-                return Ok(addedJob);
+                return SuccessResult(addedJob);
             }
             catch
             {
@@ -255,6 +259,32 @@ namespace AssetCalendarApi.Controllers
             catch
             {
                 return BadRequest(GetErrorMessageObject("Failed to Save Notes"));
+            }
+        }
+
+        [HttpPost("saveTags/{id}")]
+        public IActionResult SaveTags(Guid id, [FromBody]SaveTagsRequestViewModel saveTagsRequest)
+        {
+            try
+            {
+                if (saveTagsRequest.Date.HasValue)
+                    _tagRepository.DeleteTagsFromJobDay(id, saveTagsRequest.Date.Value);
+                else
+                    _tagRepository.DeleteTagsFromJob(id);
+
+                foreach(var tag in saveTagsRequest.Tags)
+                {
+                    if (saveTagsRequest.Date.HasValue)
+                        _tagRepository.AddTagToJobDay(tag.Id, id, saveTagsRequest.Date.Value);
+                    else
+                        _tagRepository.AddTagToJob(tag.Id, id);
+                }
+
+                return Ok();
+            }
+            catch
+            {
+                return BadRequest(GetErrorMessageObject("Failed to Save Tags"));
             }
         }
 

@@ -19,6 +19,7 @@ namespace AssetCalendarApi.Controllers
 
         private readonly WorkerRepository _workerRepository;
 
+        private readonly TagRepository _tagRepository;
         #endregion
 
         #region Constructor
@@ -27,11 +28,13 @@ namespace AssetCalendarApi.Controllers
         (
             JobRepository jobRepository,
             WorkerRepository workerRepository,
+            TagRepository tagRepository,
             UserManager<CalendarUser> userManager
         ): base(userManager)
         {
             _jobRepository = jobRepository;
             _workerRepository = workerRepository;
+            _tagRepository = tagRepository;
         }
 
         #endregion
@@ -70,6 +73,7 @@ namespace AssetCalendarApi.Controllers
                     };
 
                     vm.WorkersByJob = _workerRepository.GetWorkersByJob(d, CalendarUser.OrganizationId);
+                    vm.TagsByJob = _tagRepository.GetTagsByJob(d, CalendarUser.OrganizationId);
 
                     monthData.Add(d, vm);
                 }
@@ -109,6 +113,7 @@ namespace AssetCalendarApi.Controllers
                         Jobs = ( jobsByDate.ContainsKey(d) ? jobsByDate[d] : Enumerable.Empty<Job>() ).OrderBy( job => job.Name )
                     };
                     vm.WorkersByJob = _workerRepository.GetWorkersByJob(d, CalendarUser.OrganizationId);
+                    vm.TagsByJob = _tagRepository.GetTagsByJob(d, CalendarUser.OrganizationId);
 
                     monthData.Add(d, vm);
                 }
@@ -137,7 +142,7 @@ namespace AssetCalendarApi.Controllers
                 var workers = _workerRepository.GetAvailableWorkersForDay(CalendarUser.OrganizationId, date);
                 var offByDate = _workerRepository.GetOffWorkersForDates(CalendarUser.OrganizationId, date, date);
                 var workersByJob = _workerRepository.GetWorkersByJob(date, CalendarUser.OrganizationId);
-
+                var tagsByJob = _tagRepository.GetTagsByJob(date, CalendarUser.OrganizationId);
                 var dayData = new Dictionary<DateTime, DayViewModel>();
                 dayData.Add(date, new DayViewModel()
                 {
@@ -145,6 +150,7 @@ namespace AssetCalendarApi.Controllers
                     AvailableWorkers = workers,
                     Jobs = jobs,
                     WorkersByJob = workersByJob,
+                    TagsByJob = tagsByJob,
                     TimeOffWorkers = (offByDate.ContainsKey(date.Date) ? offByDate[date.Date] : Enumerable.Empty<Worker>()).OrderBy(worker => worker.FullName),
                 });
 

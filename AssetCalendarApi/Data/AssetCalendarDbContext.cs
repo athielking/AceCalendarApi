@@ -25,6 +25,7 @@ namespace AssetCalendarApi.Data
         public DbSet<DayOffWorker> DayOffWorkers { get; set; }
         public DbSet<Tag> Tags { get; set; }
         public DbSet<JobTags> JobTags { get; set; }
+        public DbSet<DayJobTag> DaysJobsTags { get; set; }
 
         //Views
         public DbSet<JobsByDate> JobsByDate { get; set; }
@@ -33,6 +34,7 @@ namespace AssetCalendarApi.Data
         public DbSet<TimeOffWorkers> TimeOffWorkers { get; set; }
         public DbSet<WorkersByJob> WorkersByJob { get; set; }
         public DbSet<WorkersByJobDate> WorkersByJobDate { get; set; }
+        public DbSet<TagsByJob> TagsByJob { get; set; }
         public DbSet<TagsByJobDate> TagsByJobDate { get; set; }
 
         #endregion
@@ -140,6 +142,24 @@ namespace AssetCalendarApi.Data
                     .HasConstraintName("FK_JobTags_Tag"); 
             });
 
+            modelBuilder.Entity<DayJobTag>(entity =>
+            {
+                entity.ToTable("DaysJobsTags");
+                entity.Property(e => e.Id).ValueGeneratedNever();
+
+                entity.HasOne(t => t.DayJob)
+                    .WithMany(j => j.DayJobTags)
+                    .HasForeignKey(j => j.IdDayJob)
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("FK_DayJobTag_DayJob");
+
+                entity.HasOne(t => t.Tag)
+                    .WithMany(t => t.DayJobTags)
+                    .HasForeignKey(t => t.IdTag)
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("FK_DayJobTag_Tag");
+            });
+
             modelBuilder.Entity<Worker>(entity =>
             {
                 entity.ToTable("Workers");
@@ -203,6 +223,7 @@ namespace AssetCalendarApi.Data
                 entity.Property(e => e.Id).ValueGeneratedNever();
                 entity.Property(e => e.Description).HasMaxLength(25);
                 entity.Property(e => e.Color).HasMaxLength(10);
+                entity.Property(e => e.Icon).HasMaxLength(50);
 
                 entity.HasOne(d => d.Organization)
                      .WithMany(t => t.Tags)

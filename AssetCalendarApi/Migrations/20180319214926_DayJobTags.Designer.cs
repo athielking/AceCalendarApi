@@ -11,9 +11,10 @@ using System;
 namespace AssetCalendarApi.Migrations
 {
     [DbContext(typeof(AssetCalendarDbContext))]
-    partial class AssetCalendarDbContextModelSnapshot : ModelSnapshot
+    [Migration("20180319214926_DayJobTags")]
+    partial class DayJobTags
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -277,8 +278,7 @@ namespace AssetCalendarApi.Migrations
                     b.Property<string>("Description")
                         .HasMaxLength(25);
 
-                    b.Property<string>("Icon")
-                        .HasMaxLength(50);
+                    b.Property<string>("MatIcon");
 
                     b.Property<Guid>("OrganizationId");
 
@@ -287,28 +287,6 @@ namespace AssetCalendarApi.Migrations
                     b.HasIndex("OrganizationId");
 
                     b.ToTable("Tags");
-                });
-
-            modelBuilder.Entity("AssetCalendarApi.Data.Models.TagsByJob", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd();
-
-                    b.Property<string>("Color");
-
-                    b.Property<string>("Description");
-
-                    b.Property<bool>("FromJobDay");
-
-                    b.Property<Guid>("IdJob");
-
-                    b.Property<string>("MatIcon");
-
-                    b.Property<Guid>("OrganizationId");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("TagsByJob");
                 });
 
             modelBuilder.Entity("AssetCalendarApi.Data.Models.TagsByJobDate", b =>
@@ -321,8 +299,6 @@ namespace AssetCalendarApi.Migrations
                     b.Property<DateTime>("Date");
 
                     b.Property<string>("Description");
-
-                    b.Property<bool>("FromJobDay");
 
                     b.Property<Guid>("IdJob");
 

@@ -25,8 +25,9 @@ namespace AssetCalendarApi.Data.Models
         public DateTime Date { get; set; }
 
         public Job Job { get; set; }
-        public ICollection<DayJobWorker> DayJobWorkers { get; set; } 
-        
+        public ICollection<DayJobWorker> DayJobWorkers { get; set; }
+        public ICollection<DayJobTag> DayJobTags { get; set; }
+
         #endregion
     }
 }

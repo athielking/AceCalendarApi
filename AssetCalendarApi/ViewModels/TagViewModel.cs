@@ -17,5 +17,7 @@ namespace AssetCalendarApi.ViewModels
         public string Description { get; set; }
 
         public string Color { get; set; }
+
+        public bool FromJobDay { get; set; }
     }
 }

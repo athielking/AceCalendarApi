@@ -49,6 +49,7 @@ namespace AssetCalendarApi.ViewModels
             }
         } 
 
+        public IEnumerable<TagViewModel> Tags { get; set; }
         #endregion
     }
 }
