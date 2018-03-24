@@ -20,6 +20,7 @@ using AssetCalendarApi.Data.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using AutoMapper;
+using AssetCalendarApi.ViewModels;
 
 namespace AssetCalendarApi
 {
@@ -82,19 +83,29 @@ namespace AssetCalendarApi
 
             services.AddMvc(options =>
             {
-                if (_hostingEnvironment.IsProduction())
-                    options.Filters.Add(new RequireHttpsAttribute());
+                //if (_hostingEnvironment.IsProduction())
+                //    options.Filters.Add(new RequireHttpsAttribute());
             }).AddJsonOptions(jsonOptions =>
             {
                 jsonOptions.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
             });
 
-            services.AddDbContext<AssetCalendarDbContext>(options =>
-                options.UseSqlServer(_configuration.GetConnectionString("AssetDatabase")));
+            if (_hostingEnvironment.IsProduction())
+            {
+                services.AddDbContext<AssetCalendarDbContext>(options =>
+                    options.UseSqlServer(_configuration.GetConnectionString("AceCalendarDb_Prod")));
+            }
+            else
+            {
+                services.AddDbContext<AssetCalendarDbContext>(options =>
+                   options.UseSqlServer(_configuration.GetConnectionString("AceCalendarDb_Stg")));
+            }
+
 
             services.AddScoped<WorkerRepository>();
             services.AddScoped<JobRepository>();
             services.AddScoped<OrganizationRepository>();
+            services.AddScoped<TagRepository>();
 
             services.AddScoped<WorkerValidator>();
 
@@ -104,10 +115,16 @@ namespace AssetCalendarApi
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
+            var origin = "http://localhost:4200";
+            //if (env.IsProduction())
+            //    origin = "https://acecalendar.io";
+            //else if (env.IsStaging())
+            //    origin = "http://acecalendarclient.azurewebsites.net";
+
             if (env.IsDevelopment())
             {
                 app.UseCors(
-                    options => options.WithOrigins("http://localhost:4200")
+                    options => options.WithOrigins(origin)
                         .AllowAnyHeader()
                         .AllowAnyMethod());
 
@@ -126,7 +143,8 @@ namespace AssetCalendarApi
                 config.CreateMap<TimeOffWorkers, Worker>();
                 config.CreateMap<WorkersByJob, Worker>();
                 config.CreateMap<WorkersByJobDate, Worker>();
-                config.CreateMap<TagsByJobDate, Tag>();
+                config.CreateMap<TagsByJob, TagViewModel>();
+                config.CreateMap<TagsByJobDate, TagViewModel>();
             });
         }
 

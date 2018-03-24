@@ -11,9 +11,10 @@ using System;
 namespace AssetCalendarApi.Migrations
 {
     [DbContext(typeof(AssetCalendarDbContext))]
-    partial class AssetCalendarDbContextModelSnapshot : ModelSnapshot
+    [Migration("20180318193426_TagOrganization")]
+    partial class TagOrganization
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -120,23 +121,6 @@ namespace AssetCalendarApi.Migrations
                         .HasName("IX_Date_IdJob");
 
                     b.ToTable("DaysJobs");
-                });
-
-            modelBuilder.Entity("AssetCalendarApi.Data.Models.DayJobTag", b =>
-                {
-                    b.Property<Guid>("Id");
-
-                    b.Property<Guid>("IdDayJob");
-
-                    b.Property<Guid>("IdTag");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("IdDayJob");
-
-                    b.HasIndex("IdTag");
-
-                    b.ToTable("DaysJobsTags");
                 });
 
             modelBuilder.Entity("AssetCalendarApi.Data.Models.DayJobWorker", b =>
@@ -277,8 +261,7 @@ namespace AssetCalendarApi.Migrations
                     b.Property<string>("Description")
                         .HasMaxLength(25);
 
-                    b.Property<string>("Icon")
-                        .HasMaxLength(50);
+                    b.Property<string>("MatIcon");
 
                     b.Property<Guid>("OrganizationId");
 
@@ -287,28 +270,6 @@ namespace AssetCalendarApi.Migrations
                     b.HasIndex("OrganizationId");
 
                     b.ToTable("Tags");
-                });
-
-            modelBuilder.Entity("AssetCalendarApi.Data.Models.TagsByJob", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd();
-
-                    b.Property<string>("Color");
-
-                    b.Property<string>("Description");
-
-                    b.Property<bool>("FromJobDay");
-
-                    b.Property<Guid>("IdJob");
-
-                    b.Property<string>("MatIcon");
-
-                    b.Property<Guid>("OrganizationId");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("TagsByJob");
                 });
 
             modelBuilder.Entity("AssetCalendarApi.Data.Models.TagsByJobDate", b =>
@@ -321,8 +282,6 @@ namespace AssetCalendarApi.Migrations
                     b.Property<DateTime>("Date");
 
                     b.Property<string>("Description");
-
-                    b.Property<bool>("FromJobDay");
 
                     b.Property<Guid>("IdJob");
 
@@ -555,21 +514,6 @@ namespace AssetCalendarApi.Migrations
                         .WithMany("DaysJobs")
                         .HasForeignKey("IdJob")
                         .HasConstraintName("FK_DaysJobs_Job")
-                        .OnDelete(DeleteBehavior.Cascade);
-                });
-
-            modelBuilder.Entity("AssetCalendarApi.Data.Models.DayJobTag", b =>
-                {
-                    b.HasOne("AssetCalendarApi.Data.Models.DayJob", "DayJob")
-                        .WithMany("DayJobTags")
-                        .HasForeignKey("IdDayJob")
-                        .HasConstraintName("FK_DayJobTag_DayJob")
-                        .OnDelete(DeleteBehavior.Cascade);
-
-                    b.HasOne("AssetCalendarApi.Data.Models.Tag", "Tag")
-                        .WithMany("DayJobTags")
-                        .HasForeignKey("IdTag")
-                        .HasConstraintName("FK_DayJobTag_Tag")
                         .OnDelete(DeleteBehavior.Cascade);
                 });
 

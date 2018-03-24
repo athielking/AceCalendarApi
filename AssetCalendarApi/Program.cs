@@ -40,7 +40,7 @@ namespace AssetCalendarApi
         public static void Main(string[] args)
         {
             var host = BuildWebHost(args);
-
+       
             var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
 
             if (environment == EnvironmentName.Development)

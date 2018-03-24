@@ -16,17 +16,19 @@ namespace AssetCalendarApi.Repository
         #region Data Members
 
         private readonly AssetCalendarDbContext _dbContext;
-
+        private readonly TagRepository _tagRepository;
         #endregion
 
         #region Constructor
 
         public JobRepository
         (
-            AssetCalendarDbContext dbContext
+            AssetCalendarDbContext dbContext,
+            TagRepository tagRepository
         )
         {
             _dbContext = dbContext;
+            _tagRepository = tagRepository;
         }
 
         #endregion
@@ -138,6 +140,9 @@ namespace AssetCalendarApi.Repository
 
             _dbContext.Jobs.Add(job);
 
+            foreach (var tag in addJobModel.Tags)
+                _tagRepository.AddTagToJob(tag.Id, job.Id);
+
             for (var date = addJobModel.StartDate.Date; date <= addJobModel.EndDate; date = date.AddDays(1))
             {
                 var dayJob = new DayJob()
@@ -179,6 +184,9 @@ namespace AssetCalendarApi.Repository
             job.Notes = addJobModel.Notes;
 
             _dbContext.Jobs.Update(job);
+
+            //Update Tags
+            _tagRepository.UpdateTagsForJob(id, addJobModel.Tags);
 
             var dayJobs = GetDayJobsForJob(id, organizationId);
 

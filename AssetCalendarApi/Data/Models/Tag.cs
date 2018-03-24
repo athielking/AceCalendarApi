@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using AssetCalendarApi.ViewModels;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,11 +10,27 @@ namespace AssetCalendarApi.Data.Models
     public class Tag
     {
         public Guid Id { get; set; }
-        public string MatIcon { get; set; }
+        public string Icon { get; set; }
         public string Description { get; set; }
         public string Color { get; set; }
+        public Guid OrganizationId { get; set; }
 
         [JsonIgnore]
         public ICollection<JobTags> JobTags { get; set; }
+
+        [JsonIgnore]
+        public ICollection<DayJobTag> DayJobTags { get; set; }
+
+        public Organization Organization { get; set; }
+
+        public TagViewModel GetViewModel()
+        {
+            return new TagViewModel() {
+                Id = this.Id,
+                Color = this.Color,
+                Description = this.Description,
+                Icon = this.Icon
+            };
+        }
     }
 }

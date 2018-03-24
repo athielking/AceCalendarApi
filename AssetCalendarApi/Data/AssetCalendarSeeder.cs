@@ -14,9 +14,9 @@ namespace AssetCalendarApi.Data
         #region Constants
 
         const string FiveZeroOneOrganizationName = "501Software";
+        const string itsOrganizationName = "ITS LLC";
 
         const string OrganizationOneName = "Organization1";
-
         const string OrganizationTwoName = "Organization2";
 
         private static class Roles
@@ -67,8 +67,6 @@ namespace AssetCalendarApi.Data
             SeedOrganizations();
 
             await SeedUsers();
-
-            SeedTags();
         }
 
         #endregion
@@ -172,128 +170,68 @@ namespace AssetCalendarApi.Data
         private void SeedOrganizations()
         {
             var fiveZeroOneOrganization = _organizationRepository.GetOrganizationByName(FiveZeroOneOrganizationName);
-            var organizationOne = _organizationRepository.GetOrganizationByName(OrganizationOneName);
-            var organizationTwo = _organizationRepository.GetOrganizationByName(OrganizationTwoName);
+            var itsOrganization = _organizationRepository.GetOrganizationByName(itsOrganizationName);
+            
 
             if (fiveZeroOneOrganization == null)
                 _organizationRepository.AddOrganization(FiveZeroOneOrganizationName);
 
-            if (organizationOne == null)
-                _organizationRepository.AddOrganization(OrganizationOneName);
-
-            if (organizationTwo == null)
-                _organizationRepository.AddOrganization(OrganizationTwoName);
+            if (itsOrganization == null)
+                _organizationRepository.AddOrganization(itsOrganizationName);
         }
 
         private async Task SeedUsers()
         {
             await SeedAdminUser();
-            await SeedUserOne();
-            await SeedUserTwo();
-            await SeedUserThree();
+            await SeedITSUsers();
         }
 
-        private async Task SeedUserOne()
+        private async Task SeedITSUsers()
         {
-            var user = await _userManager.FindByNameAsync("user1");
+            var itsAdmin = await _userManager.FindByNameAsync("itsAdmin");
+            var itsUser = await _userManager.FindByNameAsync("itsUser");
 
-            var organizationOne = _organizationRepository.GetOrganizationByName(OrganizationOneName);
+            var itsOrganization = _organizationRepository.GetOrganizationByName(itsOrganizationName);
 
-            if (user == null)
+            if( itsAdmin == null)
             {
-                user = new CalendarUser()
+                itsAdmin = new CalendarUser()
                 {
-                    FirstName = "User",
-                    LastName = "One",
-                    UserName = "user1",
-                    OrganizationId = organizationOne.Id
+                    FirstName = "ITS Administrator",
+                    UserName = "itsAdmin",
+                    OrganizationId = itsOrganization.Id
                 };
 
-                var result = await _userManager.CreateAsync(user, "P@ssw0rd!");
-
-                if (result != IdentityResult.Success)
+                var result = await _userManager.CreateAsync(itsAdmin, "P@ssw0rd!");
+                if( result != IdentityResult.Success )
                 {
-                    throw new InvalidOperationException("Failed to create default user1");
+                    throw new InvalidOperationException("Failed to create ITS Admin User");
                 }
+
+                if (!_userManager.IsInRoleAsync(itsAdmin, Roles.User).Result)
+                    await _userManager.AddToRoleAsync(itsAdmin, Roles.User);
             }
 
-            if (!_userManager.IsInRoleAsync(user, Roles.User).Result)
-                await _userManager.AddToRoleAsync(user, Roles.User);
-        }
-
-        private async Task SeedUserTwo()
-        {
-            var user = await _userManager.FindByNameAsync("user2");
-
-            var organizationTwo = _organizationRepository.GetOrganizationByName(OrganizationTwoName);
-
-            if (user == null)
+            if( itsUser == null )
             {
-                user = new CalendarUser()
+                itsUser = new CalendarUser()
                 {
-                    FirstName = "User",
-                    LastName = "Two",
-                    UserName = "user2",
-                    OrganizationId = organizationTwo.Id
+                    FirstName = "ITS User",
+                    UserName = "itsUser",
+                    OrganizationId = itsOrganization.Id
                 };
 
-                var result = await _userManager.CreateAsync(user, "P@ssw0rd!");
-
+                var result = await _userManager.CreateAsync(itsUser, "R3@donly$");
                 if (result != IdentityResult.Success)
                 {
-                    throw new InvalidOperationException("Failed to create default user2");
+                    throw new InvalidOperationException("Failed to create ITS User");
                 }
-            }
 
-            if (!_userManager.IsInRoleAsync(user, Roles.Readonly).Result)
-                await _userManager.AddToRoleAsync(user, Roles.Readonly);
-
-        }
-
-        private async Task SeedUserThree()
-        {
-            var user = await _userManager.FindByNameAsync("user3");
-
-            var organizationOne = _organizationRepository.GetOrganizationByName(OrganizationOneName);
-
-            if (user == null)
-            {
-                user = new CalendarUser()
-                {
-                    FirstName = "User",
-                    LastName = "Three",
-                    UserName = "user3",
-                    OrganizationId = organizationOne.Id
-                };
-
-                var result = await _userManager.CreateAsync(user, "P@ssw0rd!");
-
-                if (result != IdentityResult.Success)
-                {
-                    throw new InvalidOperationException("Failed to create default user3");
-                }
-            }
-
-            if (!_userManager.IsInRoleAsync(user, Roles.Readonly).Result)
-                await _userManager.AddToRoleAsync(user, Roles.Readonly);
-
-        }
-
-        private void SeedTags()
-        {
-            var tag = _assetCalendarDbContext.Tags.FirstOrDefault(t => t.MatIcon == "airplanemode_active");
-            if (tag == null)
-            {
-                _assetCalendarDbContext.Tags.Add(new Tag()
-                {
-                    Id = Guid.NewGuid(),
-                    MatIcon = "airplanemode_active",
-                    Description = "Out of Town",
-                    Color = "#8BC34A"
-                });
+                if (!_userManager.IsInRoleAsync(itsUser, Roles.Readonly).Result)
+                    await _userManager.AddToRoleAsync(itsAdmin, Roles.Readonly);
             }
         }
-
+      
         #endregion
     }
 }

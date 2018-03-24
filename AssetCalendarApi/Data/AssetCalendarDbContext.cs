@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.Configuration;
 using AssetCalendarApi.Data.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.AspNetCore.Hosting;
 
 namespace AssetCalendarApi.Data
 {
@@ -12,6 +13,8 @@ namespace AssetCalendarApi.Data
         #region Data Members
 
         private IConfiguration _configuration;
+
+        private IHostingEnvironment _environment;
 
         #endregion
 
@@ -25,6 +28,7 @@ namespace AssetCalendarApi.Data
         public DbSet<DayOffWorker> DayOffWorkers { get; set; }
         public DbSet<Tag> Tags { get; set; }
         public DbSet<JobTags> JobTags { get; set; }
+        public DbSet<DayJobTag> DaysJobsTags { get; set; }
 
         //Views
         public DbSet<JobsByDate> JobsByDate { get; set; }
@@ -33,16 +37,18 @@ namespace AssetCalendarApi.Data
         public DbSet<TimeOffWorkers> TimeOffWorkers { get; set; }
         public DbSet<WorkersByJob> WorkersByJob { get; set; }
         public DbSet<WorkersByJobDate> WorkersByJobDate { get; set; }
+        public DbSet<TagsByJob> TagsByJob { get; set; }
         public DbSet<TagsByJobDate> TagsByJobDate { get; set; }
 
         #endregion
 
         #region Constructor
 
-        public AssetCalendarDbContext(IConfiguration configuration, DbContextOptions dbContextOptions)
+        public AssetCalendarDbContext(IConfiguration configuration, IHostingEnvironment environment, DbContextOptions dbContextOptions)
             : base(dbContextOptions)
         {
             _configuration = configuration;
+            _environment = environment;
         }
 
         #endregion
@@ -53,14 +59,10 @@ namespace AssetCalendarApi.Data
         {
             if (!optionsBuilder.IsConfigured)
             {
-                var server = "snare.arvixe.com";
-                var db = "AssetCalendarDb";
-                var pw = "d70wIakr5oxP";
-                var user = "acecalendar";
-
-
-                var connectionString = $"Server={server}; Database={db}; User Id={user}; Password={pw}; MultipleActiveResultSets=true";
-                optionsBuilder.UseSqlServer(connectionString);
+                if (_environment.IsProduction())
+                    optionsBuilder.UseSqlServer(_configuration.GetConnectionString("AceCalendarDb_Prod"));
+                else
+                    optionsBuilder.UseSqlServer(_configuration.GetConnectionString("AceCalendarDb_Stg"));
             }
         }
 
@@ -140,6 +142,24 @@ namespace AssetCalendarApi.Data
                     .HasConstraintName("FK_JobTags_Tag"); 
             });
 
+            modelBuilder.Entity<DayJobTag>(entity =>
+            {
+                entity.ToTable("DaysJobsTags");
+                entity.Property(e => e.Id).ValueGeneratedNever();
+
+                entity.HasOne(t => t.DayJob)
+                    .WithMany(j => j.DayJobTags)
+                    .HasForeignKey(j => j.IdDayJob)
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("FK_DayJobTag_DayJob");
+
+                entity.HasOne(t => t.Tag)
+                    .WithMany(t => t.DayJobTags)
+                    .HasForeignKey(t => t.IdTag)
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("FK_DayJobTag_Tag");
+            });
+
             modelBuilder.Entity<Worker>(entity =>
             {
                 entity.ToTable("Workers");
@@ -203,34 +223,41 @@ namespace AssetCalendarApi.Data
                 entity.Property(e => e.Id).ValueGeneratedNever();
                 entity.Property(e => e.Description).HasMaxLength(25);
                 entity.Property(e => e.Color).HasMaxLength(10);
+                entity.Property(e => e.Icon).HasMaxLength(50);
+
+                entity.HasOne(d => d.Organization)
+                     .WithMany(t => t.Tags)
+                     .HasForeignKey(d => d.OrganizationId)
+                     .OnDelete(DeleteBehavior.Restrict)
+                     .HasConstraintName("FK_Tags_Organization");
             });
 
-            modelBuilder.Entity<JobsByDate>(entity =>
-            {
-                entity.Property(e => e.Date).HasColumnType("datetime");
-            });
+            //modelBuilder.Entity<JobsByDate>(entity =>
+            //{
+            //    entity.Property(e => e.Date).HasColumnType("datetime");
+            //});
 
-            modelBuilder.Entity<JobsByDateWorker>(entity =>
-            {
-                entity.Property(e => e.Date).HasColumnType("datetime");
-            });
+            //modelBuilder.Entity<JobsByDateWorker>(entity =>
+            //{
+            //    entity.Property(e => e.Date).HasColumnType("datetime");
+            //});
 
-            modelBuilder.Entity<AvailableWorkers>(entity =>
-            {
-                entity.Property(e => e.Date).HasColumnType("datetime");
-            });
+            //modelBuilder.Entity<AvailableWorkers>(entity =>
+            //{
+            //    entity.Property(e => e.Date).HasColumnType("datetime");
+            //});
 
-            modelBuilder.Entity<TimeOffWorkers>(entity =>
-            {
-                entity.Property(e => e.Date).HasColumnType("datetime");
-            });
+            //modelBuilder.Entity<TimeOffWorkers>(entity =>
+            //{
+            //    entity.Property(e => e.Date).HasColumnType("datetime");
+            //});
 
-            modelBuilder.Entity<WorkersByJob>(entity => { });
+            //modelBuilder.Entity<WorkersByJob>(entity => { });
 
-            modelBuilder.Entity<WorkersByJobDate>(entity =>
-            {
-                entity.Property(e => e.Date).HasColumnType("datetime");
-            });
+            //modelBuilder.Entity<WorkersByJobDate>(entity =>
+            //{
+            //    entity.Property(e => e.Date).HasColumnType("datetime");
+            //});
 
         }
 
