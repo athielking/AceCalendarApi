@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.Extensions.Configuration;
 using AssetCalendarApi.Data.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.AspNetCore.Hosting;
 
 namespace AssetCalendarApi.Data
 {
@@ -12,6 +13,8 @@ namespace AssetCalendarApi.Data
         #region Data Members
 
         private IConfiguration _configuration;
+
+        private IHostingEnvironment _environment;
 
         #endregion
 
@@ -41,10 +44,11 @@ namespace AssetCalendarApi.Data
 
         #region Constructor
 
-        public AssetCalendarDbContext(IConfiguration configuration, DbContextOptions dbContextOptions)
+        public AssetCalendarDbContext(IConfiguration configuration, IHostingEnvironment environment, DbContextOptions dbContextOptions)
             : base(dbContextOptions)
         {
             _configuration = configuration;
+            _environment = environment;
         }
 
         #endregion
@@ -55,14 +59,10 @@ namespace AssetCalendarApi.Data
         {
             if (!optionsBuilder.IsConfigured)
             {
-                var server = "snare.arvixe.com";
-                var db = "AssetCalendarDb";
-                var pw = "d70wIakr5oxP";
-                var user = "acecalendar";
-
-
-                var connectionString = $"Server={server}; Database={db}; User Id={user}; Password={pw}; MultipleActiveResultSets=true";
-                optionsBuilder.UseSqlServer(connectionString);
+                if (_environment.IsProduction())
+                    optionsBuilder.UseSqlServer(_configuration.GetConnectionString("AceCalendarDb_Prod"));
+                else
+                    optionsBuilder.UseSqlServer(_configuration.GetConnectionString("AceCalendarDb_Stg"));
             }
         }
 
