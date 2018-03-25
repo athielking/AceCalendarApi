@@ -183,7 +183,7 @@ namespace AssetCalendarApi.Data
         private async Task SeedUsers()
         {
             await SeedAdminUser();
-            await SeedITSUsers();
+            //await SeedITSUsers();
         }
 
         private async Task SeedITSUsers()

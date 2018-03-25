@@ -83,8 +83,8 @@ namespace AssetCalendarApi
 
             services.AddMvc(options =>
             {
-                //if (_hostingEnvironment.IsProduction())
-                //    options.Filters.Add(new RequireHttpsAttribute());
+                if (_hostingEnvironment.IsProduction())
+                    options.Filters.Add(new RequireHttpsAttribute());
             }).AddJsonOptions(jsonOptions =>
             {
                 jsonOptions.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
