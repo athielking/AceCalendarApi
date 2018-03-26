@@ -145,6 +145,8 @@ namespace AssetCalendarApi
                 config.CreateMap<WorkersByJobDate, Worker>();
                 config.CreateMap<TagsByJob, TagViewModel>();
                 config.CreateMap<TagsByJobDate, TagViewModel>();
+                config.CreateMap<CalendarUser, UserViewModel>().ReverseMap();
+                config.CreateMap<Organization, OrganizationViewModel>().ReverseMap();
             });
         }
 
