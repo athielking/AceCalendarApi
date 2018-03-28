@@ -49,11 +49,28 @@ namespace AssetCalendarApi.Repository
                 .Include(o => o.CalendarUsers)
                 .SingleOrDefault(organization => organization.Id == id);
 
-            return new OrganizationViewModel() {
-                Id = org.Id,
-                Name = org.Name,
-                Users = org.CalendarUsers.Select(u => AutoMapper.Mapper.Map<UserViewModel>(u))
-            };
+            var rolesByUser = _dbContext.Roles.Join(
+                _dbContext.UserRoles,
+                r => r.Id,
+                u => u.RoleId,
+                (role, userRole) =>
+                    new { userId = userRole.UserId, role = role.Name }).GroupBy(x => x.userId).ToDictionary(group => group.Key, group => group.Select(x => x.role));
+
+            var orgVM = new OrganizationViewModel() { Id = org.Id, Name = org.Name };
+            var users = new List<UserViewModel>();
+            foreach( var user in org.CalendarUsers)
+            {
+                var model = AutoMapper.Mapper.Map<UserViewModel>(user);
+
+                if (rolesByUser.ContainsKey(user.Id))
+                    model.Role = rolesByUser[user.Id].First(); //May need to support multiple roles, but for now we only have singular roles 
+
+                users.Add(model);
+            }
+
+            orgVM.Users = users;
+
+            return orgVM;
         }
 
         public Organization EditOrganization(Guid id, string name)
