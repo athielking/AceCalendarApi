@@ -73,6 +73,11 @@ namespace AssetCalendarApi.Repository
                 .Select(j => AutoMapper.Mapper.Map<Job>(j));
         }
 
+        public IEnumerable<DayJob> GetJobDaysForJob(Guid jobId, Guid organizationId)
+        {
+            return _dbContext.DaysJobs.Where(dj => dj.IdJob == jobId);
+        }
+
         public IQueryable<DayJob> GetDayJobsForDay(DateTime date, Guid organizationId)
         {
             return GetJobsByOrganization(organizationId)
@@ -143,13 +148,13 @@ namespace AssetCalendarApi.Repository
             foreach (var tag in addJobModel.Tags)
                 _tagRepository.AddTagToJob(tag.Id, job.Id);
 
-            for (var date = addJobModel.StartDate.Date; date <= addJobModel.EndDate; date = date.AddDays(1))
+            foreach (var date in addJobModel.JobDays)
             {
                 var dayJob = new DayJob()
                 {
                     Id = Guid.NewGuid(),
                     IdJob = job.Id,
-                    Date = date
+                    Date = date.Date
                 };
 
                 _dbContext.DaysJobs.Add(dayJob);
@@ -193,7 +198,7 @@ namespace AssetCalendarApi.Repository
             //Delete Day Jobs that are not in the new range
             foreach( var dayJob in dayJobs )
             {
-                if (addJobModel.StartDate.Date <= dayJob.Date.Date && dayJob.Date.Date <= addJobModel.EndDate.Value.Date)
+                if (addJobModel.JobDays.Any( d => dayJob.Date.Date == d.Date ))
                     continue;
 
                 _dbContext.DaysJobs.Remove(dayJob);
@@ -202,7 +207,7 @@ namespace AssetCalendarApi.Repository
             var dayJobDates = dayJobs.Select(dayJob => dayJob.Date.Date);
 
             //Create Day Jobs for the new range
-            for (var date = addJobModel.StartDate.Date; date <= addJobModel.EndDate; date = date.AddDays(1))
+            foreach (var date in addJobModel.JobDays)
             {
                 if (dayJobDates.Contains(date.Date))
                     continue;

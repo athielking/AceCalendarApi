@@ -29,27 +29,9 @@ namespace AssetCalendarApi.ViewModels
             set;
         }
 
-        [Required]
-        public DateTime StartDate
-        {
-            get;
-            set;
-        }
-
-        private DateTime? _endDate;
-        public DateTime? EndDate
-        {
-            get
-            {
-                return _endDate ?? StartDate;
-            }
-            set
-            {
-                _endDate = value;
-            }
-        } 
-
         public IEnumerable<TagViewModel> Tags { get; set; }
+
+        public IEnumerable<DateTime> JobDays { get; set; }
         #endregion
     }
 }

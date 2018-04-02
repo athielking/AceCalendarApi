@@ -145,6 +145,21 @@ namespace AssetCalendarApi.Controllers
             }
         }
 
+        [HttpGet]
+        [Route("getJobDays")]
+        public IActionResult GetJobDays(Guid jobId)
+        {
+            try
+            {
+                return SuccessResult(_jobRepository.GetJobDaysForJob(jobId, CalendarUser.OrganizationId).Select( j => j.Date.Date));
+            }
+            catch
+            {
+                return BadRequest("Failed to Get Job Start and End Date");
+            }
+        }
+
+
         [HttpPost]
         [Authorize(Roles = "Admin, User")]
         public IActionResult Post([FromBody]AddJobModel job)
