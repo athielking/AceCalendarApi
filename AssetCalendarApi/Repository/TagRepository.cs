@@ -30,7 +30,7 @@ namespace AssetCalendarApi.Repository
 
         public IEnumerable<TagViewModel> GetAllTags(Guid organizationId)
         {
-            return _dbContext.Tags.Select(t => t.GetViewModel());
+            return _dbContext.Tags.Select(t => t.GetViewModel(false));
         }
 
         public Tag GetTag( Guid id, Guid organizationId)

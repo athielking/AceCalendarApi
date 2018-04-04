@@ -34,7 +34,7 @@ namespace AssetCalendarApi.Repository
         #endregion
 
         #region Private Methods
-      
+
         private IQueryable<Job> GetJobsByOrganization(Guid organizationId)
         {
             return _dbContext.Jobs
@@ -89,7 +89,7 @@ namespace AssetCalendarApi.Repository
         public Dictionary<DateTime, IEnumerable<Job>> GetJobsForMonth(DateTime month, Guid organizationId)
         {
             return _dbContext.JobsByDate
-                .Where(j => j.OrganizationId == organizationId && j.Date.Month == month.Month )
+                .Where(j => j.OrganizationId == organizationId && j.Date.Month == month.Month)
                 .GroupBy(j => j.Date)
                 .ToDictionary(group => group.Key, group => group.Select(g => AutoMapper.Mapper.Map<Job>(g)));
         }
@@ -124,12 +124,61 @@ namespace AssetCalendarApi.Repository
         public Dictionary<DateTime, IEnumerable<Job>> GetJobsForWeekByWorker(DateTime week, Guid organizationId, Guid idWorker)
         {
             return _dbContext.JobsByDateWorker.Where(
-                j => j.OrganizationId == organizationId && 
-                    j.Date >= week.StartOfWeek() && j.Date <= week.EndOfWeek() && 
+                j => j.OrganizationId == organizationId &&
+                    j.Date >= week.StartOfWeek() && j.Date <= week.EndOfWeek() &&
                     j.IdWorker == idWorker
                 )
                 .GroupBy(j => j.Date)
                 .ToDictionary(group => group.Key, group => group.Select(g => AutoMapper.Mapper.Map<Job>(g)));
+        }
+
+        public void CopyCalendarDay(Guid organizationId, DateTime dateFrom, DateTime dateTo)
+        {
+            var dayJobsToDelete = GetDayJobsForDay(dateTo, organizationId);
+            foreach (var toDelete in dayJobsToDelete)
+            {
+                _dbContext.DaysJobs.Remove(toDelete);
+            }
+
+            var copyFrom = _dbContext.DaysJobs
+                .Include(dj => dj.DayJobTags)
+                .Include(dj => dj.DayJobWorkers)
+                .Include(dj => dj.Job)
+                .Where(dj => dj.Job.OrganizationId == organizationId && dj.Date.Date == dateFrom.Date);
+
+            foreach (var dayJob in copyFrom)
+            {
+                var newDayJob = new DayJob()
+                {
+                    Id = Guid.NewGuid(),
+                    Date = dateTo,
+                    IdJob = dayJob.IdJob
+                };
+
+                _dbContext.DaysJobs.Add(newDayJob);
+
+                foreach (var dayJobWorker in dayJob.DayJobWorkers)
+                {
+                    _dbContext.DaysJobsWorkers.Add(new DayJobWorker()
+                    {
+                        Id = Guid.NewGuid(),
+                        IdDayJob = newDayJob.Id,
+                        IdWorker = dayJobWorker.IdWorker
+                    });
+                }
+
+                foreach (var dayJobTag in dayJob.DayJobTags)
+                {
+                    _dbContext.DaysJobsTags.Add(new DayJobTag()
+                    {
+                        Id = Guid.NewGuid(),
+                        IdDayJob = newDayJob.Id,
+                        IdTag = dayJobTag.IdTag
+                    });
+                }
+            }
+
+            _dbContext.SaveChanges();
         }
 
         public Job AddJob(AddJobModel addJobModel, Guid organizationId)
@@ -196,9 +245,9 @@ namespace AssetCalendarApi.Repository
             var dayJobs = GetDayJobsForJob(id, organizationId);
 
             //Delete Day Jobs that are not in the new range
-            foreach( var dayJob in dayJobs )
+            foreach (var dayJob in dayJobs)
             {
-                if (addJobModel.JobDays.Any( d => dayJob.Date.Date == d.Date ))
+                if (addJobModel.JobDays.Any(d => dayJob.Date.Date == d.Date))
                     continue;
 
                 _dbContext.DaysJobs.Remove(dayJob);
@@ -252,7 +301,7 @@ namespace AssetCalendarApi.Repository
                 _dbContext.DaysJobsWorkers.Add(jobDayWorker);
             }
 
-            if(save)
+            if (save)
                 _dbContext.SaveChanges();
         }
 
@@ -297,7 +346,7 @@ namespace AssetCalendarApi.Repository
             var toJob = jobsOnDay.FirstOrDefault(j => j.IdJob == idJob);
 
             var dayOff = _dbContext.DayOffWorkers.FirstOrDefault(dow => dow.IdWorker == idWorker && dow.Date.Date == date.Date);
-            if(dayOff != null)
+            if (dayOff != null)
                 _dbContext.DayOffWorkers.Remove(dayOff);
 
             if (fromJob != null)
@@ -321,7 +370,7 @@ namespace AssetCalendarApi.Repository
             var jobsOnDay = _dbContext.DaysJobs.Include(dj => dj.DayJobWorkers).Where(dj => dj.Date.Date == date.Date);
 
             var fromJob = jobsOnDay.FirstOrDefault(dj => dj.DayJobWorkers.Any(djw => djw.IdWorker == idWorker));
-          
+
             if (fromJob != null)
             {
                 var existingWorkerDay = fromJob.DayJobWorkers.FirstOrDefault(djw => djw.IdWorker == idWorker);
@@ -357,7 +406,7 @@ namespace AssetCalendarApi.Repository
             _dbContext.SaveChanges();
         }
 
-        public void SaveNotes(Guid idJob, Guid organizationId, string notes )
+        public void SaveNotes(Guid idJob, Guid organizationId, string notes)
         {
             var job = GetJob(idJob, organizationId);
 

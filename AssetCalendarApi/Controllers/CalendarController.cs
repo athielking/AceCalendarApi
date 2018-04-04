@@ -162,6 +162,14 @@ namespace AssetCalendarApi.Controllers
             }
         }
 
+        [HttpPost]
+        [Route("copyCalendarDay")]
+        public IActionResult CopyCalendarDay( DateTime dateFrom, DateTime dateTo)
+        {
+            _jobRepository.CopyCalendarDay(CalendarUser.OrganizationId, dateFrom, dateTo);
+
+            return GetDataForWeek(dateFrom, null);
+        }
         #endregion
     }
 }

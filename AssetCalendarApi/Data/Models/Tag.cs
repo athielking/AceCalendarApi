@@ -23,13 +23,14 @@ namespace AssetCalendarApi.Data.Models
 
         public Organization Organization { get; set; }
 
-        public TagViewModel GetViewModel()
+        public TagViewModel GetViewModel(bool fromJobDay = false)
         {
             return new TagViewModel() {
                 Id = this.Id,
                 Color = this.Color,
                 Description = this.Description,
-                Icon = this.Icon
+                Icon = this.Icon,
+                FromJobDay = fromJobDay
             };
         }
     }
