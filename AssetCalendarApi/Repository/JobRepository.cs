@@ -314,9 +314,11 @@ namespace AssetCalendarApi.Repository
             _dbContext.SaveChanges();
         }
 
-        public void MoveWorkerToAllDaysOnJob(Guid jobId, Guid workerId, Guid organizationId)
+        public void MoveWorkerToAllDaysOnJob(Guid jobId, Guid workerId, DateTime viewDate, Guid organizationId)
         {
-            var jobDays = _dbContext.DaysJobs.Where(d => d.IdJob == jobId);
+            var start = viewDate.StartOfWeek();
+            var end = viewDate.EndOfWeek();
+            var jobDays = _dbContext.DaysJobs.Where(d => d.IdJob == jobId && d.Date.Date >= start.Date && d.Date.Date <= end.Date);
 
             foreach (var jobDay in jobDays)
                 MoveWorkerToJob(jobId, workerId, jobDay.Date, organizationId, false);
@@ -324,10 +326,13 @@ namespace AssetCalendarApi.Repository
             _dbContext.SaveChanges();
         }
 
-        public void MoveWorkerToAllAvailableDaysOnJob(Guid jobId, Guid workerId, DateTime date, Guid organizationId)
+        public void MoveWorkerToAllAvailableDaysOnJob(Guid jobId, Guid workerId, DateTime date, DateTime viewDate, Guid organizationId)
         {
-            var jobDays = _dbContext.DaysJobs.Where(d => d.IdJob == jobId);
-            var workingDays = _dbContext.DaysJobsWorkers.Include(djw => djw.DayJob).Where(djw => djw.IdWorker == workerId).Select(djw => djw.DayJob).Where(dj => dj.Date.Date != date.Date);
+            var start = viewDate.StartOfWeek();
+            var end = viewDate.EndOfWeek();
+
+            var jobDays = _dbContext.DaysJobs.Where(d => d.IdJob == jobId && d.Date.Date >= start.Date && d.Date.Date <= end.Date);
+            var workingDays = _dbContext.DaysJobsWorkers.Include(djw => djw.DayJob).Where(djw => djw.IdWorker == workerId).Select(djw => djw.DayJob).Where(dj => dj.Date.Date != date.Date );
 
             var availableDays = jobDays.Where(d => !workingDays.Any(wd => wd.Date.Date == d.Date.Date));
 

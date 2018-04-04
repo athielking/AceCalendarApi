@@ -27,6 +27,8 @@ namespace AssetCalendarApi.ViewModels
             set;
         } 
         
+        public DateTime? ViewDate { get; set; }
+
         public AddWorkerOption AddWorkerOption
         {
             get;
