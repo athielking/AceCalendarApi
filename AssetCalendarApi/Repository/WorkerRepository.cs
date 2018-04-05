@@ -77,8 +77,9 @@ namespace AssetCalendarApi.Repository
 
         public Dictionary<DateTime, IEnumerable<Worker>> GetAvailableWorkersForMonth(Guid organizationId, DateTime dateInMonth)
         {
-            var startOfMonth = new DateTime(dateInMonth.Year, dateInMonth.Month, 1);
-            var endOfMonth = startOfMonth.AddMonths(1).AddDays(-1);
+            //Need to always fill out the entire week of the start and end of the month
+            var startOfMonth = new DateTime(dateInMonth.Year, dateInMonth.Month, 1).StartOfWeek();
+            var endOfMonth = startOfMonth.AddMonths(1).AddDays(-1).EndOfWeek();
 
             return GetAvailableWorkersForDates(organizationId, startOfMonth, endOfMonth);
         }
@@ -104,8 +105,9 @@ namespace AssetCalendarApi.Repository
 
         public Dictionary<DateTime, IEnumerable<Worker>> GetOffWorkersForMonth(Guid organizationId, DateTime dateInMonth)
         {
-            var startOfMonth = new DateTime(dateInMonth.Year, dateInMonth.Month, 1);
-            var endOfMonth = startOfMonth.AddMonths(1).AddDays(-1);
+            //Need to always fill out the entire week of the start and end of the month
+            var startOfMonth = new DateTime(dateInMonth.Year, dateInMonth.Month, 1).StartOfWeek();
+            var endOfMonth = startOfMonth.AddMonths(1).AddDays(-1).EndOfWeek();
 
             return GetOffWorkersForDates(organizationId, startOfMonth, endOfMonth);
         }

@@ -88,8 +88,12 @@ namespace AssetCalendarApi.Repository
 
         public Dictionary<DateTime, IEnumerable<Job>> GetJobsForMonth(DateTime month, Guid organizationId)
         {
+            //Need the calendar to show from sunday to saturday regardless of month
+            DateTime monthStart = new DateTime(month.Year, month.Month, 1).StartOfWeek();
+            DateTime monthEnd = monthStart.AddMonths(1).AddDays(-1).EndOfWeek();
+
             return _dbContext.JobsByDate
-                .Where(j => j.OrganizationId == organizationId && j.Date.Month == month.Month)
+                .Where(j => j.OrganizationId == organizationId && j.Date >= monthStart && j.Date <= monthEnd )
                 .GroupBy(j => j.Date)
                 .ToDictionary(group => group.Key, group => group.Select(g => AutoMapper.Mapper.Map<Job>(g)));
         }
