@@ -262,6 +262,34 @@ namespace AssetCalendarApi.Controllers
             }
         }
 
+        [HttpDelete("deleteDayJob/{id}/{date}")]
+        public IActionResult DeleteDayJob(Guid id, DateTime date)
+        {
+            try
+            {
+                _jobRepository.DeleteDayJob(id, date, CalendarUser.OrganizationId);
+                return Ok();
+            }
+            catch
+            {
+                return BadRequest(GetErrorMessageObject("Failed to Delete Job Day"));
+            }
+        }
+
+        [HttpDelete("deleteJobs/{date}")]
+        public IActionResult DeleteJobsFromDay(DateTime date)
+        {
+            try
+            {
+                _jobRepository.DeleteJobsFromDay(date, CalendarUser.OrganizationId);
+                return Ok();
+            }
+            catch
+            {
+                return BadRequest(GetErrorMessageObject("Failed to Delete Jobs from Day"));
+            }
+        }
+
         [HttpPost("saveNotes/{id}")]
         public IActionResult SaveNotes(Guid id, [FromBody]SaveNotesRequestViewModel saveNotesRequestViewModel)
         {

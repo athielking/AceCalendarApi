@@ -314,6 +314,27 @@ namespace AssetCalendarApi.Repository
             _dbContext.SaveChanges();
         }
 
+        public void DeleteDayJob( Guid idJob, DateTime date, Guid organizationid)
+        {
+            var dayJob = _dbContext.DaysJobs.FirstOrDefault(dj => dj.IdJob == idJob && dj.Date.Date == date.Date);
+
+            if (dayJob == null)
+                throw new InvalidOperationException("Unable to locate day job");
+
+            _dbContext.DaysJobs.Remove(dayJob);
+            _dbContext.SaveChanges();
+        }
+
+        public void DeleteJobsFromDay( DateTime date, Guid organizationId)
+        {
+            var dayJobs = _dbContext.DaysJobs.Include(dj => dj.Job).Where(dj => dj.Job.OrganizationId == organizationId && dj.Date.Date == date.Date);
+
+            foreach (var dj in dayJobs)
+                _dbContext.DaysJobs.Remove(dj);
+
+            _dbContext.SaveChanges();
+        }
+
         public void MoveWorkerToAllDaysOnJob(Guid jobId, Guid workerId, DateTime viewDate, Guid organizationId)
         {
             var start = viewDate.StartOfWeek();
