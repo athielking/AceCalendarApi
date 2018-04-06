@@ -161,7 +161,6 @@ namespace AssetCalendarApi.Controllers
 
 
         [HttpPost]
-        [Authorize(Roles = "Admin, User")]
         public IActionResult Post([FromBody]AddJobModel job)
         {
             try
