@@ -9,6 +9,8 @@ namespace AssetCalendarApi.ViewModels
     public class AddJobModel
     {
         #region Properties
+        
+        public string Id { get; set; }
 
         public string Number
         {

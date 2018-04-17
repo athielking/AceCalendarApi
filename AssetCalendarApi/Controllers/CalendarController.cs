@@ -50,35 +50,11 @@ namespace AssetCalendarApi.Controllers
                 if (date.Year < 1900)
                     return BadRequest("Invalid Date");
 
-                var jobsByDate = idWorker == null ?
-                    _jobRepository.GetJobsForMonth(date, CalendarUser.OrganizationId) :
-                    _jobRepository.GetJobsForMonthByWorker(date, CalendarUser.OrganizationId, idWorker.Value);
-
-                var workersByDate = _workerRepository.GetAvailableWorkersForMonth(CalendarUser.OrganizationId, date);
-                var timeOffWorkers = _workerRepository.GetOffWorkersForMonth(CalendarUser.OrganizationId, date);
-
                 //Need the calendar to show from sunday to saturday regardless of month
                 DateTime monthStart = new DateTime(date.Year, date.Month, 1);
                 DateTime monthEnd = monthStart.AddMonths(1).AddDays(-1).EndOfWeek();
 
-                Dictionary<DateTime, DayViewModel> monthData = new Dictionary<DateTime, DayViewModel>();
-                for (DateTime d = monthStart.StartOfWeek(); d <= monthEnd; d = d.AddDays(1))
-                {
-                    DayViewModel vm = new DayViewModel()
-                    {
-                        Date = d,
-                        AvailableWorkers = workersByDate.ContainsKey(d) ? workersByDate[d] : Enumerable.Empty<Worker>(),
-                        Jobs = jobsByDate.ContainsKey(d) ? jobsByDate[d] : Enumerable.Empty<Job>(),
-                        TimeOffWorkers = timeOffWorkers.ContainsKey(d) ? timeOffWorkers[d] : Enumerable.Empty<Worker>()
-                    };
-
-                    vm.WorkersByJob = _workerRepository.GetWorkersByJob(d, CalendarUser.OrganizationId);
-                    vm.TagsByJob = _tagRepository.GetTagsByJob(d, CalendarUser.OrganizationId);
-
-                    monthData.Add(d, vm);
-                }
-
-                return SuccessResult(monthData);
+                return SuccessResult(GetDataForRange(monthStart, monthEnd, idWorker));
             }
             catch
             {
@@ -95,30 +71,10 @@ namespace AssetCalendarApi.Controllers
                 if (date.Year < 1900)
                     return BadRequest("Invalid Date");
 
-                var jobsByDate = idWorker == null ?
-                    _jobRepository.GetJobsForWeek(date, CalendarUser.OrganizationId) :
-                    _jobRepository.GetJobsForWeekByWorker(date, CalendarUser.OrganizationId, idWorker.Value);
-
-                var workersByDate = _workerRepository.GetAvailableWorkersForWeek(CalendarUser.OrganizationId, date);
-                var offByDate = _workerRepository.GetOffWorkersForWeek(CalendarUser.OrganizationId, date);
-
-                Dictionary<DateTime, DayViewModel> monthData = new Dictionary<DateTime, DayViewModel>();
-                for (DateTime d = date.StartOfWeek(); d <= date.EndOfWeek(); d = d.AddDays(1))
-                {
-                    DayViewModel vm = new DayViewModel()
-                    {
-                        Date = d,
-                        AvailableWorkers = ( workersByDate.ContainsKey(d) ? workersByDate[d] : Enumerable.Empty<Worker>() ).OrderBy(worker => worker.FullName),
-                        TimeOffWorkers = ( offByDate.ContainsKey(d) ? offByDate[d] : Enumerable.Empty<Worker>() ).OrderBy(worker => worker.FullName),
-                        Jobs = ( jobsByDate.ContainsKey(d) ? jobsByDate[d] : Enumerable.Empty<Job>() ).OrderBy( job => job.Name )
-                    };
-                    vm.WorkersByJob = _workerRepository.GetWorkersByJob(d, CalendarUser.OrganizationId);
-                    vm.TagsByJob = _tagRepository.GetTagsByJob(d, CalendarUser.OrganizationId);
-
-                    monthData.Add(d, vm);
-                }
-
-                return SuccessResult(monthData);
+                DateTime weekStart = date.StartOfWeek();
+                DateTime weekEnd = date.EndOfWeek();
+              
+                return SuccessResult(GetDataForRange(weekStart, weekEnd, idWorker));
             }
             catch
             {
@@ -135,26 +91,7 @@ namespace AssetCalendarApi.Controllers
                 if (date.Year < 1900)
                     return BadRequest("Invalid Date");
 
-                var jobs = idWorker == null ? 
-                    _jobRepository.GetJobsForDay(date, CalendarUser.OrganizationId) : 
-                    _jobRepository.GetJobsForDayByWorker(date, CalendarUser.OrganizationId, idWorker.Value);
-
-                var workers = _workerRepository.GetAvailableWorkersForDay(CalendarUser.OrganizationId, date);
-                var offByDate = _workerRepository.GetOffWorkersForDates(CalendarUser.OrganizationId, date, date);
-                var workersByJob = _workerRepository.GetWorkersByJob(date, CalendarUser.OrganizationId);
-                var tagsByJob = _tagRepository.GetTagsByJob(date, CalendarUser.OrganizationId);
-                var dayData = new Dictionary<DateTime, DayViewModel>();
-                dayData.Add(date, new DayViewModel()
-                {
-                    Date = date,
-                    AvailableWorkers = workers,
-                    Jobs = jobs,
-                    WorkersByJob = workersByJob,
-                    TagsByJob = tagsByJob,
-                    TimeOffWorkers = (offByDate.ContainsKey(date.Date) ? offByDate[date.Date] : Enumerable.Empty<Worker>()).OrderBy(worker => worker.FullName),
-                });
-
-                return SuccessResult(dayData);
+                return SuccessResult(GetDataForRange(date, null, idWorker));
             }
             catch
             {
@@ -162,13 +99,50 @@ namespace AssetCalendarApi.Controllers
             }
         }
 
+        [HttpGet]
+        [Route("getRange")]
+        public IActionResult GetDataForRange( DateTime date, DateTime? endDate, Guid? idWorker)
+        {
+            var jobsByDate = _jobRepository.GetJobsForRange(CalendarUser.OrganizationId, date, endDate, idWorker);
+
+            var workersByDate = _workerRepository.GetAvailableWorkersForDates(CalendarUser.OrganizationId, date, endDate);
+            var offByDate = _workerRepository.GetOffWorkersForDates(CalendarUser.OrganizationId, date, endDate);
+
+            var end = endDate.HasValue ? endDate.Value : date;
+
+            Dictionary<DateTime, DayViewModel> result = new Dictionary<DateTime, DayViewModel>();
+            for (DateTime d = date.Date; d <= end.Date; d = d.AddDays(1))
+            {
+                DayViewModel vm = new DayViewModel()
+                {
+                    Date = d,
+                    AvailableWorkers = (workersByDate.ContainsKey(d) ? workersByDate[d] : Enumerable.Empty<Worker>()).OrderBy(worker => worker.FullName),
+                    TimeOffWorkers = (offByDate.ContainsKey(d) ? offByDate[d] : Enumerable.Empty<Worker>()).OrderBy(worker => worker.FullName),
+                    Jobs = (jobsByDate.ContainsKey(d) ? jobsByDate[d] : Enumerable.Empty<Job>()).OrderBy(job => job.Name)
+                };
+                vm.WorkersByJob = _workerRepository.GetWorkersByJob(d, CalendarUser.OrganizationId);
+                vm.TagsByJob = _tagRepository.GetTagsByJob(d, CalendarUser.OrganizationId);
+
+                result.Add(d, vm);
+            }
+
+            return SuccessResult(result);
+        }
+
         [HttpPost]
         [Route("copyCalendarDay")]
         public IActionResult CopyCalendarDay( DateTime dateFrom, DateTime dateTo)
         {
-            _jobRepository.CopyCalendarDay(CalendarUser.OrganizationId, dateFrom, dateTo);
+            try
+            {
+                _jobRepository.CopyCalendarDay(CalendarUser.OrganizationId, dateFrom, dateTo);
 
-            return GetDataForWeek(dateFrom, null);
+                return Ok();
+            }
+            catch(Exception ex)
+            {
+                return BadRequest(GetErrorMessageObject("Failed to Copy Calendar Day"));
+            }
         }
         #endregion
     }
