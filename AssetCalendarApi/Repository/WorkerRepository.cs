@@ -51,14 +51,59 @@ namespace AssetCalendarApi.Repository
         public Worker GetWorker(Guid id, Guid organizationId)
         {
             return GetWorkersByOrganization(organizationId)
-                .Include( w => w.DayOffWorkers )
-                .Include( w => w.DayJobWorkers )
-                .ThenInclude( djw => djw.DayJob )
-                .ThenInclude( dj => dj.Job )
+                //.Include( w => w.DayOffWorkers )
+                //.Include( w => w.DayJobWorkers )
+                //.ThenInclude( djw => djw.DayJob )
+                //.ThenInclude( dj => dj.Job )
                 .AsExpandable()
                 .FirstOrDefault(w => w.Id == id);
         }
 
+        public IEnumerable<DayOffWorker> GetTimeOffForMonth(Guid workerId, DateTime date, Guid organizationId)
+        {
+            return _dbContext.DayOffWorkers
+                .Include( dayOffWorker => dayOffWorker.Worker )
+                .Where
+                ( 
+                    dayOffWorker => 
+                        dayOffWorker.IdWorker == workerId &&
+                        dayOffWorker.Date.Month == date.Month &&
+                        dayOffWorker.Date.Year == date.Year &&
+                        dayOffWorker.Worker.OrganizationId == organizationId 
+                );
+        }
+
+        public DayOffWorker GetTimeOffForDay(Guid workerId, DateTime date, Guid organizationId)
+        {
+            return _dbContext.DayOffWorkers
+                .Include(dayOffWorker => dayOffWorker.Worker)
+                .SingleOrDefault
+                (
+                    dayOffWorker =>
+                        dayOffWorker.IdWorker == workerId &&
+                        dayOffWorker.Date.Day == date.Day &&
+                        dayOffWorker.Date.Month == date.Month &&
+                        dayOffWorker.Date.Year == date.Year &&
+                        dayOffWorker.Worker.OrganizationId == organizationId
+                );
+        }
+
+        public IEnumerable<DayJobWorker> GetJobsForMonth(Guid id, DateTime date, Guid organizationId)
+        {
+            return _dbContext.DaysJobsWorkers
+                .Include(dayJobWorker => dayJobWorker.Worker )
+                .Include( dayJobWorker => dayJobWorker.DayJob)
+                .ThenInclude( daysJob => daysJob.Job )
+                .Where
+                ( 
+                    dayJobWorker =>
+                        dayJobWorker.Worker.Id == id &&
+                        dayJobWorker.DayJob.Date.Month == date.Month &&
+                        dayJobWorker.DayJob.Date.Year == date.Year &&
+                        dayJobWorker.Worker.OrganizationId == organizationId 
+                );
+        }
+ 
         public Worker GetWorkerWithJobs(Guid id, Guid organizationId)
         {
             return GetWorkersByOrganization(organizationId)
@@ -188,50 +233,45 @@ namespace AssetCalendarApi.Repository
             _dbContext.SaveChanges();
         }
 
-        public Worker AddTimeOff(DateRangeViewModel model, Guid organizationId)
+        public void DeleteTimeOff(Guid workerId, DateTime date, Guid organizationId)
         {
-            var worker = GetWorker(model.Id, organizationId);
+            var timeOff = GetTimeOffForDay(workerId, date, organizationId);
 
-            _dbContext.Attach(worker);
+            if (timeOff == null)
+                throw new ApplicationException("Time Off Entry not Found");
 
-            var end = model.End ?? model.Date;
-
-            foreach(var d in model.Date.GetDatesTo(end) )
-            {
-                var dayOff = new DayOffWorker()
-                {
-                    Id = Guid.NewGuid(),
-                    Date = d,
-                    IdWorker = model.Id
-                };
-
-                if( !worker.DayOffWorkers.Any( off => off.Date.Date == d.Date ))
-                    worker.DayOffWorkers.Add( dayOff );
-            }
-
+            _dbContext.DayOffWorkers.Remove(timeOff);
             _dbContext.SaveChanges();
-
-            return worker;
         }
 
-        public Worker DeleteTimeOff(DateRangeViewModel model, Guid organizationId)
-        {
-            var worker = GetWorker(model.Id, organizationId);
-            _dbContext.Attach(worker);
+        //public Worker AddTimeOff(DateRangeViewModel model, Guid organizationId)
+        //{
+        //    var worker = GetWorker(model.Id, organizationId);
 
-            var end = model.End ?? model.Date;
+        //    _dbContext.Attach(worker);
 
-            foreach (var d in model.Date.GetDatesTo(end))
-            {
-                var off = worker.DayOffWorkers.FirstOrDefault(dow => dow.Date.Date == d.Date);
-                if (off != null)
-                    worker.DayOffWorkers.Remove(off);
-            }
+        //    var end = model.End ?? model.Date;
 
-            _dbContext.SaveChanges();
+        //    foreach(var d in model.Date.GetDatesTo(end) )
+        //    {
+        //        var dayOff = new DayOffWorker()
+        //        {
+        //            Id = Guid.NewGuid(),
+        //            Date = d,
+        //            IdWorker = model.Id
+        //        };
 
-            return worker;
-        }
+        //        if( !worker.DayOffWorkers.Any( off => off.Date.Date == d.Date ))
+        //            worker.DayOffWorkers.Add( dayOff );
+        //    }
+
+        //    _dbContext.SaveChanges();
+
+        //    return worker;
+        //}
+
+
+
         #endregion
     }
 }
