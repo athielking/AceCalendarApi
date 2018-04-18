@@ -81,6 +81,47 @@ namespace AssetCalendarApi.Controllers
             //}
         }
 
+        [HttpGet]
+        [Route("getTimeOffForMonth")]
+        public IActionResult GetTimeOffForMonth(Guid id, DateTime date)
+        {
+            try
+            {
+                var timeOffForMonth = _workerRepository.GetTimeOffForMonth(id, date, CalendarUser.OrganizationId).ToList();
+
+                return SuccessResult(timeOffForMonth);
+            }
+            catch
+            {
+                return BadRequest(GetErrorMessageObject("Failed to Get Time Off for Month"));
+            }
+        }
+
+        [HttpGet]
+        [Route("getJobsForMonth")]
+        public IActionResult GetJobsForMonth(Guid id, DateTime date)
+        {
+            try
+            {
+                var jobsForMonth = _workerRepository.GetJobsForMonth(id, date, CalendarUser.OrganizationId).Select(dayJobWorker =>
+                {
+                    return new JobByDateModel()
+                    {
+                        Date = dayJobWorker.DayJob.Date,
+                        JobName = dayJobWorker.DayJob.Job.Name,
+                        JobNumber = dayJobWorker.DayJob.Job.Number
+                    };
+
+                }).ToList();
+
+                return SuccessResult(jobsForMonth);
+            }
+            catch
+            {
+                return BadRequest(GetErrorMessageObject("Failed to Get Jobs for Month"));
+            }
+        }
+
         [HttpPost]
         public IActionResult Post([FromBody]WorkerViewModel worker)
         {
@@ -132,6 +173,21 @@ namespace AssetCalendarApi.Controllers
             }
         }
 
+        [HttpDelete("deleteTimeOff")]
+        public IActionResult DeleteTimeOff(Guid workerId, DateTime date)
+        {
+            try
+            {
+                _workerRepository.DeleteTimeOff(workerId, date, CalendarUser.OrganizationId);
+
+                return Ok();
+            }
+            catch
+            {
+                return BadRequest(GetErrorMessageObject("Failed to Delete Time Off"));
+            }
+        }
+
         [HttpPost("addTimeOff")]
         public IActionResult AddTimeOff([FromBody]DateRangeViewModel model)
         {
@@ -140,10 +196,11 @@ namespace AssetCalendarApi.Controllers
                 if (!ModelState.IsValid)
                     return BadRequest(GetErrorMessageObject(GetModelStateErrors()));
 
-                var worker = _workerRepository.AddTimeOff(model, CalendarUser.OrganizationId);
+                //var worker = _workerRepository.AddTimeOff(model, CalendarUser.OrganizationId);
 
-                return SuccessResult(worker.GetViewModel());
+                return Ok();
 
+                //return SuccessResult(worker.GetViewModel());
             }
             catch
             {
@@ -151,24 +208,6 @@ namespace AssetCalendarApi.Controllers
             }
         }
 
-        [HttpPost("deleteTimeOff")]
-        public IActionResult DeleteTimeOff([FromBody]DateRangeViewModel model)
-        {
-            try
-            {
-                if (!ModelState.IsValid)
-                    return BadRequest(GetErrorMessageObject(GetModelStateErrors()));
-
-                var worker = _workerRepository.DeleteTimeOff(model, CalendarUser.OrganizationId);
-
-                return SuccessResult(worker.GetViewModel());
-
-            }
-            catch
-            {
-                return BadRequest(GetErrorMessageObject("Failed to Add Time Off"));
-            }
-        }
         #endregion
     }
 }

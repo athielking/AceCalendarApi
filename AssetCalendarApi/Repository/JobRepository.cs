@@ -395,7 +395,7 @@ namespace AssetCalendarApi.Repository
             {
                 Id = Guid.NewGuid(),
                 IdWorker = idWorker,
-                Date = date
+                Date = date.Date
             };
 
             _dbContext.DayOffWorkers.Add(dayOff);
