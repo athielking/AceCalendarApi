@@ -188,19 +188,17 @@ namespace AssetCalendarApi.Controllers
             }
         }
 
-        [HttpPost("addTimeOff")]
-        public IActionResult AddTimeOff([FromBody]DateRangeViewModel model)
+        [HttpPost("editTimeOff")]
+        public IActionResult EditTimeOff([FromBody]EditTimeOffModel model)
         {
             try
             {
                 if (!ModelState.IsValid)
                     return BadRequest(GetErrorMessageObject(GetModelStateErrors()));
 
-                //var worker = _workerRepository.AddTimeOff(model, CalendarUser.OrganizationId);
+                _workerRepository.EditTimeOff(model.WorkerId, model.MonthDate, model.TimeOffDates, CalendarUser.OrganizationId);
 
                 return Ok();
-
-                //return SuccessResult(worker.GetViewModel());
             }
             catch
             {
