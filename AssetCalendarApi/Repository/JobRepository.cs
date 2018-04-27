@@ -107,7 +107,7 @@ namespace AssetCalendarApi.Repository
             {
                 return _dbContext.JobsByDateWorker.Where(
                     j => j.OrganizationId == organizationId &&
-                        j.Date >= start && j.Date <= endDate &&
+                        j.Date >= startDate && j.Date <= endDate &&
                         j.IdWorker == idWorker.Value
                     )
                     .GroupBy(j => j.Date)
