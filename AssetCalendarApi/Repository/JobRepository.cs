@@ -139,7 +139,7 @@ namespace AssetCalendarApi.Repository
                 var newDayJob = new DayJob()
                 {
                     Id = Guid.NewGuid(),
-                    Date = dateTo,
+                    Date = dateTo.Date,
                     IdJob = dayJob.IdJob
                 };
 
