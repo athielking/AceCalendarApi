@@ -28,6 +28,7 @@ namespace AssetCalendarApi.Data
         public DbSet<DayOffWorker> DayOffWorkers { get; set; }
         public DbSet<Tag> Tags { get; set; }
         public DbSet<JobTags> JobTags { get; set; }
+        public DbSet<WorkerTags> WorkerTags { get; set; }
         public DbSet<DayJobTag> DaysJobsTags { get; set; }
 
         //Views
@@ -140,6 +141,24 @@ namespace AssetCalendarApi.Data
                     .HasForeignKey(t => t.IdTag)
                     .OnDelete(DeleteBehavior.Cascade)
                     .HasConstraintName("FK_JobTags_Tag"); 
+            });
+
+            modelBuilder.Entity<WorkerTags>(entity =>
+            {
+                entity.ToTable("WorkerTags");
+                entity.Property(e => e.Id).ValueGeneratedNever();
+
+                entity.HasOne(t => t.Worker)
+                    .WithMany(j => j.WorkerTags)
+                    .HasForeignKey(j => j.IdWorker)
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("FK_WorkerTags_Worker");
+
+                entity.HasOne(t => t.Tag)
+                    .WithMany(t => t.WorkerTags)
+                    .HasForeignKey(t => t.IdTag)
+                    .OnDelete(DeleteBehavior.Cascade)
+                    .HasConstraintName("FK_WorkerTags_Tag");
             });
 
             modelBuilder.Entity<DayJobTag>(entity =>

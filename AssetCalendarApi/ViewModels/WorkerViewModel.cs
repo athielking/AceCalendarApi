@@ -1,4 +1,5 @@
 ﻿using AssetCalendarApi.Data.Models;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -12,13 +13,26 @@ namespace AssetCalendarApi.ViewModels
         #region Properties
 
         [Required]
-        public Guid Id { get; set; }
+        public Guid Id
+        {
+            get;
+            set;
+        }
 
         [Required]
         public string FirstName
         {
             get;
             set;
+        }
+
+        [JsonIgnore]
+        public string FullName
+        {
+            get
+            {
+                return string.Format("{0} {1}", FirstName, LastName);
+            }
         }
 
         [Required]
@@ -44,13 +58,12 @@ namespace AssetCalendarApi.ViewModels
             set;
         }
 
-        public IEnumerable<DateTime> TimeOff
+        public List<TagViewModel> Tags
         {
             get;
             set;
         }
 
-        public IEnumerable<Job> Jobs { get; set; }
         #endregion
     }
 }

@@ -19,6 +19,8 @@ namespace AssetCalendarApi.Repository
 
         private readonly JobRepository _jobRepository;
 
+        private readonly TagRepository _tagRepository;
+
         #endregion
 
         #region Constructor
@@ -26,11 +28,13 @@ namespace AssetCalendarApi.Repository
         public WorkerRepository
         (
             AssetCalendarDbContext dbContext,
-            JobRepository jobRepository
+            JobRepository jobRepository,
+            TagRepository tagRepository
         )
         {
             _dbContext = dbContext;
             _jobRepository = jobRepository;
+            _tagRepository = tagRepository;
         }
 
         #endregion
@@ -49,16 +53,16 @@ namespace AssetCalendarApi.Repository
 
         public IQueryable<Worker> GetAllWorkers(Guid organizationId)
         {
-            return GetWorkersByOrganization(organizationId);
+            return GetWorkersByOrganization(organizationId)
+                .Include(w => w.WorkerTags)
+                .ThenInclude(t => t.Tag);
         }
 
         public Worker GetWorker(Guid id, Guid organizationId)
         {
             return GetWorkersByOrganization(organizationId)
-                //.Include( w => w.DayOffWorkers )
-                //.Include( w => w.DayJobWorkers )
-                //.ThenInclude( djw => djw.DayJob )
-                //.ThenInclude( dj => dj.Job )
+                .Include(w => w.WorkerTags)
+                .ThenInclude(t => t.Tag)
                 .AsExpandable()
                 .FirstOrDefault(w => w.Id == id);
         }
@@ -205,7 +209,11 @@ namespace AssetCalendarApi.Repository
             };
 
             _dbContext.Workers.Add(dbWorker);
+
             _dbContext.SaveChanges();
+
+            foreach (var tag in worker.Tags)
+                _tagRepository.AddTagToWorker(tag.Id, dbWorker.Id);
 
             return dbWorker;
         }
@@ -223,6 +231,10 @@ namespace AssetCalendarApi.Repository
             worker.Phone = workerViewModel.Phone;
 
             _dbContext.Workers.Update(worker);
+
+            //Update Tags
+            _tagRepository.UpdateTagsForWorker(id, workerViewModel.Tags);
+
             _dbContext.SaveChanges();
         }
 

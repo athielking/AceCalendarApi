@@ -139,7 +139,7 @@ namespace AssetCalendarApi.Controllers
 
                 return Ok();
             }
-            catch(Exception ex)
+            catch
             {
                 return BadRequest(GetErrorMessageObject("Failed to Copy Calendar Day"));
             }

@@ -43,13 +43,45 @@ namespace AssetCalendarApi.Controllers
         {
             try
             {
-                var tags = _tagRepository.GetAllTags(CalendarUser.OrganizationId).ToList();
+                var tags = _tagRepository.GetAllTags(CalendarUser.OrganizationId).OrderBy(tag => tag.Description).ToList();
 
                 return SuccessResult(tags);
             }
             catch
             {
-                return BadRequest(GetErrorMessageObject("Failed to Get Workers"));
+                return BadRequest(GetErrorMessageObject("Failed to Get Tags"));
+            }
+        }
+
+        [HttpGet]
+        [Route("getJobTags")]
+        public IActionResult GetJobTags()
+        {
+            try
+            {
+                var tags = _tagRepository.GetJobTags(CalendarUser.OrganizationId).OrderBy(tag => tag.Description).ToList();
+
+                return SuccessResult(tags);
+            }
+            catch
+            {
+                return BadRequest(GetErrorMessageObject("Failed to Get Job Tags"));
+            }
+        }
+
+        [HttpGet]
+        [Route("getWorkerTags")]
+        public IActionResult GetWorkerTags()
+        {
+            try
+            {
+                var tags = _tagRepository.GetWorkerTags(CalendarUser.OrganizationId).OrderBy(tag => tag.Description).ToList();
+
+                return SuccessResult(tags);
+            }
+            catch
+            {
+                return BadRequest(GetErrorMessageObject("Failed to Get Worker Tags"));
             }
         }
 
@@ -64,7 +96,7 @@ namespace AssetCalendarApi.Controllers
             }
             catch
             {
-                return BadRequest(GetErrorMessageObject("Failed to Get Worker"));
+                return BadRequest(GetErrorMessageObject("Failed to Get Tags"));
             }
         }
 
@@ -115,7 +147,7 @@ namespace AssetCalendarApi.Controllers
             }
             catch
             {
-                return BadRequest(GetErrorMessageObject("Failed to Delete Worker"));
+                return BadRequest(GetErrorMessageObject("Failed to Delete Tags"));
             }
         }
         

@@ -10,7 +10,7 @@ namespace AssetCalendarApi.Repository
 {
     public class TagRepository
     {
-        #region Private Methods
+        #region Data Members
 
         private readonly AssetCalendarDbContext _dbContext;
 
@@ -28,12 +28,46 @@ namespace AssetCalendarApi.Repository
 
         #endregion
 
+        #region Public Methods
+
         public IEnumerable<TagViewModel> GetAllTags(Guid organizationId)
         {
-            return _dbContext.Tags.Select(t => t.GetViewModel(false));
+            return _dbContext.Tags
+                .Where(t => t.OrganizationId == organizationId)
+                .Select(t => t.GetViewModel(false));
         }
 
-        public Tag GetTag( Guid id, Guid organizationId)
+        public IEnumerable<TagViewModel> GetJobTags(Guid organizationId)
+        {
+            return _dbContext.Tags
+                .Where
+                (
+                    t => 
+                        t.OrganizationId == organizationId &&
+                        (
+                            t.TagType == TagType.Job ||
+                            t.TagType == TagType.WorkerAndJob
+                        )
+                )
+                .Select(t => t.GetViewModel(false));
+        }
+
+        public IEnumerable<TagViewModel> GetWorkerTags(Guid organizationId)
+        {
+            return _dbContext.Tags
+                .Where
+                (
+                    t =>
+                        t.OrganizationId == organizationId &&
+                        (
+                            t.TagType == TagType.Worker ||
+                            t.TagType == TagType.WorkerAndJob
+                        )
+                )
+                .Select(t => t.GetViewModel(false));
+        }
+
+        public Tag GetTag(Guid id, Guid organizationId)
         {
             return _dbContext.Tags.FirstOrDefault(t => t.OrganizationId == organizationId && t.Id == id);
         }
@@ -46,7 +80,8 @@ namespace AssetCalendarApi.Repository
                 Color = tag.Color,
                 Description = tag.Description,
                 Icon = tag.Icon,
-                OrganizationId = organizationId
+                OrganizationId = organizationId,
+                TagType = tag.TagType
             };
 
             _dbContext.Tags.Add(dbTag);
@@ -64,6 +99,7 @@ namespace AssetCalendarApi.Repository
             dbTag.Icon = tag.Icon;
             dbTag.Color = tag.Color;
             dbTag.Description = tag.Description;
+            dbTag.TagType = tag.TagType;
 
             _dbContext.Tags.Update(dbTag);
             _dbContext.SaveChanges();
@@ -79,7 +115,7 @@ namespace AssetCalendarApi.Repository
             _dbContext.SaveChanges();
         }
 
-        public void DeleteTagsFromJob( Guid jobId )
+        public void DeleteTagsFromJob(Guid jobId)
         {
             var dbTags = _dbContext.JobTags.Where(j => j.IdJob == jobId);
             foreach (var jobTag in dbTags)
@@ -88,7 +124,7 @@ namespace AssetCalendarApi.Repository
             _dbContext.SaveChanges();
         }
 
-        public void DeleteTagsFromJobDay( Guid jobId, DateTime date )
+        public void DeleteTagsFromJobDay(Guid jobId, DateTime date)
         {
             var dayJob = _dbContext.DaysJobs.FirstOrDefault(dj => dj.IdJob == jobId && dj.Date.Date == date.Date);
             var dbTags = _dbContext.DaysJobsTags.Where(dt => dt.IdDayJob == dayJob.Id);
@@ -113,7 +149,7 @@ namespace AssetCalendarApi.Repository
                 _dbContext.JobTags.Remove(deleted);
             }
 
-            foreach ( var tag in tags)
+            foreach (var tag in tags)
             {
                 //Job tag overrules Day Job Tag
                 var dayTags = jobDaysTags.Where(dt => dt.IdTag == tag.Id);
@@ -124,6 +160,29 @@ namespace AssetCalendarApi.Repository
                     continue;
 
                 AddTagToJob(tag.Id, jobId, false);
+            }
+
+            _dbContext.SaveChanges();
+        }
+
+        public void UpdateTagsForWorker(Guid workerId, IEnumerable<TagViewModel> tags)
+        {
+            var workerTags = _dbContext.WorkerTags.Where(t => t.IdWorker == workerId);
+
+            foreach (var workerTag in workerTags)
+            {
+                if (tags.Any(t => t.Id == workerTag.IdTag))
+                    continue;
+
+                _dbContext.WorkerTags.Remove(workerTag);
+            }
+
+            foreach (var tag in tags)
+            {
+                if (workerTags.Any(t => t.IdTag == tag.Id))
+                    continue;
+
+                AddTagToWorker(tag.Id, workerId, false);
             }
 
             _dbContext.SaveChanges();
@@ -145,7 +204,8 @@ namespace AssetCalendarApi.Repository
             if (_dbContext.JobTags.Any(j => j.IdTag == idTag && j.IdJob == idJob))
                 return;
 
-            var dbJobTag = new JobTags() {
+            var dbJobTag = new JobTags()
+            {
                 Id = Guid.NewGuid(),
                 IdJob = idJob,
                 IdTag = idTag
@@ -164,7 +224,7 @@ namespace AssetCalendarApi.Repository
 
             var jobDay = _dbContext.DaysJobs.FirstOrDefault(dj => dj.Date.Date == date.Date && dj.IdJob == idJob);
 
-            if (_dbContext.DaysJobsTags.Any( d => d.IdDayJob == jobDay.Id && d.IdTag == idTag ))
+            if (_dbContext.DaysJobsTags.Any(d => d.IdDayJob == jobDay.Id && d.IdTag == idTag))
                 return;
 
             var dbDayJobTag = new DayJobTag()
@@ -176,8 +236,32 @@ namespace AssetCalendarApi.Repository
 
             _dbContext.DaysJobsTags.Add(dbDayJobTag);
 
-            if(saveChanges)
+            if (saveChanges)
                 _dbContext.SaveChanges();
         }
+
+        public void AddTagToWorker(Guid idTag, Guid idWorker, bool saveChanges = true)
+        {
+
+            if (!_dbContext.Tags.Any(t => t.Id == idTag))
+                throw new ApplicationException("Unable to add Tag. Tag not found");
+
+            if (_dbContext.WorkerTags.Any(w => w.IdTag == idTag && w.IdWorker == idWorker))
+                return;
+
+            var dbWorkerTag = new WorkerTags()
+            {
+                Id = Guid.NewGuid(),
+                IdWorker = idWorker,
+                IdTag = idTag
+            };
+
+            _dbContext.WorkerTags.Add(dbWorkerTag);
+
+            if (saveChanges)
+                _dbContext.SaveChanges();
+        }
+
+        #endregion
     }
 }

@@ -41,7 +41,11 @@ namespace AssetCalendarApi.Controllers
         {
             try
             {
-                var workers = _workerRepository.GetAllWorkers(CalendarUser.OrganizationId).ToList();
+                var workers = _workerRepository.GetAllWorkers(CalendarUser.OrganizationId)
+                    .ToList()
+                    .Select(worker => worker.GetViewModel() )
+                    .OrderBy(worker => worker.FullName)
+                    .ToList();
 
                 return SuccessResult(workers);
             }
