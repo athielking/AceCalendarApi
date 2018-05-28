@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AssetCalendarApi.ViewModels;
+using Microsoft.EntityFrameworkCore;
 
 namespace AssetCalendarApi.Repository
 {
@@ -193,6 +194,15 @@ namespace AssetCalendarApi.Repository
             return _dbContext.TagsByJobDate.Where(t => t.Date.Date == date.Date && t.OrganizationId == organizationId)
                 .GroupBy(t => t.IdJob)
                 .ToDictionary(group => group.Key, group => group.Select(t => AutoMapper.Mapper.Map<TagViewModel>(t)));
+        }
+
+        public Dictionary<Guid, IEnumerable<TagViewModel>> GetTagsByWorker(Guid organizationId)
+        {
+            return _dbContext.WorkerTags.Include(w => w.Tag)
+                .Where( w => w.Tag.OrganizationId == organizationId )
+                .Select(w => new { idWorker = w.IdWorker, tag = w.Tag })
+                .GroupBy(x => x.idWorker)
+                .ToDictionary(group => group.Key, group => group.Select(t => AutoMapper.Mapper.Map<TagViewModel>(t.tag)));
         }
 
         public void AddTagToJob(Guid idTag, Guid idJob, bool saveChanges = true)

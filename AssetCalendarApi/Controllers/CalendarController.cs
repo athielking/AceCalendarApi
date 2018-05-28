@@ -107,6 +107,7 @@ namespace AssetCalendarApi.Controllers
 
             var workersByDate = _workerRepository.GetAvailableWorkersForDates(CalendarUser.OrganizationId, date, endDate);
             var offByDate = _workerRepository.GetOffWorkersForDates(CalendarUser.OrganizationId, date, endDate);
+            var tagsByWorker = _tagRepository.GetTagsByWorker(CalendarUser.OrganizationId);
 
             var end = endDate.HasValue ? endDate.Value : date;
 
@@ -122,6 +123,13 @@ namespace AssetCalendarApi.Controllers
                 };
                 vm.WorkersByJob = _workerRepository.GetWorkersByJob(d, CalendarUser.OrganizationId);
                 vm.TagsByJob = _tagRepository.GetTagsByJob(d, CalendarUser.OrganizationId);
+
+                vm.TagsByWorker = new Dictionary<Guid, IEnumerable<TagViewModel>>();
+                foreach( var g in vm.GetAllWorkers())
+                {
+                    if (tagsByWorker.ContainsKey(g))
+                        vm.TagsByWorker.Add(g, tagsByWorker[g]);
+                }
 
                 result.Add(d, vm);
             }

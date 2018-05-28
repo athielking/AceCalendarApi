@@ -15,5 +15,14 @@ namespace AssetCalendarApi.ViewModels
         public IEnumerable<Worker> TimeOffWorkers { get; set; }
         public IDictionary<Guid, IEnumerable<Worker>> WorkersByJob { get; set; }
         public IDictionary<Guid, IEnumerable<TagViewModel>> TagsByJob { get; set; }
+        public IDictionary<Guid, IEnumerable<TagViewModel>> TagsByWorker { get; set; }
+
+        public IEnumerable<Guid> GetAllWorkers()
+        {
+            return AvailableWorkers.Select(w => w.Id)
+                .Concat(TimeOffWorkers.Select(w => w.Id))
+                .Concat(WorkersByJob.SelectMany(kv => kv.Value.Select(w => w.Id)))
+                .Distinct();
+        }
     }
 }
