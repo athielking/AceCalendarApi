@@ -123,13 +123,8 @@ namespace AssetCalendarApi.Controllers
                 };
                 vm.WorkersByJob = _workerRepository.GetWorkersByJob(d, CalendarUser.OrganizationId);
                 vm.TagsByJob = _tagRepository.GetTagsByJob(d, CalendarUser.OrganizationId);
-
-                vm.TagsByWorker = new Dictionary<Guid, IEnumerable<TagViewModel>>();
-                foreach( var g in vm.GetAllWorkers())
-                {
-                    if (tagsByWorker.ContainsKey(g))
-                        vm.TagsByWorker.Add(g, tagsByWorker[g]);
-                }
+                vm.TagsByWorker = tagsByWorker;
+                
 
                 result.Add(d, vm);
             }

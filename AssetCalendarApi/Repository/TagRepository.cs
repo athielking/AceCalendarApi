@@ -200,9 +200,8 @@ namespace AssetCalendarApi.Repository
         {
             return _dbContext.WorkerTags.Include(w => w.Tag)
                 .Where( w => w.Tag.OrganizationId == organizationId )
-                .Select(w => new { idWorker = w.IdWorker, tag = w.Tag })
-                .GroupBy(x => x.idWorker)
-                .ToDictionary(group => group.Key, group => group.Select(t => AutoMapper.Mapper.Map<TagViewModel>(t.tag)));
+                .GroupBy(x => x.IdWorker)
+                .ToDictionary(group => group.Key, group => group.Select(t => AutoMapper.Mapper.Map<TagViewModel>(t.Tag)));
         }
 
         public void AddTagToJob(Guid idTag, Guid idJob, bool saveChanges = true)
