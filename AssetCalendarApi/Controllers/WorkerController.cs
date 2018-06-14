@@ -7,6 +7,8 @@ using AssetCalendarApi.Repository;
 using AssetCalendarApi.ViewModels;
 using Microsoft.AspNetCore.Identity;
 using AssetCalendarApi.Data.Models;
+using Microsoft.AspNetCore.SignalR;
+using AssetCalendarApi.Hubs;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -18,6 +20,7 @@ namespace AssetCalendarApi.Controllers
         #region Data Members
 
         private readonly WorkerRepository _workerRepository;
+        private readonly IHubContext<CalendarHub> _hubContext;
 
         #endregion
 
@@ -26,10 +29,12 @@ namespace AssetCalendarApi.Controllers
         public WorkerController
         (
             WorkerRepository workerRepository,
-            UserManager<CalendarUser> userManager
+            UserManager<CalendarUser> userManager,
+            IHubContext<CalendarHub> hubContext
         ) : base(userManager)
         {
             _workerRepository = workerRepository;
+            _hubContext = hubContext;
         }
 
         #endregion

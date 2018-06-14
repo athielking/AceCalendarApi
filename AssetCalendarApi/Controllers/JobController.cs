@@ -9,6 +9,8 @@ using AssetCalendarApi.Validators;
 using Microsoft.AspNetCore.Identity;
 using AssetCalendarApi.Data.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.SignalR;
+using AssetCalendarApi.Hubs;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -23,7 +25,7 @@ namespace AssetCalendarApi.Controllers
 
         private readonly TagRepository _tagRepository;
 
-        private readonly WorkerValidator _validator;
+        private readonly IHubContext<CalendarHub> _hubContext;
 
         #endregion
 
@@ -33,13 +35,13 @@ namespace AssetCalendarApi.Controllers
         (
             JobRepository jobRepository,
             TagRepository tagRepository,
-            WorkerValidator validator,
-            UserManager<CalendarUser> userManager
-        ): base(userManager)
+            UserManager<CalendarUser> userManager,
+            IHubContext<CalendarHub> hubContext
+        ) : base(userManager)
         {
             _jobRepository = jobRepository;
             _tagRepository = tagRepository;
-            _validator = validator;
+            _hubContext = hubContext;
         }
 
         #endregion
@@ -222,6 +224,8 @@ namespace AssetCalendarApi.Controllers
             try
             {
                 _jobRepository.MakeWorkerAvailable(model.IdWorker, model.Date.Value, CalendarUser.OrganizationId);
+
+                _hubContext.Clients.Groups(CalendarUser.OrganizationId.ToString()).SendAsync("DataUpdated", model.Date.Value);
 
                 return SuccessResult("Worker Successfully Moved");
             }

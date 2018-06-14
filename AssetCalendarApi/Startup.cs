@@ -21,6 +21,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using AutoMapper;
 using AssetCalendarApi.ViewModels;
+using AssetCalendarApi.Hubs;
 
 namespace AssetCalendarApi
 {
@@ -81,6 +82,8 @@ namespace AssetCalendarApi
                     };
                 });
 
+            services.AddSignalR();
+
             services.AddMvc(options =>
             {
                 if (_hostingEnvironment.IsProduction())
@@ -126,12 +129,17 @@ namespace AssetCalendarApi
                 app.UseCors(
                     options => options.WithOrigins(origin)
                         .AllowAnyHeader()
-                        .AllowAnyMethod());
+                        .AllowAnyMethod()
+                        .AllowCredentials());
 
                 app.UseDeveloperExceptionPage();
             }
 
             app.UseAuthentication();
+            app.UseSignalR(config =>
+            {
+               config.MapHub<CalendarHub>("/ws");
+            });
 
             app.UseMvc();
 
