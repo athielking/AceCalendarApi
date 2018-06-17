@@ -5,6 +5,8 @@ using Microsoft.Extensions.Configuration;
 using AssetCalendarApi.Data.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Logging;
+using AssetCalendarApi.Tools;
 
 namespace AssetCalendarApi.Data
 {
@@ -58,6 +60,11 @@ namespace AssetCalendarApi.Data
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
+
+            var lf = new LoggerFactory();
+            //lf.AddProvider(new EFLoggerFactory());
+            //optionsBuilder.UseLoggerFactory(lf);
+
             if (!optionsBuilder.IsConfigured)
             {
                 if (_environment.IsProduction())

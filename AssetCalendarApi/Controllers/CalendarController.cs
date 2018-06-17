@@ -7,6 +7,8 @@ using AssetCalendarApi.Repository;
 using AssetCalendarApi.ViewModels;
 using AssetCalendarApi.Data.Models;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using AssetCalendarApi.Tools;
 
 namespace AssetCalendarApi.Controllers
 {
@@ -15,26 +17,25 @@ namespace AssetCalendarApi.Controllers
     {
         #region Data Members
 
+        private readonly CalendarRepository _calendarRepository;
         private readonly JobRepository _jobRepository;
+        private readonly SignalRService _signalRService;
 
-        private readonly WorkerRepository _workerRepository;
-
-        private readonly TagRepository _tagRepository;
         #endregion
 
         #region Constructor
 
         public CalendarController
         (
+            CalendarRepository calendarRepository,
             JobRepository jobRepository,
-            WorkerRepository workerRepository,
-            TagRepository tagRepository,
+            SignalRService signalRService,
             UserManager<CalendarUser> userManager
         ): base(userManager)
         {
+            _calendarRepository = calendarRepository;
             _jobRepository = jobRepository;
-            _workerRepository = workerRepository;
-            _tagRepository = tagRepository;
+            _signalRService = signalRService;
         }
 
         #endregion
@@ -103,31 +104,8 @@ namespace AssetCalendarApi.Controllers
         [Route("getRange")]
         public IActionResult GetDataForRange( DateTime date, DateTime? endDate, Guid? idWorker)
         {
-            var jobsByDate = _jobRepository.GetJobsForRange(CalendarUser.OrganizationId, date, endDate, idWorker);
 
-            var workersByDate = _workerRepository.GetAvailableWorkersForDates(CalendarUser.OrganizationId, date, endDate);
-            var offByDate = _workerRepository.GetOffWorkersForDates(CalendarUser.OrganizationId, date, endDate);
-            var tagsByWorker = _tagRepository.GetTagsByWorker(CalendarUser.OrganizationId);
-
-            var end = endDate.HasValue ? endDate.Value : date;
-
-            Dictionary<DateTime, DayViewModel> result = new Dictionary<DateTime, DayViewModel>();
-            for (DateTime d = date.Date; d <= end.Date; d = d.AddDays(1))
-            {
-                DayViewModel vm = new DayViewModel()
-                {
-                    Date = d,
-                    AvailableWorkers = (workersByDate.ContainsKey(d) ? workersByDate[d] : Enumerable.Empty<Worker>()).OrderBy(worker => worker.FullName),
-                    TimeOffWorkers = (offByDate.ContainsKey(d) ? offByDate[d] : Enumerable.Empty<Worker>()).OrderBy(worker => worker.FullName),
-                    Jobs = (jobsByDate.ContainsKey(d) ? jobsByDate[d] : Enumerable.Empty<Job>()).OrderBy(job => job.Name)
-                };
-                vm.WorkersByJob = _workerRepository.GetWorkersByJob(d, CalendarUser.OrganizationId);
-                vm.TagsByJob = _tagRepository.GetTagsByJob(d, CalendarUser.OrganizationId);
-                vm.TagsByWorker = tagsByWorker;
-                
-
-                result.Add(d, vm);
-            }
+            var result = _calendarRepository.GetDataForRange(date, CalendarUser.OrganizationId, endDate, idWorker);
 
             return SuccessResult(result);
         }
@@ -139,6 +117,7 @@ namespace AssetCalendarApi.Controllers
             try
             {
                 _jobRepository.CopyCalendarDay(CalendarUser.OrganizationId, dateFrom, dateTo);
+                _signalRService.SendDataUpdatedAsync(dateTo, CalendarUser.OrganizationId);
 
                 return Ok();
             }

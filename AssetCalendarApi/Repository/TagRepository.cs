@@ -191,17 +191,30 @@ namespace AssetCalendarApi.Repository
 
         public Dictionary<Guid, IEnumerable<TagViewModel>> GetTagsByJob(DateTime date, Guid organizationId)
         {
-            return _dbContext.TagsByJobDate.Where(t => t.Date.Date == date.Date && t.OrganizationId == organizationId)
-                .GroupBy(t => t.IdJob)
-                .ToDictionary(group => group.Key, group => group.Select(t => AutoMapper.Mapper.Map<TagViewModel>(t)));
+            var tags = _dbContext.TagsByJobDate
+                .Where(t => t.Date.Date == date.Date && t.OrganizationId == organizationId);
+
+            var keys = tags.Select(t => t.IdJob).Distinct();
+            var dictionary = new Dictionary<Guid, IEnumerable<TagViewModel>>();
+
+            foreach (var k in keys)
+                dictionary.Add(k, tags.Where(t => t.IdJob == k).Select(t => AutoMapper.Mapper.Map<TagViewModel>(t)));
+
+            return dictionary;
         }
 
         public Dictionary<Guid, IEnumerable<TagViewModel>> GetTagsByWorker(Guid organizationId)
         {
-            return _dbContext.WorkerTags.Include(w => w.Tag)
-                .Where( w => w.Tag.OrganizationId == organizationId )
-                .GroupBy(x => x.IdWorker)
-                .ToDictionary(group => group.Key, group => group.Select(t => AutoMapper.Mapper.Map<TagViewModel>(t.Tag)));
+            var tags = _dbContext.WorkerTags.Include(w => w.Tag)
+                .Where(w => w.Tag.OrganizationId == organizationId);
+
+            var keys = tags.Select(t => t.IdWorker).Distinct();
+            var dictionary = new Dictionary<Guid, IEnumerable<TagViewModel>>();
+
+            foreach (var k in keys)
+                dictionary.Add(k, tags.Where(t => t.IdWorker == k).Select(t => AutoMapper.Mapper.Map<TagViewModel>(t.Tag)));
+
+            return dictionary;
         }
 
         public void AddTagToJob(Guid idTag, Guid idJob, bool saveChanges = true)

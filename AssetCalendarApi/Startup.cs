@@ -22,6 +22,7 @@ using Microsoft.AspNetCore.Mvc;
 using AutoMapper;
 using AssetCalendarApi.ViewModels;
 using AssetCalendarApi.Hubs;
+using AssetCalendarApi.Tools;
 
 namespace AssetCalendarApi
 {
@@ -109,8 +110,8 @@ namespace AssetCalendarApi
             services.AddScoped<JobRepository>();
             services.AddScoped<OrganizationRepository>();
             services.AddScoped<TagRepository>();
-
-            services.AddScoped<WorkerValidator>();
+            services.AddScoped<CalendarRepository>();
+            services.AddScoped<SignalRService>();
 
             services.AddTransient<AssetCalendarSeeder>();
         }
@@ -146,6 +147,7 @@ namespace AssetCalendarApi
             Mapper.Initialize(config =>
             {
                 config.CreateMap<JobsByDate, Job>();
+                config.CreateMap<JobsByDateWorker, JobsByDate>();
                 config.CreateMap<JobsByDateWorker, Job>();
                 config.CreateMap<AvailableWorkers, Worker>();
                 config.CreateMap<TimeOffWorkers, Worker>();
@@ -154,6 +156,7 @@ namespace AssetCalendarApi
                 config.CreateMap<Tag, TagViewModel>();
                 config.CreateMap<TagsByJob, TagViewModel>();
                 config.CreateMap<TagsByJobDate, TagViewModel>();
+                config.CreateMap<WorkerTags, TagViewModel>();
                 config.CreateMap<CalendarUser, UserViewModel>().ReverseMap();
                 config.CreateMap<Organization, OrganizationViewModel>().ReverseMap();
             });

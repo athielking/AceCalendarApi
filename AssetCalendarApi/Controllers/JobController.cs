@@ -11,6 +11,8 @@ using AssetCalendarApi.Data.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using AssetCalendarApi.Hubs;
+using Microsoft.Extensions.DependencyInjection;
+using AssetCalendarApi.Tools;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -22,10 +24,8 @@ namespace AssetCalendarApi.Controllers
         #region Data Members
 
         private readonly JobRepository _jobRepository;
-
         private readonly TagRepository _tagRepository;
-
-        private readonly IHubContext<CalendarHub> _hubContext;
+        private readonly SignalRService _signalRService;
 
         #endregion
 
@@ -35,13 +35,13 @@ namespace AssetCalendarApi.Controllers
         (
             JobRepository jobRepository,
             TagRepository tagRepository,
-            UserManager<CalendarUser> userManager,
-            IHubContext<CalendarHub> hubContext
+            SignalRService signalRService,
+            UserManager<CalendarUser> userManager
         ) : base(userManager)
         {
             _jobRepository = jobRepository;
             _tagRepository = tagRepository;
-            _hubContext = hubContext;
+            _signalRService = signalRService;
         }
 
         #endregion
@@ -172,6 +172,9 @@ namespace AssetCalendarApi.Controllers
 
                 var addedJob = _jobRepository.AddJob(job, CalendarUser.OrganizationId);
 
+                foreach (var jd in addedJob.DaysJobs)
+                    _signalRService.SendDataUpdatedAsync(jd.Date, CalendarUser.OrganizationId);
+
                 return SuccessResult(addedJob);
             }
             catch
@@ -208,7 +211,10 @@ namespace AssetCalendarApi.Controllers
                 else if (model.AddWorkerOption == AddWorkerOption.AvailableDays)
                     _jobRepository.MoveWorkerToAllAvailableDaysOnJob(model.IdJob.Value, model.IdWorker, model.Date.Value, model.ViewDate.Value, CalendarUser.OrganizationId);
                 else
+                {
                     _jobRepository.MoveWorkerToJob(model.IdJob.Value, model.IdWorker, model.Date.Value, CalendarUser.OrganizationId);
+                    _signalRService.SendDataUpdatedAsync(model.Date.Value, CalendarUser.OrganizationId);
+                }
 
                 return SuccessResult("Worker Successfully Moved");
             }
@@ -224,9 +230,8 @@ namespace AssetCalendarApi.Controllers
             try
             {
                 _jobRepository.MakeWorkerAvailable(model.IdWorker, model.Date.Value, CalendarUser.OrganizationId);
-
-                _hubContext.Clients.Groups(CalendarUser.OrganizationId.ToString()).SendAsync("DataUpdated", model.Date.Value);
-
+                _signalRService.SendDataUpdatedAsync(model.Date.Value, CalendarUser.OrganizationId);
+                
                 return SuccessResult("Worker Successfully Moved");
             }
             catch
@@ -241,6 +246,7 @@ namespace AssetCalendarApi.Controllers
             try
             {
                 _jobRepository.MoveWorkerToOff(model.IdWorker, model.Date.Value, CalendarUser.OrganizationId);
+                _signalRService.SendDataUpdatedAsync(model.Date.Value, CalendarUser.OrganizationId);
 
                 return SuccessResult("Worker Successfully Moved");
             }
@@ -271,6 +277,8 @@ namespace AssetCalendarApi.Controllers
             try
             {
                 _jobRepository.DeleteDayJob(id, date, CalendarUser.OrganizationId);
+                _signalRService.SendDataUpdatedAsync(date, CalendarUser.OrganizationId);
+
                 return Ok();
             }
             catch
@@ -285,6 +293,8 @@ namespace AssetCalendarApi.Controllers
             try
             {
                 _jobRepository.DeleteJobsFromDay(date, CalendarUser.OrganizationId);
+                _signalRService.SendDataUpdatedAsync(date, CalendarUser.OrganizationId);
+
                 return Ok();
             }
             catch
@@ -326,7 +336,10 @@ namespace AssetCalendarApi.Controllers
                         _tagRepository.AddTagToJob(tag.Id, id);
                 }
 
-                return Ok();
+                if (saveTagsRequest.Date.HasValue)
+                    _signalRService.SendDataUpdatedAsync(saveTagsRequest.Date.Value, CalendarUser.OrganizationId);
+
+                    return Ok();
             }
             catch
             {

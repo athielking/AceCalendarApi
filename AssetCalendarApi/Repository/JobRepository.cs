@@ -103,21 +103,30 @@ namespace AssetCalendarApi.Repository
             var startDate = start.Date;
             var endDate = end.HasValue ? end.Value.Date : startDate;
 
+            var jobs = _dbContext.DaysJobs.Include(d => d.Job)
+                .Where(d => d.Date >= startDate && d.Date <= endDate && d.Job.OrganizationId == organizationId);
+
             if (idWorker.HasValue)
             {
-                return _dbContext.JobsByDateWorker.Where(
-                    j => j.OrganizationId == organizationId &&
-                        j.Date >= startDate && j.Date <= endDate &&
-                        j.IdWorker == idWorker.Value
-                    )
-                    .GroupBy(j => j.Date)
-                    .ToDictionary(group => group.Key, group => group.Select(g => AutoMapper.Mapper.Map<Job>(g)));
+                jobs = _dbContext.DaysJobsWorkers
+                    .Include(w => w.DayJob)
+                    .ThenInclude(d => d.Job)
+                    .Where(w => 
+                        w.IdWorker == idWorker &&
+                        w.DayJob.Date >= startDate && w.DayJob.Date <= endDate &&
+                        w.DayJob.Job.OrganizationId == organizationId)
+                    .Select(w => w.DayJob);
             }
 
-            return _dbContext.JobsByDate
-                .Where(j => j.OrganizationId == organizationId && j.Date >= startDate && j.Date <= endDate)
-                .GroupBy(j => j.Date)
-                .ToDictionary(group => group.Key, group => group.Select(g => AutoMapper.Mapper.Map<Job>(g)));
+            var dictionary = new Dictionary<DateTime, IEnumerable<Job>>();
+            var keys = jobs.Select(w => w.Date).Distinct();
+
+            foreach (var k in keys)
+            {
+                dictionary.Add(k, jobs.Where(j => j.Date == k).Select(j => j.Job));
+            }
+
+            return dictionary;
         }
 
         public void CopyCalendarDay(Guid organizationId, DateTime dateFrom, DateTime dateTo)
