@@ -42,5 +42,10 @@ namespace AssetCalendarApi.Tools
             var data = _calendarRepository.GetDataForRange(startDate, organizationId, endDate, idWorker);
             _hubContext.Clients.Groups(organizationId.ToString()).SendAsync("DataUpdated", data);
         }
+
+        public void SendJobUpdated(Guid idJob)
+        {
+
+        }
     }
 }

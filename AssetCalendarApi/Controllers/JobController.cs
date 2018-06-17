@@ -161,7 +161,6 @@ namespace AssetCalendarApi.Controllers
             }
         }
 
-
         [HttpPost]
         public IActionResult Post([FromBody]AddJobModel job)
         {
@@ -209,7 +208,10 @@ namespace AssetCalendarApi.Controllers
                 if (model.AddWorkerOption == AddWorkerOption.AllDays)
                     _jobRepository.MoveWorkerToAllDaysOnJob(model.IdJob.Value, model.IdWorker, model.ViewDate.Value, CalendarUser.OrganizationId);
                 else if (model.AddWorkerOption == AddWorkerOption.AvailableDays)
+                {
                     _jobRepository.MoveWorkerToAllAvailableDaysOnJob(model.IdJob.Value, model.IdWorker, model.Date.Value, model.ViewDate.Value, CalendarUser.OrganizationId);
+                    _signalRService.SendDataUpdatedAsync(model.ViewDate.Value.StartOfWeek(), CalendarUser.OrganizationId, model.ViewDate.Value.EndOfWeek());
+                }
                 else
                 {
                     _jobRepository.MoveWorkerToJob(model.IdJob.Value, model.IdWorker, model.Date.Value, CalendarUser.OrganizationId);
@@ -338,8 +340,12 @@ namespace AssetCalendarApi.Controllers
 
                 if (saveTagsRequest.Date.HasValue)
                     _signalRService.SendDataUpdatedAsync(saveTagsRequest.Date.Value, CalendarUser.OrganizationId);
+                else
+                {
 
-                    return Ok();
+                }
+              
+                return Ok();
             }
             catch
             {
