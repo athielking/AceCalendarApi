@@ -284,6 +284,10 @@ namespace AssetCalendarApi.Repository
                 _dbContext.SaveChanges();
         }
 
+        public IEnumerable<TagViewModel> GetTagsForJob(Guid idJob)
+        {
+            return _dbContext.TagsByJob.Where(t => t.IdJob == idJob).Select(t => AutoMapper.Mapper.Map<TagViewModel>(t));
+        }
         #endregion
     }
 }

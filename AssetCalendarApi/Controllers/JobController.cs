@@ -191,6 +191,7 @@ namespace AssetCalendarApi.Controllers
                     return BadRequest(GetErrorMessageObject(GetModelStateErrors()));
 
                 _jobRepository.EditJob(id, job, CalendarUser.OrganizationId);
+                _signalRService.SendDataUpdatedAsync(job.JobDays.Select( d => d.Date.Date ), CalendarUser.OrganizationId);
 
                 return Ok();
             }
@@ -264,6 +265,7 @@ namespace AssetCalendarApi.Controllers
             try
             {
                 _jobRepository.DeleteJob(id, CalendarUser.OrganizationId);
+                _signalRService.SendJobUpdatedAsync(id, CalendarUser.OrganizationId);
 
                 return Ok();
             }
@@ -311,6 +313,7 @@ namespace AssetCalendarApi.Controllers
             try
             {
                 _jobRepository.SaveNotes(id, CalendarUser.OrganizationId, saveNotesRequestViewModel.Notes);
+                _signalRService.SendJobUpdatedAsync(id, CalendarUser.OrganizationId);
 
                 return Ok();
             }
@@ -341,9 +344,7 @@ namespace AssetCalendarApi.Controllers
                 if (saveTagsRequest.Date.HasValue)
                     _signalRService.SendDataUpdatedAsync(saveTagsRequest.Date.Value, CalendarUser.OrganizationId);
                 else
-                {
-
-                }
+                    _signalRService.SendJobUpdatedAsync(id, CalendarUser.OrganizationId);
               
                 return Ok();
             }

@@ -20,7 +20,7 @@ namespace AssetCalendarApi.Repository
             _tagRepository = tagRepository;
         }
 
-        public Dictionary<DateTime, DayViewModel> GetDataForRange(DateTime date, Guid organizationId, DateTime? endDate, Guid? idWorker)
+        public Dictionary<DateTime, DayViewModel> GetDataForRange(DateTime date, Guid organizationId, DateTime? endDate = null, Guid? idWorker = null)
         {
             var availableByDate = _workerRepository.GetAvailableWorkersForDates(organizationId, date, endDate);
             var offByDate = _workerRepository.GetOffWorkersForDates(organizationId, date, endDate);
