@@ -1,5 +1,6 @@
 ﻿using AssetCalendarApi.Data.Models;
 using AssetCalendarApi.Filters;
+using AssetCalendarApi.Repository;
 using AssetCalendarApi.ViewModels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -28,6 +29,7 @@ namespace AssetCalendarApi.Controllers
 
         private IConfiguration _configuration;
 
+        private OrganizationRepository _organizationRepository;
         #endregion
 
         #region Constructor
@@ -36,6 +38,7 @@ namespace AssetCalendarApi.Controllers
         (
             SignInManager<CalendarUser> signInManager,
             UserManager<CalendarUser> userManager,
+            OrganizationRepository organizationRepository,
             ILogger<AuthController> logger,
             IConfiguration configuration
         )
@@ -44,6 +47,7 @@ namespace AssetCalendarApi.Controllers
             _logger = logger;
             _userManager = userManager;
             _configuration = configuration;
+            _organizationRepository = organizationRepository; 
         }
 
         #endregion
@@ -124,14 +128,16 @@ namespace AssetCalendarApi.Controllers
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                 new Claim(JwtRegisteredClaimNames.GivenName, user.FirstName ?? String.Empty),
                 new Claim(JwtRegisteredClaimNames.FamilyName, user.LastName ?? String.Empty),
-                new Claim(ClaimTypes.Name, user.UserName)
+                new Claim(ClaimTypes.Name, user.UserName),
+                new Claim("OrganizationId", user.OrganizationId.ToString()),
+                new Claim("SubscriptionActive", _organizationRepository.HasActiveSubscription(user.OrganizationId).ToString() )
             };
 
             var roles = _userManager.GetRolesAsync(user).Result;
-
+            
             foreach(var role in roles)
                 claims.Add(new Claim(ClaimTypes.Role, role));
-            
+ 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JwtKey"]));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
             var expires = DateTime.Now.AddDays(Convert.ToDouble(_configuration["JwtExpireDays"]));

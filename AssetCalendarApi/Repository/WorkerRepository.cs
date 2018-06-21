@@ -39,16 +39,6 @@ namespace AssetCalendarApi.Repository
 
         #endregion
 
-        #region Private Methods
-
-        private IQueryable<Worker> GetWorkersByOrganization(Guid organizationId)
-        {
-            return _dbContext.Workers
-                .Where(worker => worker.OrganizationId == organizationId);
-        }
-
-        #endregion
-
         #region Public Methods
 
         public IQueryable<Worker> GetAllWorkers(Guid organizationId)
@@ -56,6 +46,12 @@ namespace AssetCalendarApi.Repository
             return GetWorkersByOrganization(organizationId)
                 .Include(w => w.WorkerTags)
                 .ThenInclude(t => t.Tag);
+        }
+
+        public IQueryable<Worker> GetWorkersByOrganization(Guid organizationId)
+        {
+            return _dbContext.Workers
+                .Where(worker => worker.OrganizationId == organizationId);
         }
 
         public Worker GetWorker(Guid id, Guid organizationId)

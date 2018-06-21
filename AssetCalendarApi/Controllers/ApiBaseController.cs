@@ -33,10 +33,7 @@ namespace AssetCalendarApi.Controllers
 
         #region Constructor
 
-        public ApiBaseController
-            (
-                UserManager<CalendarUser> userManager
-            )
+        public ApiBaseController( UserManager<CalendarUser> userManager )
         {
             _userManager = userManager;
         }
@@ -85,6 +82,11 @@ namespace AssetCalendarApi.Controllers
                 success = true,
                 data = data
             });
+        }
+
+        protected bool UserIsAdmin()
+        {
+            return _userManager.GetRolesAsync( CalendarUser ).Result.Contains("Admin");
         }
 
         #endregion

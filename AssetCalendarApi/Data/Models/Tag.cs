@@ -38,6 +38,19 @@ namespace AssetCalendarApi.Data.Models
                 TagType = this.TagType
             };
         }
+
+        //public Calendar Calendar
+        //{
+        //    get;
+        //    set;
+        //}
+
+        //public Guid CalendarId
+        //{
+        //    get;
+        //    set;
+        //}
+
     }
 
     public enum TagType

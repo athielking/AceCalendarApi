@@ -22,9 +22,11 @@ namespace AssetCalendarApi.Data
         private static class Roles
         {
             public static string Admin = "Admin";
+            public static string OrganizationAdmin = "Organization Admin";
             public static string User = "User";
             public static string Readonly = "Readonly";
         }
+
         #endregion
 
         #region Data Members
@@ -32,6 +34,12 @@ namespace AssetCalendarApi.Data
         private readonly AssetCalendarDbContext _assetCalendarDbContext;
 
         private readonly OrganizationRepository _organizationRepository;
+
+        private readonly WorkerRepository _workerRepository;
+
+        private readonly JobRepository _jobRepository;
+
+        private readonly TagRepository _tagRepository;
 
         private readonly UserManager<CalendarUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
@@ -45,13 +53,19 @@ namespace AssetCalendarApi.Data
             AssetCalendarDbContext assetCalendarDbContext,
             UserManager<CalendarUser> userManager,
             RoleManager<IdentityRole> roleManager,
-            OrganizationRepository organizationRepository
+            OrganizationRepository organizationRepository,
+            WorkerRepository workerRepository,
+            JobRepository jobRepository,
+            TagRepository tagRepository
         )
         {
             _assetCalendarDbContext = assetCalendarDbContext;
             _userManager = userManager;
             _roleManager = roleManager;
             _organizationRepository = organizationRepository;
+            _workerRepository = workerRepository;
+            _jobRepository = jobRepository;
+            _tagRepository = tagRepository;
         }
 
         #endregion
@@ -67,6 +81,8 @@ namespace AssetCalendarApi.Data
             SeedOrganizations();
 
             await SeedUsers();
+
+            //SeedCalendars();
         }
 
         #endregion
@@ -77,6 +93,9 @@ namespace AssetCalendarApi.Data
         {
             if (!_roleManager.RoleExistsAsync(Roles.Admin).Result)
                 await _roleManager.CreateAsync(new IdentityRole(Roles.Admin));
+
+            if (!_roleManager.RoleExistsAsync(Roles.OrganizationAdmin).Result)
+                await _roleManager.CreateAsync(new IdentityRole(Roles.OrganizationAdmin));
 
             if (!_roleManager.RoleExistsAsync(Roles.User).Result)
                 await _roleManager.CreateAsync(new IdentityRole(Roles.User));
@@ -169,16 +188,67 @@ namespace AssetCalendarApi.Data
 
         private void SeedOrganizations()
         {
-            var fiveZeroOneOrganization = _organizationRepository.GetOrganizationByName(FiveZeroOneOrganizationName);
-            var itsOrganization = _organizationRepository.GetOrganizationByName(itsOrganizationName);
+            //var fiveZeroOneOrganization = _organizationRepository.GetOrganizationByName(FiveZeroOneOrganizationName);
+            //var itsOrganization = _organizationRepository.GetOrganizationByName(itsOrganizationName);
             
 
-            if (fiveZeroOneOrganization == null)
-                _organizationRepository.AddOrganization(FiveZeroOneOrganizationName);
+            //if (fiveZeroOneOrganization == null)
+            //    _organizationRepository.AddOrganization(FiveZeroOneOrganizationName);
 
-            if (itsOrganization == null)
-                _organizationRepository.AddOrganization(itsOrganizationName);
+            //if (itsOrganization == null)
+            //    _organizationRepository.AddOrganization(itsOrganizationName);
         }
+
+        //private void SeedCalendars()
+        //{
+        //    foreach (var organization in _organizationRepository.GetAllOrganizations())
+        //    {
+        //        var calendars = _organizationRepository.GetOrganizationCalendars(organization.Id);
+
+        //        if (calendars.Any())
+        //            continue;
+
+        //        SeedDefaultCalendar(organization);
+        //    }
+        //}
+
+        //private void SeedDefaultCalendar(Organization organization)
+        //{
+        //    var calendar = _organizationRepository.AddCalendar(organization.Id, "Default Calendar", false, _assetCalendarDbContext );
+
+        //    var workers = _workerRepository.GetWorkersByOrganization(organization.Id).ToList();
+
+        //    foreach(var worker in workers)
+        //    {
+        //        if (worker.CalendarId == Guid.Empty)
+        //            worker.CalendarId = calendar.Id;
+
+        //        _assetCalendarDbContext.Workers.Update(worker);
+        //    }
+
+        //    var jobs = _jobRepository.GetAllJobs(organization.Id).ToList();
+
+        //    foreach (var job in jobs)
+        //    {
+        //        if (job.CalendarId == Guid.Empty)
+        //            job.CalendarId = calendar.Id;
+
+        //        _assetCalendarDbContext.Jobs.Update(job);
+        //    }
+
+        //    var tags = _tagRepository.GetTagsByOrganization(organization.Id).ToList();
+
+        //    foreach (var tag in tags)
+        //    {
+        //        if (tag.CalendarId == Guid.Empty)
+        //            tag.CalendarId = calendar.Id;
+
+        //        _assetCalendarDbContext.Tags.Update(tag);
+        //    }
+
+        //    //Make sure to first test without saving
+        //    //_assetCalendarDbContext.SaveChanges();
+        //}
 
         private async Task SeedUsers()
         {

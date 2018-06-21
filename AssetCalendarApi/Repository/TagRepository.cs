@@ -31,6 +31,11 @@ namespace AssetCalendarApi.Repository
 
         #region Public Methods
 
+        public IQueryable<Tag> GetTagsByOrganization(Guid organizationId)
+        {
+            return _dbContext.Tags.Where(t => t.OrganizationId == organizationId);
+        }
+
         public IEnumerable<TagViewModel> GetAllTags(Guid organizationId)
         {
             return _dbContext.Tags
