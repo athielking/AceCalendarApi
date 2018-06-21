@@ -38,6 +38,18 @@ namespace AssetCalendarApi.Data.Models
             set;
         }
 
+        //public Guid CalendarId
+        //{
+        //    get;
+        //    set;
+        //}
+
+        //public Calendar Calendar
+        //{
+        //    get;
+        //    set;
+        //}
+
         [JsonIgnore()]
         public ICollection<WorkerTags> WorkerTags { get; set; }
 

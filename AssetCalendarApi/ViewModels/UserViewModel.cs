@@ -15,5 +15,16 @@ namespace AssetCalendarApi.ViewModels
         public Guid OrganizationId { get; set; }
 
         public string Role { get; set; }
+        public List<string> Claims { get; set; }
+
+        public UserViewModel()
+        {
+            Claims = new List<string>();
+        }
+
+        public bool IsEditor()
+        {
+            return this.Role == "Admin" || this.Role == "User";
+        }
     }
 }

@@ -32,6 +32,7 @@ namespace AssetCalendarApi.Data
         public DbSet<JobTags> JobTags { get; set; }
         public DbSet<WorkerTags> WorkerTags { get; set; }
         public DbSet<DayJobTag> DaysJobsTags { get; set; }
+        //public DbSet<Calendar> Calendar { get; set; }
 
         //Views
         public DbSet<JobsByDate> JobsByDate { get; set; }
@@ -227,6 +228,15 @@ namespace AssetCalendarApi.Data
                     .IsRequired()
                     .IsUnicode(false);
 
+                entity.Property(e => e.Email)
+                    .HasMaxLength(200)
+                    .IsRequired()
+                    .IsUnicode(false);
+
+                entity.Property(e => e.Stripe_CustomerId)
+                    .HasMaxLength(18)
+                    .IsRequired()
+                    .IsUnicode(false);
             });
 
             modelBuilder.Entity<DayOffWorker>(entity =>

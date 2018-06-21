@@ -112,6 +112,7 @@ namespace AssetCalendarApi
             services.AddScoped<TagRepository>();
             services.AddScoped<CalendarRepository>();
             services.AddScoped<SignalRService>();
+            services.AddScoped<StripeRepository>();
 
             services.AddTransient<AssetCalendarSeeder>();
         }

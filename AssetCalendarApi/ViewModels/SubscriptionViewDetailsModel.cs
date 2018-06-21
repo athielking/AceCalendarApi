@@ -4,72 +4,68 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace AssetCalendarApi.Data.Models
+namespace AssetCalendarApi.ViewModels
 {
-    public class Organization
+    public class SubscriptionViewDetailsModel
     {
-        #region Constructor
+        #region Public Methods
 
-        public Organization()
-        {
-            CalendarUsers = new HashSet<CalendarUser>();
-            Workers = new HashSet<Worker>();
-            Jobs = new HashSet<Job>();
-        }
-
-        #endregion
-
-
-        #region Properties
-
-        public Guid Id
+        public string ProductName
         {
             get;
             set;
         }
 
-        public string Name
+        public bool IsActive
         {
             get;
             set;
         }
 
-        public string Email
+        public bool IsTrial
         {
             get;
             set;
         }
 
-        public string Stripe_CustomerId
+        public int DaysLeft
         {
             get;
             set;
         }
 
-        public ICollection<CalendarUser> CalendarUsers
+        public bool CancelAtPeriodEnd
         {
             get;
             set;
         }
 
-        public ICollection<Worker> Workers
+        public string SubscriptionId
         {
             get;
             set;
         }
 
-        public ICollection<Job> Jobs
+        public DateTime? CurrentPeriodEnd
         {
             get;
             set;
         }
 
-        public ICollection<Tag> Tags
+        public bool HasDefaultPaymentMethod
+        {
+            get;
+            set;
+        }
+
+        public String DefaultPaymentMethod
         {
             get;
             set;
         }
 
         #endregion
+
+
     }
 }

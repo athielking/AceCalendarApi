@@ -4,31 +4,25 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace AssetCalendarApi.Data.Models
+namespace AssetCalendarApi.ViewModels
 {
-    public class Organization
+    public class OrganizationDetailsViewModel
     {
-        #region Constructor
-
-        public Organization()
-        {
-            CalendarUsers = new HashSet<CalendarUser>();
-            Workers = new HashSet<Worker>();
-            Jobs = new HashSet<Job>();
-        }
-
-        #endregion
-
-
         #region Properties
 
-        public Guid Id
+        public string AddressLine1
         {
             get;
             set;
         }
 
-        public string Name
+        public string AddressLine2
+        {
+            get;
+            set;
+        }
+
+        public string OrganizationName
         {
             get;
             set;
@@ -40,31 +34,25 @@ namespace AssetCalendarApi.Data.Models
             set;
         }
 
-        public string Stripe_CustomerId
+        public string City
         {
             get;
             set;
         }
 
-        public ICollection<CalendarUser> CalendarUsers
+        public string State
         {
             get;
             set;
         }
 
-        public ICollection<Worker> Workers
+        public string Zip
         {
             get;
             set;
         }
 
-        public ICollection<Job> Jobs
-        {
-            get;
-            set;
-        }
-
-        public ICollection<Tag> Tags
+        public string CityStateZip
         {
             get;
             set;

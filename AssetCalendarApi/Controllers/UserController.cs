@@ -40,95 +40,108 @@ namespace AssetCalendarApi.Controllers
         #region Public Methods
 
         
-        [HttpPost]
-        public IActionResult Post([FromBody]UserRequestModel user)
-        {
-            try
-            {
-                if (!ModelState.IsValid)
-                    return BadRequest(GetErrorMessageObject(GetModelStateErrors()));
+        //[HttpPost]
+        //public async Task<IActionResult> Post([FromBody]UserRequestModel user)
+        //{
+        //    try
+        //    {
+        //        if (!ModelState.IsValid)
+        //            return BadRequest(GetErrorMessageObject(GetModelStateErrors()));
 
-                var organization = _organizationRepository.GetOrganizationById(new Guid(user.OrganizationId));
+        //        var organization = _organizationRepository.GetOrganizationById(new Guid(user.OrganizationId));
 
-                if (organization.Users.Any(u => u.UserName == user.UserName))
-                    return BadRequest(GetErrorMessageObject("Username is already in use"));
+        //        if (organization.Users.Any(u => u.UserName == user.UserName))
+        //            return BadRequest(GetErrorMessageObject("Username is already in use"));
 
-                var result = _userManager.CreateAsync(new CalendarUser()
-                {
-                    OrganizationId = new Guid(user.OrganizationId),
-                    UserName = user.UserName,
-                    FirstName = user.FirstName,
-                    LastName = user.LastName,
-                    Email = user.Email,
-                }, user.Password).Result;
+        //        if (user.Role != "Readonly")
+        //        {
+        //            if (organization.Users.Count(u => u.Role == "Admin" || u.Role == "User") >= organization.Subscription.LicenseQuantity)
+        //                return BadRequest(GetErrorMessageObject("The current subscription does not support any additional editing users. Please add user licenses to your subscription"));
+        //        }
 
-                if (!result.Succeeded)
-                    return BadRequest(GetErrorMessageObject(result.Errors.First().Description));
+        //        var result = _userManager.CreateAsync(new CalendarUser()
+        //        {
+        //            OrganizationId = new Guid(user.OrganizationId),
+        //            UserName = user.UserName,
+        //            FirstName = user.FirstName,
+        //            LastName = user.LastName,
+        //            Email = user.Email,
+        //        }, user.Password).Result;
 
-                var addedUser = _userManager.FindByNameAsync(user.UserName).Result;
+        //        if (!result.Succeeded)
+        //            return BadRequest(GetErrorMessageObject(result.Errors.First().Description));
 
-                if(_roleManager.RoleExistsAsync(user.Role).Result)
-                    _userManager.AddToRoleAsync(addedUser, user.Role);
+        //        var addedUser = _userManager.FindByNameAsync(user.UserName).Result;
+
+        //        if(_roleManager.RoleExistsAsync(user.Role).Result)
+        //            await _userManager.AddToRoleAsync(addedUser, user.Role);
            
-                return Ok(AutoMapper.Mapper.Map<UserViewModel>(addedUser));
-            }
-            catch
-            {
-                return BadRequest(GetErrorMessageObject("Failed to Add Tag"));
-            }
-        }
+        //        return Ok(AutoMapper.Mapper.Map<UserViewModel>(addedUser));
+        //    }
+        //    catch
+        //    {
+        //        return BadRequest(GetErrorMessageObject("Failed to Add Tag"));
+        //    }
+        //}
 
-        [HttpPut("{id}")]
-        public IActionResult Put(Guid id, [FromBody]UserRequestModel userModel)
-        {
-            try
-            {
-                if (!ModelState.IsValid)
-                    return BadRequest(GetErrorMessageObject(GetModelStateErrors()));
+        //[HttpPut("{id}")]
+        //public IActionResult Put(Guid id, [FromBody]UserRequestModel userModel)
+        //{
+        //    try
+        //    {
+        //        if (!ModelState.IsValid)
+        //            return BadRequest(GetErrorMessageObject(GetModelStateErrors()));
 
-                var user = _userManager.FindByIdAsync(userModel.Id).Result;
+        //        var user = _userManager.FindByIdAsync(userModel.Id).Result;
+        //        var organization = _organizationRepository.GetOrganizationById(new Guid(userModel.OrganizationId));
 
-                if (user == null)
-                    return BadRequest(GetErrorMessageObject("Unable to locate user"));
+        //        if (user == null)
+        //            return BadRequest(GetErrorMessageObject("Unable to locate user"));
 
-                user.FirstName = userModel.FirstName;
-                user.LastName = userModel.LastName;
-                user.Email = userModel.Email;
+        //        user.FirstName = userModel.FirstName;
+        //        user.LastName = userModel.LastName;
+        //        user.Email = userModel.Email;
 
-                var result = _userManager.UpdateAsync(user).Result;
-                if (!result.Succeeded)
-                    return BadRequest(GetErrorMessageObject(result.Errors.First().Description));
+        //        var result = _userManager.UpdateAsync(user).Result;
+        //        if (!result.Succeeded)
+        //            return BadRequest(GetErrorMessageObject(result.Errors.First().Description));
 
-                var roles = _userManager.GetRolesAsync(user).Result;
-                if( !roles.Contains( userModel.Role ))
-                {
-                    result = _userManager.RemoveFromRolesAsync(user, roles).Result;
-                    result = _userManager.AddToRoleAsync(user, userModel.Role).Result;
-                }
+        //        var roles = _userManager.GetRolesAsync(user).Result;
+        //        if( !roles.Contains( userModel.Role ))
+        //        {
+        //            if(userModel.Role != "Readonly" && !UserIsAdmin() )
+        //            {
+        //                if (organization.Users.Count(u => u.Role == "Organization Admin" || u.Role == "User") >= organization.Subscription.LicenseQuantity)
+        //                    return BadRequest(GetErrorMessageObject("The current subscription does not support any additional editing users. Please add user licenses to your subscription"));
+        //            }
 
-                return Ok(userModel);
-            }
-            catch
-            {
-                return BadRequest(GetErrorMessageObject("Failed to Update User"));
-            }
-        }
+        //            result = _userManager.RemoveFromRolesAsync(user, roles).Result;
+        //            result = _userManager.AddToRoleAsync(user, userModel.Role).Result;
+        //        }
 
-        [HttpDelete("{id}")]
-        public IActionResult Delete(Guid id)
-        {
-            try
-            {
-                var user = _userManager.FindByIdAsync(id.ToString()).Result;
-                var result = _userManager.DeleteAsync(user).Result;
+        //        return Ok(userModel);
+        //    }
+        //    catch
+        //    {
+        //        return BadRequest(GetErrorMessageObject("Failed to Update User"));
+        //    }
+        //}
 
-                return Ok();
-            }
-            catch
-            {
-                return BadRequest(GetErrorMessageObject("Failed to Delete Worker"));
-            }
-        }
+        //[HttpDelete("{id}")]
+        //public IActionResult Delete(Guid id)
+        //{
+        //    try
+        //    {
+        //        var user = _userManager.FindByIdAsync(id.ToString()).Result;
+        //        var result = _userManager.DeleteAsync(user).Result;
+
+        //        return Ok();
+        //    }
+        //    catch
+        //    {
+        //        return BadRequest(GetErrorMessageObject("Failed to Delete Worker"));
+        //    }
+        //}
         
         #endregion
     }
