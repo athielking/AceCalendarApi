@@ -154,7 +154,8 @@ namespace AssetCalendarApi.Controllers
             {
                 token = new JwtSecurityTokenHandler().WriteToken(token),
                 expiration = token.ValidTo,
-                user = user.UserName
+                user = user.UserName,
+                organizationId = user.OrganizationId
             });
         }
 
