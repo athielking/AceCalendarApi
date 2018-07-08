@@ -134,6 +134,13 @@ namespace AssetCalendarApi.Repository
             return _stripeRepository.GetSubscription(organization.Stripe_CustomerId);
         }
 
+        public Organization GetOrganizationWithUsers(Guid organizationId)
+        {
+            return _dbContext.Organizations
+                .Include(o => o.CalendarUsers)
+                .SingleOrDefault(org => org.Id == organizationId);
+        }
+
         //public OrganizationViewModel GetOrganizationById(Guid id)
         //{
         //    var org = _dbContext.Organizations
@@ -174,7 +181,7 @@ namespace AssetCalendarApi.Repository
         //    return orgVM;
         //}
 
-        public IEnumerable<UserViewModel> GetOrganizationUsers(Guid id)
+            public IEnumerable<UserViewModel> GetOrganizationUsers(Guid id)
         {
             var org = _dbContext.Organizations
                 .Include(o => o.CalendarUsers)

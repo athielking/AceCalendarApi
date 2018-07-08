@@ -104,10 +104,16 @@ namespace AssetCalendarApi.Controllers
         [Route("getRange")]
         public IActionResult GetDataForRange( DateTime date, DateTime? endDate, Guid? idWorker)
         {
+            try
+            {
+                var result = _calendarRepository.GetDataForRange(date, CalendarUser.OrganizationId, endDate, idWorker);
 
-            var result = _calendarRepository.GetDataForRange(date, CalendarUser.OrganizationId, endDate, idWorker);
-
-            return SuccessResult(result);
+                return SuccessResult(result);
+            }
+            catch
+            {
+                return BadRequest(GetErrorMessageObject("Failed to Get Data for Range"));
+            }
         }
 
         [HttpPost]
@@ -126,6 +132,7 @@ namespace AssetCalendarApi.Controllers
                 return BadRequest(GetErrorMessageObject("Failed to Copy Calendar Day"));
             }
         }
+
         #endregion
     }
 }

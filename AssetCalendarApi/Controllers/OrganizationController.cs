@@ -134,6 +134,36 @@ namespace AssetCalendarApi.Controllers
             }
         }
 
+        //Have this one authorized to admin since it will return admin users as well.
+        //Create a new one for mapping organization users to calendars.
+        [HttpGet]
+        [Authorize(Roles = "Admin")]     
+        [Route("getOrganizationUsers")]
+        public IActionResult GetOrganizationUsers(Guid id)
+        {
+            try
+            {
+                var organizationUsers = _organizationRepository.GetOrganizationUsers(id).Select(user =>
+                {
+                    return new UserGridModel()
+                    {
+                        Id = user.Id,
+                        Role = user.Role,
+                        Username = user.UserName,
+                        FirstName = user.FirstName,
+                        LastName = user.LastName,
+                        Email = user.Email
+                    };
+                }).ToList();
+
+                return SuccessResult(organizationUsers);
+            }
+            catch
+            {
+                return BadRequest("Unable to Get Organization Users");
+            }
+        }
+
         [HttpPost]
         public IActionResult Post([FromBody]SaveOrganizationRequestModel organization)
         {
