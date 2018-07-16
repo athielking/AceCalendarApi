@@ -10,7 +10,7 @@ using AssetCalendarApi.Tools;
 
 namespace AssetCalendarApi.Data
 {
-    public partial class AssetCalendarDbContext : IdentityDbContext<CalendarUser>
+    public partial class AssetCalendarDbContext : IdentityDbContext<AceUser>
     {
         #region Data Members
 
@@ -32,7 +32,8 @@ namespace AssetCalendarApi.Data
         public DbSet<JobTags> JobTags { get; set; }
         public DbSet<WorkerTags> WorkerTags { get; set; }
         public DbSet<DayJobTag> DaysJobsTags { get; set; }
-        //public DbSet<Calendar> Calendar { get; set; }
+        public DbSet<Calendar> Calendars { get; set; }
+        public DbSet<CalendarUser> CalendarUsers { get; set; }
 
         //Views
         public DbSet<JobsByDate> JobsByDate { get; set; }
@@ -61,11 +62,6 @@ namespace AssetCalendarApi.Data
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-
-            var lf = new LoggerFactory();
-            //lf.AddProvider(new EFLoggerFactory());
-            //optionsBuilder.UseLoggerFactory(lf);
-
             if (!optionsBuilder.IsConfigured)
             {
                 if (_environment.IsProduction())
@@ -126,11 +122,11 @@ namespace AssetCalendarApi.Data
                     .HasMaxLength(50)
                     .IsUnicode(false);
 
-                entity.HasOne(d => d.Organization)
+                entity.HasOne(d => d.Calendar)
                      .WithMany(j => j.Jobs)
-                     .HasForeignKey(d => d.OrganizationId)
+                     .HasForeignKey(d => d.CalendarId)
                      .OnDelete(DeleteBehavior.Restrict)
-                     .HasConstraintName("FK_Jobs_Organization");
+                     .HasConstraintName("FK_Jobs_Calendar");
             });
 
             modelBuilder.Entity<JobTags>(entity =>
@@ -210,11 +206,11 @@ namespace AssetCalendarApi.Data
                     .HasMaxLength(14)
                     .IsUnicode(false);
 
-                entity.HasOne(d => d.Organization)
+                entity.HasOne(d => d.Calendar)
                      .WithMany(j => j.Workers)
-                     .HasForeignKey(d => d.OrganizationId)
+                     .HasForeignKey(d => d.CalendarId)
                      .OnDelete(DeleteBehavior.Restrict)
-                     .HasConstraintName("FK_Workers_Organization");
+                     .HasConstraintName("FK_Workers_Calendar");
             });
 
             modelBuilder.Entity<Organization>(entity =>
@@ -261,12 +257,40 @@ namespace AssetCalendarApi.Data
                 entity.Property(e => e.Color).HasMaxLength(10);
                 entity.Property(e => e.Icon).HasMaxLength(50);
 
-                entity.HasOne(d => d.Organization)
+                entity.HasOne(d => d.Calendar)
                      .WithMany(t => t.Tags)
-                     .HasForeignKey(d => d.OrganizationId)
+                     .HasForeignKey(d => d.CalendarId)
                      .OnDelete(DeleteBehavior.Restrict)
-                     .HasConstraintName("FK_Tags_Organization");
+                     .HasConstraintName("FK_Tags_Calendar");
             });
+
+            modelBuilder.Entity<Calendar>(entity =>
+            {
+               entity.ToTable("Calendars");
+               entity.Property(e => e.Id).ValueGeneratedNever();
+               entity.Property(e => e.CalendarName).HasMaxLength(50);
+               entity.Property(e => e.Inactive)
+                   .HasColumnType("bit")
+                   .HasDefaultValueSql("0");
+
+                entity.HasOne(c => c.Organization)
+                    .WithMany(o => o.Calendars)
+                    .HasForeignKey(c => c.OrganizationId)
+                    .OnDelete(DeleteBehavior.Restrict)
+                    .HasConstraintName("FK_Calendars_Organization");
+            });
+
+            modelBuilder.Entity<CalendarUser>(entity =>
+           {
+               entity.ToTable("CalendarUsers");
+               entity.Property(e => e.Id).ValueGeneratedNever();
+
+               entity.HasOne(c => c.Calendar)
+                   .WithMany(c => c.CalendarUsers)
+                   .HasForeignKey(c => c.CalendarId)
+                   .OnDelete(DeleteBehavior.Restrict)
+                   .HasConstraintName("FK_CalendarUsers_Calendar");
+           });
 
             //modelBuilder.Entity<JobsByDate>(entity =>
             //{

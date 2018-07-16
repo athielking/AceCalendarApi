@@ -41,29 +41,29 @@ namespace AssetCalendarApi.Repository
 
         #region Public Methods
 
-        public IQueryable<Worker> GetAllWorkers(Guid organizationId)
+        public IQueryable<Worker> GetAllWorkers(Guid calendarId)
         {
-            return GetWorkersByOrganization(organizationId)
+            return GetWorkersByOrganization(calendarId)
                 .Include(w => w.WorkerTags)
                 .ThenInclude(t => t.Tag);
         }
 
-        public IQueryable<Worker> GetWorkersByOrganization(Guid organizationId)
+        public IQueryable<Worker> GetWorkersByOrganization(Guid calendarId)
         {
             return _dbContext.Workers
-                .Where(worker => worker.OrganizationId == organizationId);
+                .Where(worker => worker.CalendarId == calendarId);
         }
 
-        public Worker GetWorker(Guid id, Guid organizationId)
+        public Worker GetWorker(Guid id, Guid calendarId)
         {
-            return GetWorkersByOrganization(organizationId)
+            return GetWorkersByOrganization(calendarId)
                 .Include(w => w.WorkerTags)
                 .ThenInclude(t => t.Tag)
                 .AsExpandable()
                 .FirstOrDefault(w => w.Id == id);
         }
 
-        public IEnumerable<DayOffWorker> GetTimeOffForMonth(Guid workerId, DateTime date, Guid organizationId)
+        public IEnumerable<DayOffWorker> GetTimeOffForMonth(Guid workerId, DateTime date, Guid calendarId)
         {
             return _dbContext.DayOffWorkers
                 .Include(dayOffWorker => dayOffWorker.Worker)
@@ -73,11 +73,11 @@ namespace AssetCalendarApi.Repository
                         dayOffWorker.IdWorker == workerId &&
                         dayOffWorker.Date.Month == date.Month &&
                         dayOffWorker.Date.Year == date.Year &&
-                        dayOffWorker.Worker.OrganizationId == organizationId
+                        dayOffWorker.Worker.CalendarId == calendarId
                 );
         }
 
-        public DayOffWorker GetTimeOffForDay(Guid workerId, DateTime date, Guid organizationId)
+        public DayOffWorker GetTimeOffForDay(Guid workerId, DateTime date, Guid calendarId)
         {
             return _dbContext.DayOffWorkers
                 .Include(dayOffWorker => dayOffWorker.Worker)
@@ -88,11 +88,11 @@ namespace AssetCalendarApi.Repository
                         dayOffWorker.Date.Day == date.Day &&
                         dayOffWorker.Date.Month == date.Month &&
                         dayOffWorker.Date.Year == date.Year &&
-                        dayOffWorker.Worker.OrganizationId == organizationId
+                        dayOffWorker.Worker.CalendarId == calendarId
                 );
         }
 
-        public IEnumerable<DayJobWorker> GetJobsForMonth(Guid id, DateTime date, Guid organizationId)
+        public IEnumerable<DayJobWorker> GetJobsForMonth(Guid id, DateTime date, Guid calendarId)
         {
             return _dbContext.DaysJobsWorkers
                 .Include(dayJobWorker => dayJobWorker.Worker)
@@ -104,44 +104,44 @@ namespace AssetCalendarApi.Repository
                         dayJobWorker.Worker.Id == id &&
                         dayJobWorker.DayJob.Date.Month == date.Month &&
                         dayJobWorker.DayJob.Date.Year == date.Year &&
-                        dayJobWorker.Worker.OrganizationId == organizationId
+                        dayJobWorker.Worker.CalendarId == calendarId
                 );
         }
 
-        public Worker GetWorkerWithJobs(Guid id, Guid organizationId)
+        public Worker GetWorkerWithJobs(Guid id, Guid calendarId)
         {
-            return GetWorkersByOrganization(organizationId)
+            return GetWorkersByOrganization(calendarId)
                 .Include(worker => worker.DayJobWorkers)
                 .ThenInclude(djw => djw.DayJob)
                 .AsExpandable()
                 .FirstOrDefault(w => w.Id == id);
         }
 
-        public Dictionary<DateTime, IEnumerable<Worker>> GetAvailableWorkersForDay(Guid organizationId, DateTime startDate)
+        public Dictionary<DateTime, IEnumerable<Worker>> GetAvailableWorkersForDay(Guid calendarId, DateTime startDate)
         {
-            return GetAvailableWorkersForDates(organizationId, startDate, null);
+            return GetAvailableWorkersForDates(calendarId, startDate, null);
         }
 
-        public Dictionary<DateTime, IEnumerable<Worker>> GetAvailableWorkersForMonth(Guid organizationId, DateTime dateInMonth)
+        public Dictionary<DateTime, IEnumerable<Worker>> GetAvailableWorkersForMonth(Guid calendarId, DateTime dateInMonth)
         {
             //Need to always fill out the entire week of the start and end of the month
             var startOfMonth = new DateTime(dateInMonth.Year, dateInMonth.Month, 1).StartOfWeek();
             var endOfMonth = startOfMonth.AddMonths(1).AddDays(-1).EndOfWeek();
 
-            return GetAvailableWorkersForDates(organizationId, startOfMonth, endOfMonth);
+            return GetAvailableWorkersForDates(calendarId, startOfMonth, endOfMonth);
         }
 
-        public Dictionary<DateTime, IEnumerable<Worker>> GetAvailableWorkersForWeek(Guid organizationId, DateTime dateInWeek)
+        public Dictionary<DateTime, IEnumerable<Worker>> GetAvailableWorkersForWeek(Guid calendarId, DateTime dateInWeek)
         {
-            return GetAvailableWorkersForDates(organizationId, dateInWeek.StartOfWeek(), dateInWeek.EndOfWeek());
+            return GetAvailableWorkersForDates(calendarId, dateInWeek.StartOfWeek(), dateInWeek.EndOfWeek());
         }
 
-        public Dictionary<DateTime, IEnumerable<Worker>> GetAvailableWorkersForDates(Guid organizationId, DateTime startDate, DateTime? endDate)
+        public Dictionary<DateTime, IEnumerable<Worker>> GetAvailableWorkersForDates(Guid calendarId, DateTime startDate, DateTime? endDate)
         {
             endDate = endDate ?? startDate;
 
             var avail = _dbContext.AvailableWorkers
-                .Where(a => a.Date.Date >= startDate.Date && a.Date.Date <= endDate.Value.Date && a.OrganizationId == organizationId);
+                .Where(a => a.Date.Date >= startDate.Date && a.Date.Date <= endDate.Value.Date && a.CalendarId == calendarId);
 
             var dictionary = new Dictionary<DateTime, IEnumerable<Worker>>();
             var keys = avail.Select(w => w.Date).Distinct();
@@ -154,27 +154,27 @@ namespace AssetCalendarApi.Repository
             return dictionary;
         }
 
-        public Dictionary<DateTime, IEnumerable<Worker>> GetOffWorkersForMonth(Guid organizationId, DateTime dateInMonth)
+        public Dictionary<DateTime, IEnumerable<Worker>> GetOffWorkersForMonth(Guid calendarId, DateTime dateInMonth)
         {
             //Need to always fill out the entire week of the start and end of the month
             var startOfMonth = new DateTime(dateInMonth.Year, dateInMonth.Month, 1).StartOfWeek();
             var endOfMonth = startOfMonth.AddMonths(1).AddDays(-1).EndOfWeek();
 
-            return GetOffWorkersForDates(organizationId, startOfMonth, endOfMonth);
+            return GetOffWorkersForDates(calendarId, startOfMonth, endOfMonth);
         }
 
-        public Dictionary<DateTime, IEnumerable<Worker>> GetOffWorkersForWeek(Guid organizationId, DateTime dateInWeek)
+        public Dictionary<DateTime, IEnumerable<Worker>> GetOffWorkersForWeek(Guid calendarId, DateTime dateInWeek)
         {
-            return GetOffWorkersForDates(organizationId, dateInWeek.StartOfWeek(), dateInWeek.EndOfWeek());
+            return GetOffWorkersForDates(calendarId, dateInWeek.StartOfWeek(), dateInWeek.EndOfWeek());
         }
 
-        public Dictionary<DateTime, IEnumerable<Worker>> GetOffWorkersForDates(Guid organizationId, DateTime startDate, DateTime? endDate)
+        public Dictionary<DateTime, IEnumerable<Worker>> GetOffWorkersForDates(Guid calendarId, DateTime startDate, DateTime? endDate)
         {
             endDate = endDate ?? startDate;
 
             var off = _dbContext.DayOffWorkers
                 .Include( w => w.Worker )
-                .Where(t => t.Worker.OrganizationId == organizationId && t.Date >= startDate.Date && t.Date <= endDate.Value.Date);
+                .Where(t => t.Worker.CalendarId == calendarId && t.Date >= startDate.Date && t.Date <= endDate.Value.Date);
 
             var dictionary = new Dictionary<DateTime, IEnumerable<Worker>>();
             var keys = off.Select(w => w.Date).Distinct();
@@ -187,9 +187,9 @@ namespace AssetCalendarApi.Repository
             return dictionary;
         }
 
-        public Dictionary<Guid, IEnumerable<Worker>> GetWorkersByJob(DateTime? date, Guid organizationId)
+        public Dictionary<Guid, IEnumerable<Worker>> GetWorkersByJob(DateTime? date, Guid calendarId)
         {
-            var workers = _dbContext.WorkersByJobDate.Where(w => w.OrganizationId == organizationId);
+            var workers = _dbContext.WorkersByJobDate.Where(w => w.CalendarId == calendarId);
 
             if (date.HasValue)
                 workers = workers.Where(w => w.Date.Date == date.Value.Date);
@@ -203,7 +203,7 @@ namespace AssetCalendarApi.Repository
             return dictionary;
         }
 
-        public Worker AddWorker(WorkerViewModel worker, Guid organizationId)
+        public Worker AddWorker(WorkerViewModel worker, Guid calendarId)
         {
             var dbWorker = new Worker()
             {
@@ -212,7 +212,7 @@ namespace AssetCalendarApi.Repository
                 LastName = worker.LastName,
                 Email = worker.Email,
                 Phone = worker.Phone,
-                OrganizationId = organizationId
+                CalendarId = calendarId
             };
 
             _dbContext.Workers.Add(dbWorker);
@@ -225,9 +225,9 @@ namespace AssetCalendarApi.Repository
             return dbWorker;
         }
 
-        public void EditWorker(Guid id, WorkerViewModel workerViewModel, Guid organizationId)
+        public void EditWorker(Guid id, WorkerViewModel workerViewModel, Guid calendarId)
         {
-            var worker = GetWorkersByOrganization(organizationId).FirstOrDefault(w => w.Id == id);
+            var worker = GetWorkersByOrganization(calendarId).FirstOrDefault(w => w.Id == id);
 
             if (worker == null)
                 throw new ApplicationException("Worker not Found");
@@ -245,9 +245,9 @@ namespace AssetCalendarApi.Repository
             _dbContext.SaveChanges();
         }
 
-        public void DeleteWorker(Guid id, Guid organizationId)
+        public void DeleteWorker(Guid id, Guid calendarId)
         {
-            var worker = GetWorkersByOrganization(organizationId).FirstOrDefault(w => w.Id == id);
+            var worker = GetWorkersByOrganization(calendarId).FirstOrDefault(w => w.Id == id);
 
             if (worker == null)
                 throw new ApplicationException("Worker not Found");
@@ -256,9 +256,9 @@ namespace AssetCalendarApi.Repository
             _dbContext.SaveChanges();
         }
 
-        public void DeleteTimeOff(Guid workerId, DateTime date, Guid organizationId)
+        public void DeleteTimeOff(Guid workerId, DateTime date, Guid calendarId)
         {
-            var timeOff = GetTimeOffForDay(workerId, date, organizationId);
+            var timeOff = GetTimeOffForDay(workerId, date, calendarId);
 
             if (timeOff == null)
                 throw new ApplicationException("Time Off Entry not Found");
@@ -267,9 +267,9 @@ namespace AssetCalendarApi.Repository
             _dbContext.SaveChanges();
         }
 
-        public void EditTimeOff(Guid workerId, DateTime monthDate, IEnumerable<DateTime> timeOffDates, Guid organizationId)
+        public void EditTimeOff(Guid workerId, DateTime monthDate, IEnumerable<DateTime> timeOffDates, Guid calendarId)
         {
-            var dayOffWorkers = GetTimeOffForMonth(workerId, monthDate, organizationId);
+            var dayOffWorkers = GetTimeOffForMonth(workerId, monthDate, calendarId);
 
             //Remove existing time off days not in the new set
             foreach (var dayOffWorker in dayOffWorkers)
@@ -288,7 +288,7 @@ namespace AssetCalendarApi.Repository
                 if (existingTimeOffDates.Contains(timeOffDate.Date))
                     continue;
 
-                _jobRepository.MoveWorkerToOff(workerId, timeOffDate.Date, organizationId);
+                _jobRepository.MoveWorkerToOff(workerId, timeOffDate.Date, calendarId);
             }
         }
 

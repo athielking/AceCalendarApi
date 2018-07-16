@@ -29,7 +29,7 @@ namespace AssetCalendarApi.Controllers
         public WorkerController
         (
             WorkerRepository workerRepository,
-            UserManager<CalendarUser> userManager,
+            UserManager<AceUser> userManager,
             IHubContext<CalendarHub> hubContext
         ) : base(userManager)
         {
@@ -46,7 +46,10 @@ namespace AssetCalendarApi.Controllers
         {
             try
             {
-                var workers = _workerRepository.GetAllWorkers(CalendarUser.OrganizationId)
+                if (CalendarId == null)
+                    return BadRequest(GetErrorMessageObject("Failed to retrieve data for calendar. Calendar Id not set"));
+
+                var workers = _workerRepository.GetAllWorkers(CalendarId)
                     .ToList()
                     .Select(worker => worker.GetViewModel() )
                     .OrderBy(worker => worker.FullName)
@@ -65,7 +68,10 @@ namespace AssetCalendarApi.Controllers
         {
             try
             {
-                var worker = _workerRepository.GetWorker(id, CalendarUser.OrganizationId);
+                if (CalendarId == null)
+                    return BadRequest(GetErrorMessageObject("Failed to retrieve data for calendar. Calendar Id not set"));
+
+                var worker = _workerRepository.GetWorker(id, CalendarId);
 
                 return SuccessResult(worker.GetViewModel());
             }
@@ -96,7 +102,10 @@ namespace AssetCalendarApi.Controllers
         {
             try
             {
-                var timeOffForMonth = _workerRepository.GetTimeOffForMonth(id, date, CalendarUser.OrganizationId).ToList();
+                if (CalendarId == null)
+                    return BadRequest(GetErrorMessageObject("Failed to retrieve data for calendar. Calendar Id not set"));
+
+                var timeOffForMonth = _workerRepository.GetTimeOffForMonth(id, date, CalendarId).ToList();
 
                 return SuccessResult(timeOffForMonth);
             }
@@ -112,7 +121,10 @@ namespace AssetCalendarApi.Controllers
         {
             try
             {
-                var jobsForMonth = _workerRepository.GetJobsForMonth(id, date, CalendarUser.OrganizationId).Select(dayJobWorker =>
+                if (CalendarId == null)
+                    return BadRequest(GetErrorMessageObject("Failed to retrieve data for calendar. Calendar Id not set"));
+
+                var jobsForMonth = _workerRepository.GetJobsForMonth(id, date, CalendarId).Select(dayJobWorker =>
                 {
                     return new JobByDateModel()
                     {
@@ -139,7 +151,10 @@ namespace AssetCalendarApi.Controllers
                 if (!ModelState.IsValid)
                     return BadRequest(GetErrorMessageObject(GetModelStateErrors()));
 
-                var addedWorker = _workerRepository.AddWorker(worker, CalendarUser.OrganizationId);
+                if (CalendarId == null)
+                    return BadRequest(GetErrorMessageObject("Failed to retrieve data for calendar. Calendar Id not set"));
+
+                var addedWorker = _workerRepository.AddWorker(worker, CalendarId);
 
                 return Ok(addedWorker);
             }
@@ -157,7 +172,10 @@ namespace AssetCalendarApi.Controllers
                 if (!ModelState.IsValid)
                     return BadRequest(GetErrorMessageObject(GetModelStateErrors()));
 
-                _workerRepository.EditWorker(id, worker, CalendarUser.OrganizationId);
+                if (CalendarId == null)
+                    return BadRequest(GetErrorMessageObject("Failed to retrieve data for calendar. Calendar Id not set"));
+
+                _workerRepository.EditWorker(id, worker, CalendarId);
 
                 return Ok();
             }
@@ -172,7 +190,10 @@ namespace AssetCalendarApi.Controllers
         {
             try
             {
-                _workerRepository.DeleteWorker(id, CalendarUser.OrganizationId);
+                if (CalendarId == null)
+                    return BadRequest(GetErrorMessageObject("Failed to retrieve data for calendar. Calendar Id not set"));
+
+                _workerRepository.DeleteWorker(id, CalendarId);
 
                 return Ok();
             }
@@ -187,7 +208,10 @@ namespace AssetCalendarApi.Controllers
         {
             try
             {
-                _workerRepository.DeleteTimeOff(workerId, date, CalendarUser.OrganizationId);
+                if (CalendarId == null)
+                    return BadRequest(GetErrorMessageObject("Failed to retrieve data for calendar. Calendar Id not set"));
+
+                _workerRepository.DeleteTimeOff(workerId, date, CalendarId);
 
                 return Ok();
             }
@@ -205,7 +229,10 @@ namespace AssetCalendarApi.Controllers
                 if (!ModelState.IsValid)
                     return BadRequest(GetErrorMessageObject(GetModelStateErrors()));
 
-                _workerRepository.EditTimeOff(model.WorkerId, model.MonthDate, model.TimeOffDates, CalendarUser.OrganizationId);
+                if (CalendarId == null)
+                    return BadRequest(GetErrorMessageObject("Failed to retrieve data for calendar. Calendar Id not set"));
+
+                _workerRepository.EditTimeOff(model.WorkerId, model.MonthDate, model.TimeOffDates, CalendarId);
 
                 return Ok();
             }

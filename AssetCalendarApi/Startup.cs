@@ -58,7 +58,7 @@ namespace AssetCalendarApi
         {
             services.AddCors();
 
-            services.AddIdentity<CalendarUser, IdentityRole>()
+            services.AddIdentity<AceUser, IdentityRole>()
                 .AddEntityFrameworkStores<AssetCalendarDbContext>()
                 .AddDefaultTokenProviders();
 
@@ -121,10 +121,10 @@ namespace AssetCalendarApi
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
             var origin = "http://localhost:4200";
-            if (env.IsProduction())
-                origin = "https://acecalendar.io";
-            else if (env.IsStaging())
-                origin = "http://demo.acecalendar.io";
+            //if (env.IsProduction())
+            //    origin = "https://acecalendar.io";
+            //else if (env.IsStaging())
+            //    origin = "http://demo.acecalendar.io";
 
             app.UseCors(
                     options => options.WithOrigins(origin)
@@ -157,8 +157,9 @@ namespace AssetCalendarApi
                 config.CreateMap<TagsByJob, TagViewModel>();
                 config.CreateMap<TagsByJobDate, TagViewModel>();
                 config.CreateMap<WorkerTags, TagViewModel>();
-                config.CreateMap<CalendarUser, UserViewModel>().ReverseMap();
+                config.CreateMap<AceUser, UserViewModel>().ReverseMap();
                 config.CreateMap<Organization, OrganizationViewModel>().ReverseMap();
+                config.CreateMap<Calendar, CalendarViewModel>();
             });
         }
 

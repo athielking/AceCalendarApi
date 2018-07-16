@@ -12,9 +12,8 @@ namespace AssetCalendarApi.Data.Models
 
         public Organization()
         {
-            CalendarUsers = new HashSet<CalendarUser>();
-            Workers = new HashSet<Worker>();
-            Jobs = new HashSet<Job>();
+            AceUsers = new HashSet<AceUser>();
+            Calendars = new HashSet<Calendar>();
         }
 
         #endregion
@@ -46,25 +45,13 @@ namespace AssetCalendarApi.Data.Models
             set;
         }
 
-        public ICollection<CalendarUser> CalendarUsers
+        public ICollection<AceUser> AceUsers
         {
             get;
             set;
         }
 
-        public ICollection<Worker> Workers
-        {
-            get;
-            set;
-        }
-
-        public ICollection<Job> Jobs
-        {
-            get;
-            set;
-        }
-
-        public ICollection<Tag> Tags
+        public ICollection<Calendar> Calendars
         {
             get;
             set;

@@ -31,7 +31,7 @@ namespace AssetCalendarApi.Controllers
         public UserController
         (
             OrganizationRepository organizationRepository,
-            UserManager<CalendarUser> userManager,
+            UserManager<AceUser> userManager,
             RoleManager<IdentityRole> roleManager
         ) : base(userManager)
         {
@@ -53,10 +53,10 @@ namespace AssetCalendarApi.Controllers
 
                 var organization = _organizationRepository.GetOrganizationWithUsers(id);
 
-                if (organization.CalendarUsers.Any(u => u.UserName == addUserModel.Username))
+                if (organization.AceUsers.Any(u => u.UserName == addUserModel.Username))
                     return BadRequest(GetErrorMessageObject("Username is already in use"));
 
-                var result = _userManager.CreateAsync(new CalendarUser()
+                var result = _userManager.CreateAsync(new AceUser()
                 {
                     OrganizationId = id,
                     UserName = addUserModel.Username,

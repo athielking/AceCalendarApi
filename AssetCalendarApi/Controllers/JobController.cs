@@ -36,7 +36,7 @@ namespace AssetCalendarApi.Controllers
             JobRepository jobRepository,
             TagRepository tagRepository,
             SignalRService signalRService,
-            UserManager<CalendarUser> userManager
+            UserManager<AceUser> userManager
         ) : base(userManager)
         {
             _jobRepository = jobRepository;
@@ -53,11 +53,10 @@ namespace AssetCalendarApi.Controllers
         {
             try
             {
-                var calendarUser = await _userManager.FindByNameAsync(User.Identity.Name);
+                if (CalendarId == null)
+                    return BadRequest(GetErrorMessageObject("Failed to retrieve data for calendar. Calendar Id not set"));
 
-                var jobs = _jobRepository.GetAllJobs(calendarUser.OrganizationId).ToList();
-
-                return SuccessResult(jobs);
+                return SuccessResult(_jobRepository.GetAllJobs(CalendarId).ToList());
             }
             catch
             {
@@ -70,9 +69,12 @@ namespace AssetCalendarApi.Controllers
         {
             try
             {
+                if (CalendarId == null)
+                    return BadRequest(GetErrorMessageObject("Failed to retrieve data for calendar. Calendar Id not set"));
+
                 var calendarUser = await _userManager.FindByNameAsync(User.Identity.Name);
 
-                var job = _jobRepository.GetJob(id, calendarUser.OrganizationId);
+                var job = _jobRepository.GetJob(id, CalendarId);
 
                 if (job == null)
                     return NotFound($"Job with Id {id} not found");
@@ -87,13 +89,14 @@ namespace AssetCalendarApi.Controllers
 
         [HttpGet]
         [Route("getJobsForDay")]
-        public async Task<IActionResult> GetJobsForDay(DateTime date)
+        public IActionResult GetJobsForDay(DateTime date)
         {
             try
             {
-                var calendarUser = await _userManager.FindByNameAsync(User.Identity.Name);
+                if (CalendarId == null)
+                    return BadRequest(GetErrorMessageObject("Failed to retrieve data for calendar. Calendar Id not set"));
 
-                return SuccessResult(_jobRepository.GetJobsForDay(date, calendarUser.OrganizationId));
+                return SuccessResult(_jobRepository.GetJobsForDay(date, CalendarId));
             }
             catch
             {
@@ -103,13 +106,14 @@ namespace AssetCalendarApi.Controllers
 
         [HttpGet]
         [Route("getJobsForWeek")]
-        public async Task<IActionResult> GetJobsForWeek(DateTime date)
+        public IActionResult GetJobsForWeek(DateTime date)
         {
             try
             {
-                var calendarUser = await _userManager.FindByNameAsync(User.Identity.Name);
+                if (CalendarId == null)
+                    return BadRequest(GetErrorMessageObject("Failed to retrieve data for calendar. Calendar Id not set"));
 
-                return SuccessResult(_jobRepository.GetJobsForWeek(date, calendarUser.OrganizationId));
+                return SuccessResult(_jobRepository.GetJobsForWeek(date, CalendarId));
             }
             catch
             {
@@ -119,13 +123,14 @@ namespace AssetCalendarApi.Controllers
 
         [HttpGet]
         [Route("getJobsForMonth")]
-        public async Task<IActionResult> GetJobsForMonth(DateTime date)
+        public IActionResult GetJobsForMonth(DateTime date)
         {
             try
             {
-                var calendarUser = await _userManager.FindByNameAsync(User.Identity.Name);
+                if (CalendarId == null)
+                    return BadRequest(GetErrorMessageObject("Failed to retrieve data for calendar. Calendar Id not set"));
 
-                return SuccessResult(_jobRepository.GetJobsForMonth(date, calendarUser.OrganizationId));
+                return SuccessResult(_jobRepository.GetJobsForMonth(date, CalendarId));
             }
             catch
             {
@@ -139,7 +144,10 @@ namespace AssetCalendarApi.Controllers
         {
             try
             {
-                return SuccessResult(_jobRepository.GetJobStartAndEndDate(jobId, CalendarUser.OrganizationId));
+                if (CalendarId == null)
+                    return BadRequest(GetErrorMessageObject("Failed to retrieve data for calendar. Calendar Id not set"));
+
+                return SuccessResult(_jobRepository.GetJobStartAndEndDate(jobId, CalendarId));
             }
             catch
             {
@@ -153,7 +161,10 @@ namespace AssetCalendarApi.Controllers
         {
             try
             {
-                return SuccessResult(_jobRepository.GetJobDaysForJob(jobId, CalendarUser.OrganizationId).Select( j => j.Date.Date));
+                if (CalendarId == null)
+                    return BadRequest(GetErrorMessageObject("Failed to retrieve data for calendar. Calendar Id not set"));
+
+                return SuccessResult(_jobRepository.GetJobDaysForJob(jobId, CalendarId).Select( j => j.Date.Date));
             }
             catch
             {
@@ -169,10 +180,13 @@ namespace AssetCalendarApi.Controllers
                 if (!ModelState.IsValid)
                     return BadRequest(GetErrorMessageObject(GetModelStateErrors()));
 
-                var addedJob = _jobRepository.AddJob(job, CalendarUser.OrganizationId);
+                if (CalendarId == null)
+                    return BadRequest(GetErrorMessageObject("Failed to Add Job. Calendar Id not set"));
+
+                var addedJob = _jobRepository.AddJob(job, CalendarId);
 
                 foreach (var jd in addedJob.DaysJobs)
-                    _signalRService.SendDataUpdatedAsync(jd.Date, CalendarUser.OrganizationId);
+                    _signalRService.SendDataUpdatedAsync(jd.Date, CalendarId);
 
                 return SuccessResult(addedJob);
             }
@@ -190,8 +204,11 @@ namespace AssetCalendarApi.Controllers
                 if (!ModelState.IsValid)
                     return BadRequest(GetErrorMessageObject(GetModelStateErrors()));
 
-                _jobRepository.EditJob(id, job, CalendarUser.OrganizationId);
-                _signalRService.SendDataUpdatedAsync(job.JobDays.Select( d => d.Date.Date ), CalendarUser.OrganizationId);
+                if (CalendarId == null)
+                    return BadRequest(GetErrorMessageObject("Failed to retrieve data for calendar. Calendar Id not set"));
+
+                _jobRepository.EditJob(id, job, CalendarId);
+                _signalRService.SendDataUpdatedAsync(job.JobDays.Select( d => d.Date.Date ), CalendarId);
 
                 return Ok();
             }
@@ -206,17 +223,20 @@ namespace AssetCalendarApi.Controllers
         {
             try
             {
+                if (CalendarId == null)
+                    return BadRequest(GetErrorMessageObject("Failed to retrieve data for calendar. Calendar Id not set"));
+
                 if (model.AddWorkerOption == AddWorkerOption.AllDays)
-                    _jobRepository.MoveWorkerToAllDaysOnJob(model.IdJob.Value, model.IdWorker, model.ViewDate.Value, CalendarUser.OrganizationId);
+                    _jobRepository.MoveWorkerToAllDaysOnJob(model.IdJob.Value, model.IdWorker, model.ViewDate.Value, CalendarId);
                 else if (model.AddWorkerOption == AddWorkerOption.AvailableDays)
                 {
-                    _jobRepository.MoveWorkerToAllAvailableDaysOnJob(model.IdJob.Value, model.IdWorker, model.Date.Value, model.ViewDate.Value, CalendarUser.OrganizationId);
-                    _signalRService.SendDataUpdatedAsync(model.ViewDate.Value.StartOfWeek(), CalendarUser.OrganizationId, model.ViewDate.Value.EndOfWeek());
+                    _jobRepository.MoveWorkerToAllAvailableDaysOnJob(model.IdJob.Value, model.IdWorker, model.Date.Value, model.ViewDate.Value, CalendarId);
+                    _signalRService.SendDataUpdatedAsync(model.ViewDate.Value.StartOfWeek(), CalendarId, model.ViewDate.Value.EndOfWeek());
                 }
                 else
                 {
-                    _jobRepository.MoveWorkerToJob(model.IdJob.Value, model.IdWorker, model.Date.Value, CalendarUser.OrganizationId);
-                    _signalRService.SendDataUpdatedAsync(model.Date.Value, CalendarUser.OrganizationId);
+                    _jobRepository.MoveWorkerToJob(model.IdJob.Value, model.IdWorker, model.Date.Value, CalendarId);
+                    _signalRService.SendDataUpdatedAsync(model.Date.Value, CalendarId);
                 }
 
                 return SuccessResult("Worker Successfully Moved");
@@ -232,8 +252,11 @@ namespace AssetCalendarApi.Controllers
         {
             try
             {
-                _jobRepository.MakeWorkerAvailable(model.IdWorker, model.Date.Value, CalendarUser.OrganizationId);
-                _signalRService.SendDataUpdatedAsync(model.Date.Value, CalendarUser.OrganizationId);
+                if (CalendarId == null)
+                    return BadRequest(GetErrorMessageObject("Failed to retrieve data for calendar. Calendar Id not set"));
+
+                _jobRepository.MakeWorkerAvailable(model.IdWorker, model.Date.Value, CalendarId);
+                _signalRService.SendDataUpdatedAsync(model.Date.Value, CalendarId);
                 
                 return SuccessResult("Worker Successfully Moved");
             }
@@ -248,8 +271,11 @@ namespace AssetCalendarApi.Controllers
         {
             try
             {
-                _jobRepository.MoveWorkerToOff(model.IdWorker, model.Date.Value, CalendarUser.OrganizationId);
-                _signalRService.SendDataUpdatedAsync(model.Date.Value, CalendarUser.OrganizationId);
+                if (CalendarId == null)
+                    return BadRequest(GetErrorMessageObject("Failed to retrieve data for calendar. Calendar Id not set"));
+
+                _jobRepository.MoveWorkerToOff(model.IdWorker, model.Date.Value, CalendarId);
+                _signalRService.SendDataUpdatedAsync(model.Date.Value, CalendarId);
 
                 return SuccessResult("Worker Successfully Moved");
             }
@@ -264,8 +290,11 @@ namespace AssetCalendarApi.Controllers
         {
             try
             {
-                _jobRepository.DeleteJob(id, CalendarUser.OrganizationId);
-                _signalRService.SendJobUpdatedAsync(id, CalendarUser.OrganizationId);
+                if (CalendarId == null)
+                    return BadRequest(GetErrorMessageObject("Failed to retrieve data for calendar. Calendar Id not set"));
+
+                _jobRepository.DeleteJob(id, CalendarId);
+                _signalRService.SendJobUpdatedAsync(id, CalendarId);
 
                 return Ok();
             }
@@ -280,8 +309,11 @@ namespace AssetCalendarApi.Controllers
         {
             try
             {
-                _jobRepository.DeleteDayJob(id, date, CalendarUser.OrganizationId);
-                _signalRService.SendDataUpdatedAsync(date, CalendarUser.OrganizationId);
+                if (CalendarId == null)
+                    return BadRequest(GetErrorMessageObject("Failed to retrieve data for calendar. Calendar Id not set"));
+
+                _jobRepository.DeleteDayJob(id, date, CalendarId);
+                _signalRService.SendDataUpdatedAsync(date, CalendarId);
 
                 return Ok();
             }
@@ -296,8 +328,11 @@ namespace AssetCalendarApi.Controllers
         {
             try
             {
-                _jobRepository.DeleteJobsFromDay(date, CalendarUser.OrganizationId);
-                _signalRService.SendDataUpdatedAsync(date, CalendarUser.OrganizationId);
+                if (CalendarId == null)
+                    return BadRequest(GetErrorMessageObject("Failed to retrieve data for calendar. Calendar Id not set"));
+
+                _jobRepository.DeleteJobsFromDay(date, CalendarId);
+                _signalRService.SendDataUpdatedAsync(date, CalendarId);
 
                 return Ok();
             }
@@ -312,8 +347,11 @@ namespace AssetCalendarApi.Controllers
         {
             try
             {
-                _jobRepository.SaveNotes(id, CalendarUser.OrganizationId, saveNotesRequestViewModel.Notes);
-                _signalRService.SendJobUpdatedAsync(id, CalendarUser.OrganizationId);
+                if (CalendarId == null)
+                    return BadRequest(GetErrorMessageObject("Failed to retrieve data for calendar. Calendar Id not set"));
+
+                _jobRepository.SaveNotes(id, CalendarId, saveNotesRequestViewModel.Notes);
+                _signalRService.SendJobUpdatedAsync(id, CalendarId);
 
                 return Ok();
             }
@@ -328,6 +366,9 @@ namespace AssetCalendarApi.Controllers
         {
             try
             {
+                if (CalendarId == null)
+                    return BadRequest(GetErrorMessageObject("Failed to Save Tags. Calendar Id not set"));
+
                 if (saveTagsRequest.Date.HasValue)
                     _tagRepository.DeleteTagsFromJobDay(id, saveTagsRequest.Date.Value);
                 else
@@ -342,9 +383,9 @@ namespace AssetCalendarApi.Controllers
                 }
 
                 if (saveTagsRequest.Date.HasValue)
-                    _signalRService.SendDataUpdatedAsync(saveTagsRequest.Date.Value, CalendarUser.OrganizationId);
+                    _signalRService.SendDataUpdatedAsync(saveTagsRequest.Date.Value, CalendarId);
                 else
-                    _signalRService.SendJobUpdatedAsync(id, CalendarUser.OrganizationId);
+                    _signalRService.SendJobUpdatedAsync(id, CalendarId);
               
                 return Ok();
             }

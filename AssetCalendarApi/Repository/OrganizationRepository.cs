@@ -137,7 +137,7 @@ namespace AssetCalendarApi.Repository
         public Organization GetOrganizationWithUsers(Guid organizationId)
         {
             return _dbContext.Organizations
-                .Include(o => o.CalendarUsers)
+                .Include(o => o.AceUsers)
                 .SingleOrDefault(org => org.Id == organizationId);
         }
 
@@ -184,7 +184,7 @@ namespace AssetCalendarApi.Repository
             public IEnumerable<UserViewModel> GetOrganizationUsers(Guid id)
         {
             var org = _dbContext.Organizations
-                .Include(o => o.CalendarUsers)
+                .Include(o => o.AceUsers)
                 .SingleOrDefault(organization => organization.Id == id);
 
             var rolesByUser = _dbContext.Roles.Join(
@@ -195,7 +195,7 @@ namespace AssetCalendarApi.Repository
                     new { userId = userRole.UserId, role = role.Name }).GroupBy(x => x.userId).ToDictionary(group => group.Key, group => group.Select(x => x.role));
 
             var users = new List<UserViewModel>();
-            foreach (var user in org.CalendarUsers)
+            foreach (var user in org.AceUsers)
             {
                 var model = AutoMapper.Mapper.Map<UserViewModel>(user);
 
@@ -208,35 +208,29 @@ namespace AssetCalendarApi.Repository
             return users;
         }
 
-        //public Calendar AddCalendar
-        //(
-        //    Guid organizationId, 
-        //    string calendarName, 
-        //    bool save = true, 
-        //    AssetCalendarDbContext assetCalendarDbContext = null 
-        //)
-        //{
-        //    var dbContext = assetCalendarDbContext ?? _dbContext;
+        public Calendar AddCalendar(Guid organizationId, string calendarName)
+        {
+            var calendar = _dbContext.Calendars.FirstOrDefault(c => c.OrganizationId == organizationId && c.CalendarName == calendarName);
+            if (calendar != null)
+                throw new InvalidOperationException($"Calendar {calendarName} already exists on organization");
 
-        //    var calendar = new Calendar()
-        //    {
-        //        Id = Guid.NewGuid(),
-        //        CalendarName = calendarName,
-        //        OrganizationId = organizationId,
-        //    };
+            calendar = new Calendar()
+            {
+                Id = Guid.NewGuid(),
+                CalendarName = calendarName,
+                OrganizationId = organizationId
+            };
 
-        //    dbContext.Calendar.Add(calendar);
+            _dbContext.Calendars.Add(calendar);
+            _dbContext.SaveChanges();
 
-        //    if(save)
-        //        dbContext.SaveChanges();
+            return calendar;
+        }
 
-        //    return calendar;
-        //}
-
-        //public IEnumerable<Calendar> GetOrganizationCalendars(Guid organizationId)
-        //{
-        //    return _dbContext.Calendar.Where(calendar => calendar.OrganizationId == organizationId);
-        //}
+        public IEnumerable<Calendar> GetOrganizationCalendars(Guid organizationId)
+        {
+            return _dbContext.Calendars.Where(calendar => calendar.OrganizationId == organizationId);
+        }
 
         public Organization EditOrganization(Guid id, SaveOrganizationRequestModel saveOrganizationRequestModel)
         {

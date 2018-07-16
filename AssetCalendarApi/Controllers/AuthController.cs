@@ -23,22 +23,24 @@ namespace AssetCalendarApi.Controllers
 
         private ILogger<AuthController> _logger;
 
-        private SignInManager<CalendarUser> _signInManager;
+        private SignInManager<AceUser> _signInManager;
 
-        private UserManager<CalendarUser> _userManager;
+        private UserManager<AceUser> _userManager;
 
         private IConfiguration _configuration;
 
         private OrganizationRepository _organizationRepository;
+        private CalendarRepository _calendarRepository;
         #endregion
 
         #region Constructor
 
         public AuthController
         (
-            SignInManager<CalendarUser> signInManager,
-            UserManager<CalendarUser> userManager,
+            SignInManager<AceUser> signInManager,
+            UserManager<AceUser> userManager,
             OrganizationRepository organizationRepository,
+            CalendarRepository calendarRepository,
             ILogger<AuthController> logger,
             IConfiguration configuration
         )
@@ -47,7 +49,8 @@ namespace AssetCalendarApi.Controllers
             _logger = logger;
             _userManager = userManager;
             _configuration = configuration;
-            _organizationRepository = organizationRepository; 
+            _organizationRepository = organizationRepository;
+            _calendarRepository = calendarRepository;
         }
 
         #endregion
@@ -120,7 +123,7 @@ namespace AssetCalendarApi.Controllers
 
         #region Private Methods
 
-        private IActionResult GenerateJwtToken( CalendarUser user)
+        private IActionResult GenerateJwtToken(AceUser user)
         {
             var claims = new List<Claim>
             {
@@ -137,7 +140,7 @@ namespace AssetCalendarApi.Controllers
             
             foreach(var role in roles)
                 claims.Add(new Claim(ClaimTypes.Role, role));
- 
+
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JwtKey"]));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
             var expires = DateTime.Now.AddDays(Convert.ToDouble(_configuration["JwtExpireDays"]));
@@ -150,12 +153,15 @@ namespace AssetCalendarApi.Controllers
                 signingCredentials: creds
             );
 
+            var calendars = _calendarRepository.GetCalendarsForUser(user.Id, user.OrganizationId);
+
             return Ok(new
             {
                 token = new JwtSecurityTokenHandler().WriteToken(token),
                 expiration = token.ValidTo,
                 user = user.UserName,
-                organizationId = user.OrganizationId
+                organizationId = user.OrganizationId,
+                calendars = calendars
             });
         }
 

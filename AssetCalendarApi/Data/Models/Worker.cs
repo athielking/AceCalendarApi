@@ -30,25 +30,13 @@ namespace AssetCalendarApi.Data.Models
         [JsonIgnore()]
         public ICollection<DayOffWorker> DayOffWorkers { get; set; }
 
-        public Organization Organization { get; set; }
+        public Calendar Calendar { get; set; }
 
-        public Guid OrganizationId
+        public Guid CalendarId
         {
             get;
             set;
         }
-
-        //public Guid CalendarId
-        //{
-        //    get;
-        //    set;
-        //}
-
-        //public Calendar Calendar
-        //{
-        //    get;
-        //    set;
-        //}
 
         [JsonIgnore()]
         public ICollection<WorkerTags> WorkerTags { get; set; }

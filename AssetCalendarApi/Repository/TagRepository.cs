@@ -31,25 +31,25 @@ namespace AssetCalendarApi.Repository
 
         #region Public Methods
 
-        public IQueryable<Tag> GetTagsByOrganization(Guid organizationId)
+        public IQueryable<Tag> GetTagsByOrganization(Guid calendarId)
         {
-            return _dbContext.Tags.Where(t => t.OrganizationId == organizationId);
+            return _dbContext.Tags.Where(t => t.CalendarId == calendarId);
         }
 
-        public IEnumerable<TagViewModel> GetAllTags(Guid organizationId)
+        public IEnumerable<TagViewModel> GetAllTags(Guid calendarId)
         {
             return _dbContext.Tags
-                .Where(t => t.OrganizationId == organizationId)
+                .Where(t => t.CalendarId == calendarId)
                 .Select(t => t.GetViewModel(false));
         }
 
-        public IEnumerable<TagViewModel> GetJobTags(Guid organizationId)
+        public IEnumerable<TagViewModel> GetJobTags(Guid calendarId)
         {
             return _dbContext.Tags
                 .Where
                 (
                     t => 
-                        t.OrganizationId == organizationId &&
+                        t.CalendarId == calendarId &&
                         (
                             t.TagType == TagType.Job ||
                             t.TagType == TagType.WorkerAndJob
@@ -58,13 +58,13 @@ namespace AssetCalendarApi.Repository
                 .Select(t => t.GetViewModel(false));
         }
 
-        public IEnumerable<TagViewModel> GetWorkerTags(Guid organizationId)
+        public IEnumerable<TagViewModel> GetWorkerTags(Guid calendarId)
         {
             return _dbContext.Tags
                 .Where
                 (
                     t =>
-                        t.OrganizationId == organizationId &&
+                        t.CalendarId == calendarId &&
                         (
                             t.TagType == TagType.Worker ||
                             t.TagType == TagType.WorkerAndJob
@@ -73,12 +73,12 @@ namespace AssetCalendarApi.Repository
                 .Select(t => t.GetViewModel(false));
         }
 
-        public Tag GetTag(Guid id, Guid organizationId)
+        public Tag GetTag(Guid id, Guid calendarId)
         {
-            return _dbContext.Tags.FirstOrDefault(t => t.OrganizationId == organizationId && t.Id == id);
+            return _dbContext.Tags.FirstOrDefault(t => t.CalendarId == calendarId && t.Id == id);
         }
 
-        public Tag AddTag(TagViewModel tag, Guid organizationId)
+        public Tag AddTag(TagViewModel tag, Guid calendarId)
         {
             var dbTag = new Tag()
             {
@@ -86,7 +86,7 @@ namespace AssetCalendarApi.Repository
                 Color = tag.Color,
                 Description = tag.Description,
                 Icon = tag.Icon,
-                OrganizationId = organizationId,
+                CalendarId = calendarId,
                 TagType = tag.TagType
             };
 
@@ -96,9 +96,9 @@ namespace AssetCalendarApi.Repository
             return dbTag;
         }
 
-        public void EditTag(Guid id, TagViewModel tag, Guid organizationId)
+        public void EditTag(Guid id, TagViewModel tag, Guid calendarId)
         {
-            var dbTag = _dbContext.Tags.FirstOrDefault(t => t.OrganizationId == organizationId && t.Id == id);
+            var dbTag = _dbContext.Tags.FirstOrDefault(t => t.CalendarId == calendarId && t.Id == id);
             if (dbTag == null)
                 throw new ApplicationException("Tag not Found");
 
@@ -111,9 +111,9 @@ namespace AssetCalendarApi.Repository
             _dbContext.SaveChanges();
         }
 
-        public void DeleteTag(Guid id, Guid organizationId)
+        public void DeleteTag(Guid id, Guid calendarId)
         {
-            var dbTag = _dbContext.Tags.FirstOrDefault(t => t.OrganizationId == organizationId && t.Id == id);
+            var dbTag = _dbContext.Tags.FirstOrDefault(t => t.CalendarId == calendarId && t.Id == id);
             if (dbTag == null)
                 throw new ApplicationException("Tag not Found");
 
@@ -194,10 +194,10 @@ namespace AssetCalendarApi.Repository
             _dbContext.SaveChanges();
         }
 
-        public Dictionary<Guid, IEnumerable<TagViewModel>> GetTagsByJob(DateTime date, Guid organizationId)
+        public Dictionary<Guid, IEnumerable<TagViewModel>> GetTagsByJob(DateTime date, Guid calendarId)
         {
             var tags = _dbContext.TagsByJobDate
-                .Where(t => t.Date.Date == date.Date && t.OrganizationId == organizationId);
+                .Where(t => t.Date.Date == date.Date && t.CalendarId == calendarId);
 
             var keys = tags.Select(t => t.IdJob).Distinct();
             var dictionary = new Dictionary<Guid, IEnumerable<TagViewModel>>();
@@ -208,10 +208,10 @@ namespace AssetCalendarApi.Repository
             return dictionary;
         }
 
-        public Dictionary<Guid, IEnumerable<TagViewModel>> GetTagsByWorker(Guid organizationId)
+        public Dictionary<Guid, IEnumerable<TagViewModel>> GetTagsByWorker(Guid calendarId)
         {
             var tags = _dbContext.WorkerTags.Include(w => w.Tag)
-                .Where(w => w.Tag.OrganizationId == organizationId);
+                .Where(w => w.Tag.CalendarId == calendarId);
 
             var keys = tags.Select(t => t.IdWorker).Distinct();
             var dictionary = new Dictionary<Guid, IEnumerable<TagViewModel>>();

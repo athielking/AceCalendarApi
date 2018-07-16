@@ -12,7 +12,7 @@ namespace AssetCalendarApi.Data.Models
         public string Description { get; set; }
         public string Color { get; set; }
         public Guid IdJob { get; set; }
-        public Guid OrganizationId { get; set; }
+        public Guid CalendarId { get; set; }
         public bool FromJobDay { get; set; }
 
     }

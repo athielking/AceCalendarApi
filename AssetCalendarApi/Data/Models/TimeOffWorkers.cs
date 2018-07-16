@@ -12,7 +12,7 @@ namespace AssetCalendarApi.Data.Models
         public string FirstName { get; set; }
         public string LastName { get; set; }
         public string Phone { get; set; }
-        public Guid OrganizationId { get; set; }
+        public Guid CalendarId { get; set; }
         public DateTime Date { get; set; }
     }
 }

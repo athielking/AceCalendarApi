@@ -41,7 +41,7 @@ namespace AssetCalendarApi.Data
 
         private readonly TagRepository _tagRepository;
 
-        private readonly UserManager<CalendarUser> _userManager;
+        private readonly UserManager<AceUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
 
         #endregion
@@ -51,7 +51,7 @@ namespace AssetCalendarApi.Data
         public AssetCalendarSeeder
         (
             AssetCalendarDbContext assetCalendarDbContext,
-            UserManager<CalendarUser> userManager,
+            UserManager<AceUser> userManager,
             RoleManager<IdentityRole> roleManager,
             OrganizationRepository organizationRepository,
             WorkerRepository workerRepository,
@@ -78,11 +78,7 @@ namespace AssetCalendarApi.Data
 
             await SeedRoles();
 
-            SeedOrganizations();
-
-            await SeedUsers();
-
-            //SeedCalendars();
+            SeedCalendars();
         }
 
         #endregion
@@ -111,7 +107,7 @@ namespace AssetCalendarApi.Data
             var user = await _userManager.FindByNameAsync("athielking");
             if( user == null )
             {
-                user = new CalendarUser()
+                user = new AceUser()
                 {
                     FirstName = "Andrew",
                     LastName = "Thielking",
@@ -137,7 +133,7 @@ namespace AssetCalendarApi.Data
             user = await _userManager.FindByNameAsync("dculham");
             if (user == null)
             {
-                user = new CalendarUser()
+                user = new AceUser()
                 {
                     FirstName = "David",
                     LastName = "Culham",
@@ -164,7 +160,7 @@ namespace AssetCalendarApi.Data
 
             if (user == null)
             {
-                user = new CalendarUser()
+                user = new AceUser()
                 {
                     FirstName = "501",
                     LastName = "Software",
@@ -199,109 +195,57 @@ namespace AssetCalendarApi.Data
             //    _organizationRepository.AddOrganization(itsOrganizationName);
         }
 
-        //private void SeedCalendars()
-        //{
-        //    foreach (var organization in _organizationRepository.GetAllOrganizations())
-        //    {
-        //        var calendars = _organizationRepository.GetOrganizationCalendars(organization.Id);
-
-        //        if (calendars.Any())
-        //            continue;
-
-        //        SeedDefaultCalendar(organization);
-        //    }
-        //}
-
-        //private void SeedDefaultCalendar(Organization organization)
-        //{
-        //    var calendar = _organizationRepository.AddCalendar(organization.Id, "Default Calendar", false, _assetCalendarDbContext );
-
-        //    var workers = _workerRepository.GetWorkersByOrganization(organization.Id).ToList();
-
-        //    foreach(var worker in workers)
-        //    {
-        //        if (worker.CalendarId == Guid.Empty)
-        //            worker.CalendarId = calendar.Id;
-
-        //        _assetCalendarDbContext.Workers.Update(worker);
-        //    }
-
-        //    var jobs = _jobRepository.GetAllJobs(organization.Id).ToList();
-
-        //    foreach (var job in jobs)
-        //    {
-        //        if (job.CalendarId == Guid.Empty)
-        //            job.CalendarId = calendar.Id;
-
-        //        _assetCalendarDbContext.Jobs.Update(job);
-        //    }
-
-        //    var tags = _tagRepository.GetTagsByOrganization(organization.Id).ToList();
-
-        //    foreach (var tag in tags)
-        //    {
-        //        if (tag.CalendarId == Guid.Empty)
-        //            tag.CalendarId = calendar.Id;
-
-        //        _assetCalendarDbContext.Tags.Update(tag);
-        //    }
-
-        //    //Make sure to first test without saving
-        //    //_assetCalendarDbContext.SaveChanges();
-        //}
-
-        private async Task SeedUsers()
+        private void SeedCalendars()
         {
-            await SeedAdminUser();
-            //await SeedITSUsers();
+            //foreach (var organization in _organizationRepository.GetAllOrganizations())
+            //{
+            //    var calendars = _organizationRepository.GetOrganizationCalendars(organization.Id);
+
+            //    if (calendars.Any())
+            //        continue;
+
+            //    SeedDefaultCalendar(organization);
+            //}
         }
 
-        private async Task SeedITSUsers()
+        private void SeedDefaultCalendar(Organization organization)
         {
-            var itsAdmin = await _userManager.FindByNameAsync("itsAdmin");
-            var itsUser = await _userManager.FindByNameAsync("itsUser");
+            var calendar = _organizationRepository.AddCalendar(organization.Id, "Default Calendar");
 
-            var itsOrganization = _organizationRepository.GetOrganizationByName(itsOrganizationName);
+            var workers = _workerRepository.GetWorkersByOrganization(organization.Id).ToList();
 
-            if( itsAdmin == null)
+            foreach (var worker in workers)
             {
-                itsAdmin = new CalendarUser()
-                {
-                    FirstName = "ITS Administrator",
-                    UserName = "itsAdmin",
-                    OrganizationId = itsOrganization.Id
-                };
+                if (worker.CalendarId == Guid.Empty)
+                    worker.CalendarId = calendar.Id;
 
-                var result = await _userManager.CreateAsync(itsAdmin, "P@ssw0rd!");
-                if( result != IdentityResult.Success )
-                {
-                    throw new InvalidOperationException("Failed to create ITS Admin User");
-                }
-
-                if (!_userManager.IsInRoleAsync(itsAdmin, Roles.User).Result)
-                    await _userManager.AddToRoleAsync(itsAdmin, Roles.User);
+                _assetCalendarDbContext.Workers.Update(worker);
             }
 
-            if( itsUser == null )
+            var jobs = _jobRepository.GetAllJobs(organization.Id).ToList();
+
+            foreach (var job in jobs)
             {
-                itsUser = new CalendarUser()
-                {
-                    FirstName = "ITS User",
-                    UserName = "itsUser",
-                    OrganizationId = itsOrganization.Id
-                };
+                if (job.CalendarId == Guid.Empty)
+                    job.CalendarId = calendar.Id;
 
-                var result = await _userManager.CreateAsync(itsUser, "R3@donly$");
-                if (result != IdentityResult.Success)
-                {
-                    throw new InvalidOperationException("Failed to create ITS User");
-                }
-
-                if (!_userManager.IsInRoleAsync(itsUser, Roles.Readonly).Result)
-                    await _userManager.AddToRoleAsync(itsAdmin, Roles.Readonly);
+                _assetCalendarDbContext.Jobs.Update(job);
             }
+
+            var tags = _tagRepository.GetTagsByOrganization(organization.Id).ToList();
+
+            foreach (var tag in tags)
+            {
+                if (tag.CalendarId == Guid.Empty)
+                    tag.CalendarId = calendar.Id;
+
+                _assetCalendarDbContext.Tags.Update(tag);
+            }
+
+            //Make sure to first test without saving
+            //_assetCalendarDbContext.SaveChanges();
         }
-      
+
         #endregion
     }
 }

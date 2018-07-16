@@ -33,7 +33,7 @@ namespace AssetCalendarApi.Controllers
         (
             IConfiguration configuration,
             OrganizationRepository organizationRepository,
-            UserManager<CalendarUser> userManager
+            UserManager<AceUser> userManager
         ) : base(userManager)
         {
             _config = configuration;
@@ -87,8 +87,8 @@ namespace AssetCalendarApi.Controllers
         {
             try
             {
-                if (!UserIsAdmin() && CalendarUser.OrganizationId != id)
-                    return BadRequest(GetErrorMessageObject($"User '{CalendarUser.UserName}' does not have access to this organization."));
+                if (!UserIsAdmin() && AceUser.OrganizationId != id)
+                    return BadRequest(GetErrorMessageObject($"User '{AceUser.UserName}' does not have access to this organization."));
 
                 return SuccessResult(_organizationRepository.GetOrganizationDetails(id));
             }
@@ -104,8 +104,8 @@ namespace AssetCalendarApi.Controllers
         {
             try
             {
-                if (!UserIsAdmin() && CalendarUser.OrganizationId != id)
-                    return BadRequest(GetErrorMessageObject($"User '{CalendarUser.UserName}' does not have access to this organization."));
+                if (!UserIsAdmin() && AceUser.OrganizationId != id)
+                    return BadRequest(GetErrorMessageObject($"User '{AceUser.UserName}' does not have access to this organization."));
 
                 return SuccessResult(_organizationRepository.GetSubscriptionDetails(id));
             }
@@ -121,8 +121,8 @@ namespace AssetCalendarApi.Controllers
         {
             try
             {
-                if (!UserIsAdmin() && CalendarUser.OrganizationId != id)
-                    return BadRequest(GetErrorMessageObject($"User '{CalendarUser.UserName}' does not have access to this organization."));
+                if (!UserIsAdmin() && AceUser.OrganizationId != id)
+                    return BadRequest(GetErrorMessageObject($"User '{AceUser.UserName}' does not have access to this organization."));
 
                 var defaultPaymentSource = _organizationRepository.GetDefaultPaymentSource(id);
 
@@ -137,12 +137,13 @@ namespace AssetCalendarApi.Controllers
         //Have this one authorized to admin since it will return admin users as well.
         //Create a new one for mapping organization users to calendars.
         [HttpGet]
-        [Authorize(Roles = "Admin")]     
+        [Authorize(Roles = "Admin, Organization Admin")]     
         [Route("getOrganizationUsers")]
         public IActionResult GetOrganizationUsers(Guid id)
         {
             try
             {
+                
                 var organizationUsers = _organizationRepository.GetOrganizationUsers(id).Select(user =>
                 {
                     return new UserGridModel()
@@ -155,6 +156,9 @@ namespace AssetCalendarApi.Controllers
                         Email = user.Email
                     };
                 }).ToList();
+
+                if (User.IsInRole("Organization Admin"))
+                    organizationUsers = organizationUsers.Where(u => u.Role != "Admin").ToList();
 
                 return SuccessResult(organizationUsers);
             }
@@ -190,8 +194,8 @@ namespace AssetCalendarApi.Controllers
                 if (!ModelState.IsValid)
                     return BadRequest(GetErrorMessageObject(GetModelStateErrors()));
 
-                if (!UserIsAdmin() && CalendarUser.OrganizationId != id)
-                    return BadRequest(GetErrorMessageObject($"User '{CalendarUser.UserName}' does not have access to this organization."));
+                if (!UserIsAdmin() && AceUser.OrganizationId != id)
+                    return BadRequest(GetErrorMessageObject($"User '{AceUser.UserName}' does not have access to this organization."));
 
                 _organizationRepository.EditOrganization(id, organization);
 
@@ -224,8 +228,8 @@ namespace AssetCalendarApi.Controllers
         {
             try
             {
-                if (!UserIsAdmin() && CalendarUser.OrganizationId != id)
-                    return BadRequest(GetErrorMessageObject($"User '{CalendarUser.UserName}' does not have access to this organization."));
+                if (!UserIsAdmin() && AceUser.OrganizationId != id)
+                    return BadRequest(GetErrorMessageObject($"User '{AceUser.UserName}' does not have access to this organization."));
 
                 _organizationRepository.AddCardToOrganization(id, token, false);
 
@@ -242,8 +246,8 @@ namespace AssetCalendarApi.Controllers
         {
             try
             {
-                if (!UserIsAdmin() && CalendarUser.OrganizationId != id)
-                    return BadRequest(GetErrorMessageObject($"User '{CalendarUser.UserName}' does not have access to this organization."));
+                if (!UserIsAdmin() && AceUser.OrganizationId != id)
+                    return BadRequest(GetErrorMessageObject($"User '{AceUser.UserName}' does not have access to this organization."));
 
                 _organizationRepository.DeleteDefaultPaymentSource(id);
 
@@ -262,8 +266,8 @@ namespace AssetCalendarApi.Controllers
         {
             try
             {
-                if (!UserIsAdmin() && CalendarUser.OrganizationId != id)
-                    return BadRequest(GetErrorMessageObject($"User '{CalendarUser.UserName}' does not have access to this organization."));
+                if (!UserIsAdmin() && AceUser.OrganizationId != id)
+                    return BadRequest(GetErrorMessageObject($"User '{AceUser.UserName}' does not have access to this organization."));
 
                 var deleted = _organizationRepository.DeleteCard(id, sourceId);
 
@@ -282,8 +286,8 @@ namespace AssetCalendarApi.Controllers
         {
             try
             {
-                if (!UserIsAdmin() && CalendarUser.OrganizationId != id)
-                    return BadRequest(GetErrorMessageObject($"User '{CalendarUser.UserName}' does not have access to this organization."));
+                if (!UserIsAdmin() && AceUser.OrganizationId != id)
+                    return BadRequest(GetErrorMessageObject($"User '{AceUser.UserName}' does not have access to this organization."));
 
                 _organizationRepository.DeleteDefaultPaymentSource(id);
                 
@@ -300,8 +304,8 @@ namespace AssetCalendarApi.Controllers
         {
             try
             {
-                if (!UserIsAdmin() && CalendarUser.OrganizationId != id)
-                    return BadRequest(GetErrorMessageObject($"User '{CalendarUser.UserName}' does not have access to this organization."));
+                if (!UserIsAdmin() && AceUser.OrganizationId != id)
+                    return BadRequest(GetErrorMessageObject($"User '{AceUser.UserName}' does not have access to this organization."));
 
                 _organizationRepository.CancelSubscription(id);
 
@@ -318,8 +322,8 @@ namespace AssetCalendarApi.Controllers
         {
             try
             {
-                if (!UserIsAdmin() && CalendarUser.OrganizationId != id)
-                    return BadRequest(GetErrorMessageObject($"User '{CalendarUser.UserName}' does not have access to this organization."));
+                if (!UserIsAdmin() && AceUser.OrganizationId != id)
+                    return BadRequest(GetErrorMessageObject($"User '{AceUser.UserName}' does not have access to this organization."));
 
                 var cust = _organizationRepository.SetOrganizationDefaultPaymentSource(id, sourceId);
 
@@ -351,8 +355,8 @@ namespace AssetCalendarApi.Controllers
         {
             try
             {
-                if (!UserIsAdmin() && CalendarUser.OrganizationId != id)
-                    return BadRequest(GetErrorMessageObject($"User '{CalendarUser.UserName}' does not have access to this organization."));
+                if (!UserIsAdmin() && AceUser.OrganizationId != id)
+                    return BadRequest(GetErrorMessageObject($"User '{AceUser.UserName}' does not have access to this organization."));
 
                 var subscription = _organizationRepository.SetProductPlan(id, request);
 
@@ -369,8 +373,8 @@ namespace AssetCalendarApi.Controllers
         {
             try
             {
-                if (!UserIsAdmin() && CalendarUser.OrganizationId != id)
-                    return BadRequest(GetErrorMessageObject($"User '{CalendarUser.UserName}' does not have access to this organization."));
+                if (!UserIsAdmin() && AceUser.OrganizationId != id)
+                    return BadRequest(GetErrorMessageObject($"User '{AceUser.UserName}' does not have access to this organization."));
 
                 var subscription = _organizationRepository.GetSubscriptionDetails(id);
 
@@ -392,8 +396,8 @@ namespace AssetCalendarApi.Controllers
         {
             try
             {
-                if (!UserIsAdmin() && CalendarUser.OrganizationId != id)
-                    return BadRequest(GetErrorMessageObject($"User '{CalendarUser.UserName}' does not have access to this organization."));
+                if (!UserIsAdmin() && AceUser.OrganizationId != id)
+                    return BadRequest(GetErrorMessageObject($"User '{AceUser.UserName}' does not have access to this organization."));
 
                 _organizationRepository.ActivateSubscription(id, setProductPlanRequest);
 
@@ -410,8 +414,8 @@ namespace AssetCalendarApi.Controllers
         {
             try
             {
-                if (!UserIsAdmin() && CalendarUser.OrganizationId != id)
-                    return BadRequest(GetErrorMessageObject($"User '{CalendarUser.UserName}' does not have access to this organization."));
+                if (!UserIsAdmin() && AceUser.OrganizationId != id)
+                    return BadRequest(GetErrorMessageObject($"User '{AceUser.UserName}' does not have access to this organization."));
 
                 return SuccessResult(_organizationRepository.OrganizationHadTrial(id));
             }

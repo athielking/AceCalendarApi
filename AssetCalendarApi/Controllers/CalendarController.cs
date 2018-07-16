@@ -30,7 +30,7 @@ namespace AssetCalendarApi.Controllers
             CalendarRepository calendarRepository,
             JobRepository jobRepository,
             SignalRService signalRService,
-            UserManager<CalendarUser> userManager
+            UserManager<AceUser> userManager
         ): base(userManager)
         {
             _calendarRepository = calendarRepository;
@@ -104,9 +104,10 @@ namespace AssetCalendarApi.Controllers
         [Route("getRange")]
         public IActionResult GetDataForRange( DateTime date, DateTime? endDate, Guid? idWorker)
         {
-            try
-            {
-                var result = _calendarRepository.GetDataForRange(date, CalendarUser.OrganizationId, endDate, idWorker);
+            if (CalendarId == null)
+                return BadRequest(GetErrorMessageObject("Failed to retrieve data for calendar. Calendar Id not set"));
+            try { 
+                var result = _calendarRepository.GetDataForRange(date, CalendarId, endDate, idWorker);
 
                 return SuccessResult(result);
             }
@@ -122,14 +123,144 @@ namespace AssetCalendarApi.Controllers
         {
             try
             {
-                _jobRepository.CopyCalendarDay(CalendarUser.OrganizationId, dateFrom, dateTo);
-                _signalRService.SendDataUpdatedAsync(dateTo, CalendarUser.OrganizationId);
+                if (CalendarId == null)
+                    return BadRequest(GetErrorMessageObject("Failed to Copy Calendar Day. Calendar Id not set"));
+
+                _jobRepository.CopyCalendarDay(CalendarId, dateFrom, dateTo);
+                _signalRService.SendDataUpdatedAsync(dateTo, CalendarId);
 
                 return Ok();
             }
             catch
             {
                 return BadRequest(GetErrorMessageObject("Failed to Copy Calendar Day"));
+            }
+        }
+
+        [HttpGet]
+        public IActionResult Get()
+        {
+            try
+            {
+                var calendars = _calendarRepository.GetCalendarsForOrganization(AceUser.OrganizationId);
+                return SuccessResult(calendars);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(GetErrorMessageObject($"Failed Getting Organization Calendars: {ex.Message}"));
+            }
+        }
+
+        [HttpGet("{id}")]
+        public IActionResult Get(Guid id)
+        {
+            try
+            {
+                var calendar = _calendarRepository.GetCalendar(id);
+                return SuccessResult(calendar);
+            }
+            catch( Exception ex )
+            {
+                return BadRequest(GetErrorMessageObject($"Failed Getting Calendar: {ex.Message}"));
+            }
+        }
+
+        [HttpGet("users/{id}")]
+        public IActionResult GetUsers(Guid id)
+        {
+            try
+            {
+                var calendar = _calendarRepository.GetCalendarUsers(id);
+                return SuccessResult(calendar);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(GetErrorMessageObject($"Failed Getting Calendar: {ex.Message}"));
+            }
+        }
+
+        [HttpPost("users/{id}")]
+        public IActionResult AssignUsers(Guid id, [FromBody]List<string> users)
+        {
+            try
+            {
+                var calendarUsers = _calendarRepository.AssignCalendarUsers(id, users);
+
+                foreach (var userId in users)
+                    _signalRService.SendUserDataUpdatedAsync(userId);
+
+                return SuccessResult(calendarUsers);
+            }
+            catch( Exception ex)
+            {
+                return BadRequest(GetErrorMessageObject($"Failed Assigning Users to Calendar: {ex.Message}"));
+            }
+        }
+
+        [HttpDelete("user/{id}/{userId}")]
+        public IActionResult DeleteUserFromCalendar(Guid id, string userId)
+        {
+            try
+            {
+                var calendarUsers = _calendarRepository.DeleteUserFromCalendar(id, userId);
+                _signalRService.SendUserDataUpdatedAsync(userId);
+
+                return SuccessResult(calendarUsers);
+            }
+            catch(Exception ex)
+            {
+                return BadRequest(GetErrorMessageObject($"Failed Deleting User from Calendar: {ex.Message}"));
+            }
+        }
+
+        [HttpPost]
+        public IActionResult Post([FromBody]AddCalendarModel model)
+        {
+            if (AceUser == null)
+                return BadRequest(GetErrorMessageObject("Failed to add calendar. User is null"));
+
+            try
+            {
+                var result = _calendarRepository.AddCalendarToOrganization(model);
+                return SuccessResult(result);
+            }
+            catch( Exception ex)
+            {
+                return BadRequest(GetErrorMessageObject(ex.Message));
+            }
+        }
+
+        [HttpDelete("{id}")]
+        public IActionResult Delete(Guid id)
+        {
+            try
+            {
+                var calendars = _calendarRepository.DeleteCalendar(id);
+                return SuccessResult(calendars);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(GetErrorMessageObject($"Failed Deleting Calendar: {ex.Message}"));
+            }
+        }
+
+        [HttpPut("{id}")]
+        public IActionResult Put(Guid id, [FromBody]EditCalendarModel editCalendarModel)
+        {
+            try
+            {
+                _calendarRepository.EditCalendar(id, editCalendarModel);
+
+                var calendarUsers = _calendarRepository.GetCalendarUsers(id);
+
+                foreach (var calendarUser in calendarUsers)
+                    _signalRService.SendUserDataUpdatedAsync(calendarUser.UserId);
+
+                return Ok();
+            }
+            catch
+            {
+                return BadRequest(GetErrorMessageObject("Failed to Update Calendar"));
             }
         }
 

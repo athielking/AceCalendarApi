@@ -28,7 +28,7 @@ namespace AssetCalendarApi.Controllers
         public TagController
         (
             TagRepository tagRepository,
-            UserManager<CalendarUser> userManager
+            UserManager<AceUser> userManager
         ) : base(userManager)
         {
             _tagRepository = tagRepository;
@@ -43,7 +43,10 @@ namespace AssetCalendarApi.Controllers
         {
             try
             {
-                var tags = _tagRepository.GetAllTags(CalendarUser.OrganizationId).OrderBy(tag => tag.Description).ToList();
+                if (CalendarId == null)
+                    return BadRequest(GetErrorMessageObject("Failed to retrieve data for calendar. Calendar Id not set"));
+
+                var tags = _tagRepository.GetAllTags(CalendarId).OrderBy(tag => tag.Description).ToList();
 
                 return SuccessResult(tags);
             }
@@ -59,7 +62,10 @@ namespace AssetCalendarApi.Controllers
         {
             try
             {
-                var tags = _tagRepository.GetJobTags(CalendarUser.OrganizationId).OrderBy(tag => tag.Description).ToList();
+                if (CalendarId == null)
+                    return BadRequest(GetErrorMessageObject("Failed to retrieve data for calendar. Calendar Id not set"));
+
+                var tags = _tagRepository.GetJobTags(CalendarId).OrderBy(tag => tag.Description).ToList();
 
                 return SuccessResult(tags);
             }
@@ -75,7 +81,10 @@ namespace AssetCalendarApi.Controllers
         {
             try
             {
-                var tags = _tagRepository.GetWorkerTags(CalendarUser.OrganizationId).OrderBy(tag => tag.Description).ToList();
+                if (CalendarId == null)
+                    return BadRequest(GetErrorMessageObject("Failed to retrieve data for calendar. Calendar Id not set"));
+
+                var tags = _tagRepository.GetWorkerTags(CalendarId).OrderBy(tag => tag.Description).ToList();
 
                 return SuccessResult(tags);
             }
@@ -90,7 +99,10 @@ namespace AssetCalendarApi.Controllers
         {
             try
             {
-                var tag = _tagRepository.GetTag(id, CalendarUser.OrganizationId);
+                if (CalendarId == null)
+                    return BadRequest(GetErrorMessageObject("Failed to retrieve data for calendar. Calendar Id not set"));
+
+                var tag = _tagRepository.GetTag(id, CalendarId);
 
                 return SuccessResult(tag.GetViewModel());
             }
@@ -108,7 +120,10 @@ namespace AssetCalendarApi.Controllers
                 if (!ModelState.IsValid)
                     return BadRequest(GetErrorMessageObject(GetModelStateErrors()));
 
-                Tag addedTag = _tagRepository.AddTag(tag, CalendarUser.OrganizationId);
+                if (CalendarId == null)
+                    return BadRequest(GetErrorMessageObject("Failed to retrieve data for calendar. Calendar Id not set"));
+
+                Tag addedTag = _tagRepository.AddTag(tag, CalendarId);
 
                 return Ok(addedTag);
             }
@@ -126,7 +141,10 @@ namespace AssetCalendarApi.Controllers
                 if (!ModelState.IsValid)
                     return BadRequest(GetErrorMessageObject(GetModelStateErrors()));
 
-                _tagRepository.EditTag(id, tag, CalendarUser.OrganizationId);
+                if (CalendarId == null)
+                    return BadRequest(GetErrorMessageObject("Failed to retrieve data for calendar. Calendar Id not set"));
+
+                _tagRepository.EditTag(id, tag, CalendarId);
 
                 return Ok();
             }
@@ -141,7 +159,10 @@ namespace AssetCalendarApi.Controllers
         {
             try
             {
-                _tagRepository.DeleteTag(id, CalendarUser.OrganizationId);
+                if (CalendarId == null)
+                    return BadRequest(GetErrorMessageObject("Failed to retrieve data for calendar. Calendar Id not set"));
+
+                _tagRepository.DeleteTag(id, CalendarId);
 
                 return Ok();
             }

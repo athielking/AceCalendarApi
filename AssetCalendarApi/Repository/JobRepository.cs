@@ -35,15 +35,15 @@ namespace AssetCalendarApi.Repository
 
         #region Private Methods
 
-        private IQueryable<Job> GetJobsByOrganization(Guid organizationId)
+        private IQueryable<Job> GetJobsByCalendar(Guid calendarId)
         {
             return _dbContext.Jobs
-                .Where(job => job.OrganizationId == organizationId);
+                .Where(job => job.CalendarId == calendarId);
         }
 
-        private IQueryable<DayJob> GetDayJobsForJob(Guid jobId, Guid organizationId)
+        private IQueryable<DayJob> GetDayJobsForJob(Guid jobId, Guid calendarId)
         {
-            return GetJobsByOrganization(organizationId)
+            return GetJobsByCalendar(calendarId)
                 .AsExpandable()
                 .Where(job => job.Id == jobId)
                 .Include(job => job.DaysJobs)
@@ -54,57 +54,57 @@ namespace AssetCalendarApi.Repository
 
         #region Public Methods
 
-        public IQueryable<Job> GetAllJobs(Guid organizationId)
+        public IQueryable<Job> GetAllJobs(Guid calendarId)
         {
-            return GetJobsByOrganization(organizationId);
+            return GetJobsByCalendar(calendarId);
         }
 
-        public Job GetJob(Guid id, Guid organizationId)
+        public Job GetJob(Guid id, Guid calendarId)
         {
-            return GetJobsByOrganization(organizationId)
+            return GetJobsByCalendar(calendarId)
                 .AsExpandable()
                 .FirstOrDefault(job => job.Id == id);
         }
 
-        public IEnumerable<DayJob> GetJobDaysForJob(Guid jobId, Guid organizationId)
+        public IEnumerable<DayJob> GetJobDaysForJob(Guid jobId, Guid calendarId)
         {
             return _dbContext.DaysJobs.Where(dj => dj.IdJob == jobId);
         }
 
-        public IQueryable<DayJob> GetDayJobsForDay(DateTime date, Guid organizationId)
+        public IQueryable<DayJob> GetDayJobsForDay(DateTime date, Guid calendarId)
         {
-            return GetJobsByOrganization(organizationId)
+            return GetJobsByCalendar(calendarId)
                 .Include(j => j.DaysJobs)
                 .SelectMany(j => j.DaysJobs)
                 .Where(dj => dj.Date.Date == date.Date);
         }
 
-        public Dictionary<DateTime, IEnumerable<Job>> GetJobsForMonth(DateTime month, Guid organizationId, Guid? idWorker = null)
+        public Dictionary<DateTime, IEnumerable<Job>> GetJobsForMonth(DateTime month, Guid calendarId, Guid? idWorker = null)
         {
             //Need the calendar to show from sunday to saturday regardless of month
             DateTime monthStart = new DateTime(month.Year, month.Month, 1).StartOfWeek();
             DateTime monthEnd = monthStart.AddMonths(1).AddDays(-1).EndOfWeek();
 
-            return GetJobsForRange(organizationId, monthStart, monthEnd, idWorker);
+            return GetJobsForRange(calendarId, monthStart, monthEnd, idWorker);
         }
 
-        public Dictionary<DateTime, IEnumerable<Job>> GetJobsForWeek(DateTime week, Guid organizationId, Guid? idWorker = null)
+        public Dictionary<DateTime, IEnumerable<Job>> GetJobsForWeek(DateTime week, Guid calendarId, Guid? idWorker = null)
         {
-            return GetJobsForRange(organizationId, week.StartOfWeek(), week.EndOfWeek(), idWorker);
+            return GetJobsForRange(calendarId, week.StartOfWeek(), week.EndOfWeek(), idWorker);
         }
 
-        public Dictionary<DateTime, IEnumerable<Job>> GetJobsForDay(DateTime date, Guid organizationId, Guid? idWorker = null)
+        public Dictionary<DateTime, IEnumerable<Job>> GetJobsForDay(DateTime date, Guid calendarId, Guid? idWorker = null)
         {
-            return GetJobsForRange(organizationId, date, null, idWorker);
+            return GetJobsForRange(calendarId, date, null, idWorker);
         }
 
-        public Dictionary<DateTime, IEnumerable<Job>> GetJobsForRange( Guid organizationId, DateTime start, DateTime? end, Guid? idWorker = null)
+        public Dictionary<DateTime, IEnumerable<Job>> GetJobsForRange( Guid calendarId, DateTime start, DateTime? end, Guid? idWorker = null)
         {
             var startDate = start.Date;
             var endDate = end.HasValue ? end.Value.Date : startDate;
 
             var jobs = _dbContext.DaysJobs.Include(d => d.Job)
-                .Where(d => d.Date >= startDate && d.Date <= endDate && d.Job.OrganizationId == organizationId);
+                .Where(d => d.Date >= startDate && d.Date <= endDate && d.Job.CalendarId == calendarId);
 
             if (idWorker.HasValue)
             {
@@ -114,7 +114,7 @@ namespace AssetCalendarApi.Repository
                     .Where(w => 
                         w.IdWorker == idWorker &&
                         w.DayJob.Date >= startDate && w.DayJob.Date <= endDate &&
-                        w.DayJob.Job.OrganizationId == organizationId)
+                        w.DayJob.Job.CalendarId == calendarId)
                     .Select(w => w.DayJob);
             }
 
@@ -129,9 +129,9 @@ namespace AssetCalendarApi.Repository
             return dictionary;
         }
 
-        public void CopyCalendarDay(Guid organizationId, DateTime dateFrom, DateTime dateTo)
+        public void CopyCalendarDay(Guid calendarId, DateTime dateFrom, DateTime dateTo)
         {
-            var dayJobsToDelete = GetDayJobsForDay(dateTo, organizationId);
+            var dayJobsToDelete = GetDayJobsForDay(dateTo, calendarId);
             foreach (var toDelete in dayJobsToDelete)
             {
                 _dbContext.DaysJobs.Remove(toDelete);
@@ -141,7 +141,7 @@ namespace AssetCalendarApi.Repository
                 .Include(dj => dj.DayJobTags)
                 .Include(dj => dj.DayJobWorkers)
                 .Include(dj => dj.Job)
-                .Where(dj => dj.Job.OrganizationId == organizationId && dj.Date.Date == dateFrom.Date);
+                .Where(dj => dj.Job.CalendarId == calendarId && dj.Date.Date == dateFrom.Date);
 
             foreach (var dayJob in copyFrom)
             {
@@ -178,7 +178,7 @@ namespace AssetCalendarApi.Repository
             _dbContext.SaveChanges();
         }
 
-        public Job AddJob(AddJobModel addJobModel, Guid organizationId)
+        public Job AddJob(AddJobModel addJobModel, Guid calendarId)
         {
             var job = new Job()
             {
@@ -186,7 +186,7 @@ namespace AssetCalendarApi.Repository
                 Name = addJobModel.Name,
                 Number = addJobModel.Number,
                 Notes = addJobModel.Notes,
-                OrganizationId = organizationId
+                CalendarId = calendarId
             };
 
             _dbContext.Jobs.Add(job);
@@ -211,10 +211,10 @@ namespace AssetCalendarApi.Repository
             return job;
         }
 
-        public JobStartAndEndDate GetJobStartAndEndDate(Guid jobId, Guid organizationId)
+        public JobStartAndEndDate GetJobStartAndEndDate(Guid jobId, Guid calendarId)
         {
-            var startDate = GetDayJobsForJob(jobId, organizationId).Min(dayJob => dayJob.Date);
-            var endDate = GetDayJobsForJob(jobId, organizationId).Max(dayJob => dayJob.Date);
+            var startDate = GetDayJobsForJob(jobId, calendarId).Min(dayJob => dayJob.Date);
+            var endDate = GetDayJobsForJob(jobId, calendarId).Max(dayJob => dayJob.Date);
 
             return new JobStartAndEndDate()
             {
@@ -223,9 +223,9 @@ namespace AssetCalendarApi.Repository
             };
         }
 
-        public void EditJob(Guid id, AddJobModel addJobModel, Guid organizationId)
+        public void EditJob(Guid id, AddJobModel addJobModel, Guid calendarId)
         {
-            var job = GetJobsByOrganization(organizationId).FirstOrDefault(w => w.Id == id);
+            var job = GetJobsByCalendar(calendarId).FirstOrDefault(w => w.Id == id);
 
             if (job == null)
                 throw new ApplicationException("Job not Found");
@@ -239,7 +239,7 @@ namespace AssetCalendarApi.Repository
             //Update Tags
             _tagRepository.UpdateTagsForJob(id, addJobModel.Tags);
 
-            var dayJobs = GetDayJobsForJob(id, organizationId);
+            var dayJobs = GetDayJobsForJob(id, calendarId);
 
             //Delete Day Jobs that are not in the new range
             foreach (var dayJob in dayJobs)
@@ -271,9 +271,9 @@ namespace AssetCalendarApi.Repository
             _dbContext.SaveChanges();
         }
 
-        public void AddWorkerToJob(Guid idJob, Guid idWorker, Guid organizationId, DateTime? date = null, bool save = true)
+        public void AddWorkerToJob(Guid idJob, Guid idWorker, Guid calendarId, DateTime? date = null, bool save = true)
         {
-            var job = GetJob(idJob, organizationId);
+            var job = GetJob(idJob, calendarId);
 
             if (job == null)
                 throw new ApplicationException("Unable to Locate Job");
@@ -302,16 +302,16 @@ namespace AssetCalendarApi.Repository
                 _dbContext.SaveChanges();
         }
 
-        public void DeleteJob(Guid idJob, Guid organizationId)
+        public void DeleteJob(Guid idJob, Guid calendarId)
         {
-            var job = GetJob(idJob, organizationId);
+            var job = GetJob(idJob, calendarId);
 
             _dbContext.Jobs.Remove(job);
 
             _dbContext.SaveChanges();
         }
 
-        public void DeleteDayJob( Guid idJob, DateTime date, Guid organizationid)
+        public void DeleteDayJob( Guid idJob, DateTime date, Guid calendarId)
         {
             var dayJob = _dbContext.DaysJobs.FirstOrDefault(dj => dj.IdJob == idJob && dj.Date.Date == date.Date);
 
@@ -322,9 +322,9 @@ namespace AssetCalendarApi.Repository
             _dbContext.SaveChanges();
         }
 
-        public void DeleteJobsFromDay( DateTime date, Guid organizationId)
+        public void DeleteJobsFromDay( DateTime date, Guid calendarId)
         {
-            var dayJobs = _dbContext.DaysJobs.Include(dj => dj.Job).Where(dj => dj.Job.OrganizationId == organizationId && dj.Date.Date == date.Date);
+            var dayJobs = _dbContext.DaysJobs.Include(dj => dj.Job).Where(dj => dj.Job.CalendarId == calendarId && dj.Date.Date == date.Date);
 
             foreach (var dj in dayJobs)
                 _dbContext.DaysJobs.Remove(dj);
@@ -332,19 +332,19 @@ namespace AssetCalendarApi.Repository
             _dbContext.SaveChanges();
         }
 
-        public void MoveWorkerToAllDaysOnJob(Guid jobId, Guid workerId, DateTime viewDate, Guid organizationId)
+        public void MoveWorkerToAllDaysOnJob(Guid jobId, Guid workerId, DateTime viewDate, Guid calendarId)
         {
             var start = viewDate.StartOfWeek();
             var end = viewDate.EndOfWeek();
             var jobDays = _dbContext.DaysJobs.Where(d => d.IdJob == jobId && d.Date.Date >= start.Date && d.Date.Date <= end.Date);
 
             foreach (var jobDay in jobDays)
-                MoveWorkerToJob(jobId, workerId, jobDay.Date, organizationId, false);
+                MoveWorkerToJob(jobId, workerId, jobDay.Date, calendarId, false);
 
             _dbContext.SaveChanges();
         }
 
-        public void MoveWorkerToAllAvailableDaysOnJob(Guid jobId, Guid workerId, DateTime date, DateTime viewDate, Guid organizationId)
+        public void MoveWorkerToAllAvailableDaysOnJob(Guid jobId, Guid workerId, DateTime date, DateTime viewDate, Guid calendarId)
         {
             var start = viewDate.StartOfWeek();
             var end = viewDate.EndOfWeek();
@@ -355,12 +355,12 @@ namespace AssetCalendarApi.Repository
             var availableDays = jobDays.Where(d => !workingDays.Any(wd => wd.Date.Date == d.Date.Date));
 
             foreach (var jobDay in availableDays)
-                MoveWorkerToJob(jobId, workerId, jobDay.Date, organizationId, false);
+                MoveWorkerToJob(jobId, workerId, jobDay.Date, calendarId, false);
 
             _dbContext.SaveChanges();
         }
 
-        public void MoveWorkerToJob(Guid idJob, Guid idWorker, DateTime date, Guid organizationId, bool save = true)
+        public void MoveWorkerToJob(Guid idJob, Guid idWorker, DateTime date, Guid calendarId, bool save = true)
         {
             //Make into repository method that only includes jobs for the given organization           
             var jobsOnDay = _dbContext.DaysJobs.Include(dj => dj.DayJobWorkers).Where(dj => dj.Date.Date == date.Date);
@@ -384,10 +384,10 @@ namespace AssetCalendarApi.Repository
                 return;
             }
 
-            AddWorkerToJob(idJob, idWorker, organizationId, date, save);
+            AddWorkerToJob(idJob, idWorker, calendarId, date, save);
         }
 
-        public void MoveWorkerToOff(Guid idWorker, DateTime date, Guid organizationId)
+        public void MoveWorkerToOff(Guid idWorker, DateTime date, Guid calendarId)
         {
             //Make into repository method that only includes jobs for the given organization           
             var jobsOnDay = _dbContext.DaysJobs.Include(dj => dj.DayJobWorkers).Where(dj => dj.Date.Date == date.Date);
@@ -411,9 +411,9 @@ namespace AssetCalendarApi.Repository
             _dbContext.SaveChanges();
         }
 
-        public void MakeWorkerAvailable(Guid idWorker, DateTime date, Guid organizationId)
+        public void MakeWorkerAvailable(Guid idWorker, DateTime date, Guid calendarId)
         {
-            var jobWorker = GetDayJobsForDay(date, organizationId)
+            var jobWorker = GetDayJobsForDay(date, calendarId)
                 .Include(dj => dj.DayJobWorkers)
                 .SelectMany(dj => dj.DayJobWorkers)
                 .FirstOrDefault(w => w.IdWorker == idWorker);
@@ -429,9 +429,9 @@ namespace AssetCalendarApi.Repository
             _dbContext.SaveChanges();
         }
 
-        public void SaveNotes(Guid idJob, Guid organizationId, string notes)
+        public void SaveNotes(Guid idJob, Guid calendarId, string notes)
         {
-            var job = GetJob(idJob, organizationId);
+            var job = GetJob(idJob, calendarId);
 
             _dbContext.Attach(job);
 

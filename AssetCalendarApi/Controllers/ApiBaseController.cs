@@ -17,7 +17,13 @@ namespace AssetCalendarApi.Controllers
     {
         #region Properties  
 
-        public CalendarUser CalendarUser
+        public AceUser AceUser
+        {
+            get;
+            private set;
+        }
+
+        public Guid CalendarId
         {
             get;
             private set;
@@ -27,13 +33,13 @@ namespace AssetCalendarApi.Controllers
 
         #region Data Members
 
-        protected readonly UserManager<CalendarUser> _userManager;
+        protected readonly UserManager<AceUser> _userManager;
 
         #endregion
 
         #region Constructor
 
-        public ApiBaseController( UserManager<CalendarUser> userManager )
+        public ApiBaseController( UserManager<AceUser> userManager )
         {
             _userManager = userManager;
         }
@@ -86,7 +92,7 @@ namespace AssetCalendarApi.Controllers
 
         protected bool UserIsAdmin()
         {
-            return _userManager.GetRolesAsync( CalendarUser ).Result.Contains("Admin");
+            return _userManager.GetRolesAsync( AceUser ).Result.Contains("Admin");
         }
 
         #endregion
@@ -95,7 +101,12 @@ namespace AssetCalendarApi.Controllers
 
         public override void OnActionExecuting(ActionExecutingContext context)
         {
-            CalendarUser = _userManager.FindByNameAsync(User.Identity.Name).Result;
+            AceUser = _userManager.FindByNameAsync(User.Identity.Name).Result;
+
+            if(Request.Headers.ContainsKey("SelectedCalendar"))
+            {
+                CalendarId = new Guid(Request.Headers["SelectedCalendar"].First());
+            }
 
             base.OnActionExecuting(context);
         }

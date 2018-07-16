@@ -1,6 +1,8 @@
-﻿using AssetCalendarApi.Hubs;
+﻿using AssetCalendarApi.Data.Models;
+using AssetCalendarApi.Hubs;
 using AssetCalendarApi.Repository;
 using AssetCalendarApi.ViewModels;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -31,26 +33,26 @@ namespace AssetCalendarApi.Tools
             _tagRepository = tagRepository;
         }
 
-        public Task SendDataUpdatedAsync(DateTime startDate, Guid organizationId, DateTime? endDate = null, Guid? idWorker = null)
+        public Task SendDataUpdatedAsync(DateTime startDate, Guid calendarId, DateTime? endDate = null, Guid? idWorker = null)
         {
             return Task.Factory.StartNew(() =>
             {
                 using (var scope = _serviceScopeFactory.CreateScope())
                 {
                     var repo = scope.ServiceProvider.GetRequiredService<CalendarRepository>();
-                    var data = repo.GetDataForRange(startDate, organizationId, endDate, idWorker);
-                    _hubContext.Clients.Groups(organizationId.ToString()).SendAsync("DataUpdated", data);
+                    var data = repo.GetDataForRange(startDate, calendarId, endDate, idWorker);
+                    _hubContext.Clients.Groups(calendarId.ToString()).SendAsync("DataUpdated", data);
                 }
             });
         }
 
-        public async void SendDataUpdated(DateTime startDate, Guid organizationId, DateTime? endDate = null, Guid? idWorker = null)
+        public async void SendDataUpdated(DateTime startDate, Guid calendarId, DateTime? endDate = null, Guid? idWorker = null)
         {
-            var data = _calendarRepository.GetDataForRange(startDate, organizationId, endDate, idWorker);
-            await _hubContext.Clients.Groups(organizationId.ToString()).SendAsync("DataUpdated", data);
+            var data = _calendarRepository.GetDataForRange(startDate, calendarId, endDate, idWorker);
+            await _hubContext.Clients.Groups(calendarId.ToString()).SendAsync("DataUpdated", data);
         }
 
-        public Task SendDataUpdatedAsync(IEnumerable<DateTime> dates, Guid organizationId, Guid? idWorker = null)
+        public Task SendDataUpdatedAsync(IEnumerable<DateTime> dates, Guid calendarId, Guid? idWorker = null)
         {
             return Task.Factory.StartNew(() =>
             {
@@ -62,17 +64,17 @@ namespace AssetCalendarApi.Tools
                     foreach (var d in dates)
                     {
                         if (dictionary == null)
-                            dictionary = repo.GetDataForRange(d, organizationId, null, idWorker);
+                            dictionary = repo.GetDataForRange(d, calendarId, null, idWorker);
                         else
-                            dictionary.Add(d, repo.GetDataForRange(d, organizationId, null, idWorker)[d]);
+                            dictionary.Add(d, repo.GetDataForRange(d, calendarId, null, idWorker)[d]);
                     }
 
-                    _hubContext.Clients.Groups(organizationId.ToString()).SendAsync("DataUpdated", dictionary);
+                    _hubContext.Clients.Groups(calendarId.ToString()).SendAsync("DataUpdated", dictionary);
                 }
             });
         }
 
-        public Task SendJobUpdatedAsync(Guid idJob, Guid organizationId)
+        public Task SendJobUpdatedAsync(Guid idJob, Guid calendarId)
         {
             return Task.Factory.StartNew(() =>
             {
@@ -81,24 +83,41 @@ namespace AssetCalendarApi.Tools
                     var jobRepo = scope.ServiceProvider.GetRequiredService<JobRepository>();
                     var calendarRepo = scope.ServiceProvider.GetRequiredService<CalendarRepository>();
 
-                    var jobDays = jobRepo.GetJobDaysForJob(idJob, organizationId);
+                    var jobDays = jobRepo.GetJobDaysForJob(idJob, calendarId);
                     foreach (var jd in jobDays)
                     {
-                        var data = _calendarRepository.GetDataForRange(jd.Date, organizationId);
-                        _hubContext.Clients.Groups(organizationId.ToString()).SendAsync("DataUpdated", data);
+                        var data = _calendarRepository.GetDataForRange(jd.Date, calendarId);
+                        _hubContext.Clients.Groups(calendarId.ToString()).SendAsync("DataUpdated", data);
                     }
                 }
             });
         }
 
-        public async void SendJobUpdated(Guid idJob, Guid organizationId)
+        public async void SendJobUpdated(Guid idJob, Guid calendarId)
         {
-            var jobDays = _jobRepository.GetJobDaysForJob(idJob, organizationId);
+            var jobDays = _jobRepository.GetJobDaysForJob(idJob, calendarId);
             foreach( var jd in jobDays )
             {
-                var data = _calendarRepository.GetDataForRange(jd.Date, organizationId);
-                await _hubContext.Clients.Groups(organizationId.ToString()).SendAsync("DataUpdated", data);
+                var data = _calendarRepository.GetDataForRange(jd.Date, calendarId);
+                await _hubContext.Clients.Groups(calendarId.ToString()).SendAsync("DataUpdated", data);
             }
+        }
+
+        public Task SendUserDataUpdatedAsync( string userId)
+        {
+            return Task.Factory.StartNew( async () =>
+            {
+                using (var scope = _serviceScopeFactory.CreateScope())
+                {
+                    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<AceUser>>();
+                    var calendarRepo = scope.ServiceProvider.GetRequiredService<CalendarRepository>();
+
+                    var aceUser = await userManager.FindByIdAsync(userId);
+
+                    var calendars = calendarRepo.GetCalendarsForUser(aceUser.Id, aceUser.OrganizationId);
+                    _hubContext.Clients.Groups(aceUser.UserName).SendAsync("UserDataUpdated", calendars);
+                }
+            });
         }
     }
 }

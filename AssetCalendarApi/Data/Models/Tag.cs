@@ -13,7 +13,7 @@ namespace AssetCalendarApi.Data.Models
         public string Icon { get; set; }
         public string Description { get; set; }
         public string Color { get; set; }
-        public Guid OrganizationId { get; set; }
+        public Guid CalendarId { get; set; }
         public TagType TagType { get; set; }
 
         [JsonIgnore]
@@ -25,7 +25,7 @@ namespace AssetCalendarApi.Data.Models
         [JsonIgnore]
         public ICollection<DayJobTag> DayJobTags { get; set; }
 
-        public Organization Organization { get; set; }
+        public Calendar Calendar { get; set; }
 
         public TagViewModel GetViewModel(bool fromJobDay = false)
         {
@@ -38,18 +38,6 @@ namespace AssetCalendarApi.Data.Models
                 TagType = this.TagType
             };
         }
-
-        //public Calendar Calendar
-        //{
-        //    get;
-        //    set;
-        //}
-
-        //public Guid CalendarId
-        //{
-        //    get;
-        //    set;
-        //}
 
     }
 
