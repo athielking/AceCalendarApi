@@ -52,7 +52,7 @@ namespace AssetCalendarApi.Repository
                     Date = d,
                     AvailableWorkers = availableByDate.ContainsKey(d) ? availableByDate[d] : Enumerable.Empty<Worker>(),
                     TimeOffWorkers = offByDate.ContainsKey(d) ? offByDate[d] : Enumerable.Empty<Worker>(),
-                    Jobs = jobsByDate.ContainsKey(d) ? jobsByDate[d] : Enumerable.Empty<Job>()
+                    Jobs = jobsByDate.ContainsKey(d) ? jobsByDate[d].OrderBy(j => j.Name ) : Enumerable.Empty<Job>()
                 };
                 vm.WorkersByJob = _workerRepository.GetWorkersByJob(d, calendarId);
                 vm.TagsByJob = _tagRepository.GetTagsByJob(d, calendarId);
