@@ -15,5 +15,12 @@ namespace AssetCalendarApi.Hubs
             await Groups.AddToGroupAsync(Context.ConnectionId, organizationId);
             await Clients.Caller.SendAsync("AddedToGroup", organizationId);
         }
+
+        public async Task RemoveFromGroup( string groupId)
+        {
+            Console.WriteLine($"SignalR -- Client {Clients.Caller.ToString()} removed from group {groupId}");
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, groupId);
+            await Clients.Caller.SendAsync("RemovedFromGroup", groupId);
+        }
     }
 }
