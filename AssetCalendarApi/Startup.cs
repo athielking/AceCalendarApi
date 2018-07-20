@@ -121,10 +121,10 @@ namespace AssetCalendarApi
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
             var origin = "http://localhost:4200";
-            //if (env.IsProduction())
-            //    origin = "https://acecalendar.io";
-            //else if (env.IsStaging())
-            //    origin = "http://demo.acecalendar.io";
+            if (env.IsProduction())
+                origin = "https://acecalendar.io";
+            else if (env.IsStaging())
+                origin = "http://demo.acecalendar.io";
 
             app.UseCors(
                     options => options.WithOrigins(origin)
