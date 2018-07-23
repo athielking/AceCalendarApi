@@ -425,6 +425,24 @@ namespace AssetCalendarApi.Controllers
             }
         }
 
+        [HttpGet("getSubscriptionLicenseDetails/{id}")]
+        public IActionResult GetSubscriptionLicenseDetails(Guid id)
+        {
+            try
+            {
+                if (!UserIsAdmin() && AceUser.OrganizationId != id)
+                    return BadRequest(GetErrorMessageObject($"User '{AceUser.UserName}' does not have access to this organization."));
+
+                var subscriptionLicenseDetails = _organizationRepository.GetSubscriptionLicenseDetails(id);
+
+                return SuccessResult(subscriptionLicenseDetails);
+            }
+            catch
+            {
+                return BadRequest(GetErrorMessageObject("Failed to Get Subscription License Details"));
+            }
+        }
+
         #endregion
     }
 }

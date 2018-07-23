@@ -117,6 +117,23 @@ namespace AssetCalendarApi.Repository
             };
         }
 
+        public SubscriptionLicenseDetailsViewModel GetSubscriptionLicenseDetailsViewModel(string customerId)
+        {
+            var customerService = new StripeCustomerService(StripeSK);
+ 
+            var customer = customerService.Get(customerId);
+
+            if (!customer.Subscriptions.Any())
+                return null;
+
+            var subscription = customer.Subscriptions.FirstOrDefault();
+
+            return new SubscriptionLicenseDetailsViewModel()
+            {
+                Calendars = subscription.StripePlan.Metadata.ContainsKey("Calendars") ? Int32.Parse(subscription.StripePlan.Metadata["Calendars"]) : 0
+            };
+        }
+
         public BillingInformationViewModel GetCustomerBillingInformation(string customerId)
         {
             var customer = GetCustomer(customerId);

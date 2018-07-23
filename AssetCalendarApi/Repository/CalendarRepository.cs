@@ -189,7 +189,33 @@ namespace AssetCalendarApi.Repository
 
             _dbContext.Calendars.Update(calendar);
             _dbContext.SaveChanges();
-        } 
+        }
+
+        public void ActivateCalendarRecord(Guid calendarId)
+        {
+            var calendar = _dbContext.Calendars.FirstOrDefault(c => c.Id == calendarId);
+
+            if (calendar == null)
+                throw new ApplicationException("Calendar not Found");
+
+            calendar.Inactive = false;
+
+            _dbContext.Calendars.Update(calendar);
+            _dbContext.SaveChanges();
+        }
+
+        public void InactivateCalendarRecord(Guid calendarId)
+        {
+            var calendar = _dbContext.Calendars.FirstOrDefault(c => c.Id == calendarId);
+
+            if (calendar == null)
+                throw new ApplicationException("Calendar not Found");
+
+            calendar.Inactive = true;
+
+            _dbContext.Calendars.Update(calendar);
+            _dbContext.SaveChanges();
+        }
 
         #endregion
     }

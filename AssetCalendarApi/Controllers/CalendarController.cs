@@ -264,6 +264,44 @@ namespace AssetCalendarApi.Controllers
             }
         }
 
+        [HttpGet("activateCalendarRecord/{organizationId}/{calendarId}")]
+        public IActionResult ActivateCalendarRecord(Guid organizationId, Guid calendarId)
+        {
+            try
+            {
+                if (!UserIsAdmin() && AceUser.OrganizationId != organizationId)
+                    return BadRequest(GetErrorMessageObject($"User '{AceUser.UserName}' does not have access to this organization."));
+
+                _calendarRepository.ActivateCalendarRecord(calendarId);
+
+                return Ok();
+            }
+            catch
+            {
+            }
+
+            return BadRequest(GetErrorMessageObject("Failed to Activate Calendar Record"));
+        }
+
+        [HttpGet("inactivateCalendarRecord/{organizationId}/{calendarId}")]
+        public IActionResult InactivateCalendarRecord(Guid organizationId, Guid calendarId)
+        {
+            try
+            {
+                if (!UserIsAdmin() && AceUser.OrganizationId != organizationId)
+                    return BadRequest(GetErrorMessageObject($"User '{AceUser.UserName}' does not have access to this organization."));
+
+                _calendarRepository.InactivateCalendarRecord(calendarId);
+
+                return Ok();
+            }
+            catch
+            {
+            }
+
+            return BadRequest(GetErrorMessageObject("Failed to Inactivate Calendar Record"));
+        }
+
         #endregion
     }
 }

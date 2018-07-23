@@ -361,6 +361,19 @@ namespace AssetCalendarApi.Repository
             return customer.Metadata.ContainsKey(StripeRepository.HadTrialMetadataKey);
         }
 
+        public SubscriptionLicenseDetailsViewModel GetSubscriptionLicenseDetails(Guid organizationId)
+        {
+            var organization = _dbContext.Organizations.SingleOrDefault(org => org.Id == organizationId);
+
+            if (organization == null)
+                throw new ApplicationException($"Unable to locate Organization with Id:'{organizationId}'");
+
+            if (String.IsNullOrEmpty(organization.Stripe_CustomerId))
+                throw new ApplicationException("A Stripe Customer has not been setup for this Organization");
+
+            return _stripeRepository.GetSubscriptionLicenseDetailsViewModel(organization.Stripe_CustomerId);
+        }
+
         public void ActivateSubscription(Guid organizationId, SetProductPlanRequest setProductPlanRequest)
         {
             var organization = _dbContext.Organizations.SingleOrDefault(org => org.Id == organizationId);
