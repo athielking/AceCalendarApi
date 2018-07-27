@@ -16,6 +16,12 @@ namespace AssetCalendarApi.ViewModels
             set;
         }
         
+        public bool IsActive
+        {
+            get;
+            set;
+        }
+
         #endregion
     }
 }

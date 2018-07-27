@@ -24,7 +24,12 @@ namespace AssetCalendarApi.ViewModels
 
         public bool IsEditor()
         {
-            return this.Role == "Admin" || this.Role == "User";
+            return UserViewModel.RoleIsEditor(this.Role);
+        }
+
+        public static bool RoleIsEditor(string role )
+        {
+            return role == "Admin" || role == "Organization Admin" || role == "User";
         }
     }
 }

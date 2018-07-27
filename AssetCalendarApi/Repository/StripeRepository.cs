@@ -65,7 +65,7 @@ namespace AssetCalendarApi.Repository
                 {
                     new StripeSubscriptionItemOption()
                     {
-                        PlanId = plans.First().Id,
+                        PlanId = plans.OrderBy(p => p.Amount).First().Id,
                         Quantity = 1
                     }
                 },
@@ -91,7 +91,13 @@ namespace AssetCalendarApi.Repository
             var customerService = new StripeCustomerService(StripeSK);
             var productService = new StripeProductService(StripeSK);
 
+            if (string.IsNullOrEmpty(customerId))
+                return null;
+
             var customer = customerService.Get(customerId);
+
+            if (customer.Subscriptions == null)
+                return null;
 
             if (!customer.Subscriptions.Any())
                 return null;
@@ -120,17 +126,21 @@ namespace AssetCalendarApi.Repository
         public SubscriptionLicenseDetailsViewModel GetSubscriptionLicenseDetailsViewModel(string customerId)
         {
             var customerService = new StripeCustomerService(StripeSK);
- 
+
+            if (String.IsNullOrEmpty(customerId))
+                return new SubscriptionLicenseDetailsViewModel();
+
             var customer = customerService.Get(customerId);
 
             if (!customer.Subscriptions.Any())
-                return null;
+                return new SubscriptionLicenseDetailsViewModel();
 
             var subscription = customer.Subscriptions.FirstOrDefault();
 
             return new SubscriptionLicenseDetailsViewModel()
             {
-                Calendars = subscription.StripePlan.Metadata.ContainsKey("Calendars") ? Int32.Parse(subscription.StripePlan.Metadata["Calendars"]) : 0
+                Calendars = subscription.StripePlan.Metadata.ContainsKey("Calendars") ? Int32.Parse(subscription.StripePlan.Metadata["Calendars"]) : 0,
+                EditingUsers = subscription.StripePlan.Metadata.ContainsKey("Users") ? Int32.Parse(subscription.StripePlan.Metadata["Users"]) : 0
             };
         }
 

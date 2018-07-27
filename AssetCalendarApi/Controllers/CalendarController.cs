@@ -108,6 +108,7 @@ namespace AssetCalendarApi.Controllers
                 return BadRequest(GetErrorMessageObject("Failed to retrieve data for calendar. Calendar Id not set"));
             try { 
                 var result = _calendarRepository.GetDataForRange(date, CalendarId, endDate, idWorker);
+                _signalRService.CheckSubscriptionAsync(AceUser.OrganizationId);
 
                 return SuccessResult(result);
             }
@@ -256,11 +257,17 @@ namespace AssetCalendarApi.Controllers
                 foreach (var calendarUser in calendarUsers)
                     _signalRService.SendUserDataUpdatedAsync(calendarUser.UserId);
 
+                _signalRService.CheckSubscriptionAsync(AceUser.OrganizationId);
+
                 return Ok();
+            }
+            catch(ApplicationException ex)
+            {
+                return BadRequest(GetErrorMessageObject(ex.Message));
             }
             catch
             {
-                return BadRequest(GetErrorMessageObject("Failed to Update Calendar"));
+                return BadRequest(GetErrorMessageObject("Failed to update calendar"));
             }
         }
 
