@@ -181,7 +181,7 @@ namespace AssetCalendarApi.Repository
         //    return orgVM;
         //}
 
-            public IEnumerable<UserViewModel> GetOrganizationUsers(Guid id)
+        public IEnumerable<UserViewModel> GetOrganizationUsers(Guid id)
         {
             var org = _dbContext.Organizations
                 .Include(o => o.AceUsers)
@@ -358,7 +358,23 @@ namespace AssetCalendarApi.Repository
 
             var customer = _stripeRepository.GetCustomer(organization.Stripe_CustomerId);
 
+            if (customer.Metadata == null)
+                return false;
+
             return customer.Metadata.ContainsKey(StripeRepository.HadTrialMetadataKey);
+        }
+
+        public SubscriptionLicenseDetailsViewModel GetSubscriptionLicenseDetails(Guid organizationId)
+        {
+            var organization = _dbContext.Organizations.SingleOrDefault(org => org.Id == organizationId);
+
+            if (organization == null)
+                throw new ApplicationException($"Unable to locate Organization with Id:'{organizationId}'");
+
+            if (String.IsNullOrEmpty(organization.Stripe_CustomerId))
+                throw new ApplicationException("A Stripe Customer has not been setup for this Organization");
+
+            return _stripeRepository.GetSubscriptionLicenseDetailsViewModel(organization.Stripe_CustomerId);
         }
 
         public void ActivateSubscription(Guid organizationId, SetProductPlanRequest setProductPlanRequest)
@@ -424,6 +440,54 @@ namespace AssetCalendarApi.Repository
             var subscription = _stripeRepository.GetSubscription(organization.Stripe_CustomerId);
 
             return subscription != null && ( subscription.IsActive || subscription.IsTrial );
+        }
+
+        public ValidSubscriptionModel GetSubscriptionValidation(Guid organizationId)
+        {
+            var org = GetOrganizationWithUsers(organizationId);
+            var calendars = GetOrganizationCalendars(organizationId).Where(c => !c.Inactive);
+            var users = GetOrganizationUsers(organizationId);
+
+            var licenseInfo = _stripeRepository.GetSubscriptionLicenseDetailsViewModel(org.Stripe_CustomerId);
+            var subInfo = _stripeRepository.GetSubscription(org.Stripe_CustomerId);
+
+            var model = new ValidSubscriptionModel();
+
+            if (subInfo == null || (!subInfo.IsActive && !subInfo.IsTrial))
+            {
+                model.IsValid = false;
+                model.AddMessage("Subscription is not active.  All Data is Read-Only until subscription is activated");
+
+                return model;
+            }
+
+            if (licenseInfo.Calendars < calendars.Count())
+            {
+                model.IsValid = false;
+                model.AllowCalendarEdit = true;
+                model.AddMessage($"You have more active calendars than your subscription allows. Data is Read-Only until {calendars.Count() - licenseInfo.Calendars} are made inactive.");
+
+                return model;
+            }
+
+            var editorCount = users.Where(u => u.IsEditor()).Count();
+            if (licenseInfo.EditingUsers < editorCount)
+            {
+                model.IsValid = false;
+                model.AddMessage($"You have more active editing users than your subscription allows. Data is Read-Only until {editorCount - licenseInfo.EditingUsers} are made read-only");
+
+                return model;
+            }
+
+            if (subInfo.IsTrial && subInfo.DaysLeft <= 7)
+            {
+                model.IsValid = true;
+                model.AddMessage($"Your trial ends in {subInfo.DaysLeft}. Please upgrade to the full version to avoid any interruption in service.");
+
+                return model;
+            }
+
+            return model;
         }
 
         #endregion

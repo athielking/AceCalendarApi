@@ -119,5 +119,29 @@ namespace AssetCalendarApi.Tools
                 }
             });
         }
+
+        public Task CheckSubscriptionAsync(Guid organizationId)
+        {
+            return Task.Factory.StartNew( () =>
+            {
+                using (var scope = _serviceScopeFactory.CreateScope())
+                {
+                    var orgRepo = scope.ServiceProvider.GetRequiredService<OrganizationRepository>();
+                    _hubContext.Clients.Groups(organizationId.ToString()).SendAsync("SubscriptionChecked", orgRepo.GetSubscriptionValidation(organizationId));
+                }
+            });
+        }
+
+        public Task RefreshTokenAsync(AceUser user)
+        {
+            return Task.Factory.StartNew(() =>
+            {
+                using (var scope = _serviceScopeFactory.CreateScope())
+                {
+                    var jwtHelper = scope.ServiceProvider.GetRequiredService<JwtTokenService>();
+                    _hubContext.Clients.Group(user.UserName).SendAsync("TokenUpdated", jwtHelper.GenerateJwtForUser(user.UserName));
+                }
+            });
+        }
     }
 }

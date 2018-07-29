@@ -119,12 +119,31 @@ namespace AssetCalendarApi.Controllers
             return BadRequest("Failed to Change Password");
         }
 
+        [HttpGet("api/auth/validate/{id}")]
+        public IActionResult ValidateSubscription(Guid id)
+        {
+            try
+            {
+                var validation = _organizationRepository.GetSubscriptionValidation(id);
+                return new JsonResult( new { success = true, data = validation });
+            }
+            catch
+            {
+                return BadRequest(new
+                {
+                    errorMessage = "Failed to get Subscription Validation"
+                });
+            }
+        }
+
         #endregion
 
         #region Private Methods
 
-        private IActionResult GenerateJwtToken(AceUser user)
+        public IActionResult GenerateJwtToken(AceUser user)
         {
+            var validSubscription = _organizationRepository.GetSubscriptionValidation(user.OrganizationId);
+
             var claims = new List<Claim>
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.UserName),
@@ -133,7 +152,7 @@ namespace AssetCalendarApi.Controllers
                 new Claim(JwtRegisteredClaimNames.FamilyName, user.LastName ?? String.Empty),
                 new Claim(ClaimTypes.Name, user.UserName),
                 new Claim("OrganizationId", user.OrganizationId.ToString()),
-                new Claim("SubscriptionActive", _organizationRepository.HasActiveSubscription(user.OrganizationId).ToString() )
+                new Claim("SubscriptionActive", validSubscription.IsValid.ToString() )
             };
 
             var roles = _userManager.GetRolesAsync(user).Result;

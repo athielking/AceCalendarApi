@@ -6,17 +6,23 @@ using System.Threading.Tasks;
 
 namespace AssetCalendarApi.ViewModels
 {
-    public class EditCalendarModel
+    public class SubscriptionLicenseDetailsViewModel
     {
         #region Properties
-
-        public string CalendarName
+        
+        public int Calendars
         {
             get;
             set;
         }
-        
-        public bool IsActive
+
+        public int EditingUsers
+        {
+            get;
+            set;
+        }
+
+        public int ReadonlyUsers
         {
             get;
             set;

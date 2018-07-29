@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Configuration;
 using Stripe;
 using AutoMapper;
+using AssetCalendarApi.Tools;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -23,6 +24,7 @@ namespace AssetCalendarApi.Controllers
         #region Data Members
 
         private readonly OrganizationRepository _organizationRepository;
+        private readonly SignalRService _signalRService;
         private readonly IConfiguration _config;
 
         #endregion
@@ -33,11 +35,13 @@ namespace AssetCalendarApi.Controllers
         (
             IConfiguration configuration,
             OrganizationRepository organizationRepository,
+            SignalRService signalRService,
             UserManager<AceUser> userManager
         ) : base(userManager)
         {
             _config = configuration;
             _organizationRepository = organizationRepository;
+            _signalRService = signalRService;
         }
 
         #endregion
@@ -107,6 +111,7 @@ namespace AssetCalendarApi.Controllers
                 if (!UserIsAdmin() && AceUser.OrganizationId != id)
                     return BadRequest(GetErrorMessageObject($"User '{AceUser.UserName}' does not have access to this organization."));
 
+                _signalRService.CheckSubscriptionAsync(id);
                 return SuccessResult(_organizationRepository.GetSubscriptionDetails(id));
             }
             catch
@@ -308,6 +313,7 @@ namespace AssetCalendarApi.Controllers
                     return BadRequest(GetErrorMessageObject($"User '{AceUser.UserName}' does not have access to this organization."));
 
                 _organizationRepository.CancelSubscription(id);
+                _signalRService.CheckSubscriptionAsync(id);
 
                 return Ok();
             }
@@ -400,6 +406,7 @@ namespace AssetCalendarApi.Controllers
                     return BadRequest(GetErrorMessageObject($"User '{AceUser.UserName}' does not have access to this organization."));
 
                 _organizationRepository.ActivateSubscription(id, setProductPlanRequest);
+                _signalRService.CheckSubscriptionAsync(id);
 
                 return Ok();
             }
@@ -422,6 +429,42 @@ namespace AssetCalendarApi.Controllers
             catch
             {
                 return SuccessResult(true);
+            }
+        }
+
+        [HttpGet("getSubscriptionLicenseDetails/{id}")]
+        public IActionResult GetSubscriptionLicenseDetails(Guid id)
+        {
+            try
+            {
+                if (!UserIsAdmin() && AceUser.OrganizationId != id)
+                    return BadRequest(GetErrorMessageObject($"User '{AceUser.UserName}' does not have access to this organization."));
+
+                var subscriptionLicenseDetails = _organizationRepository.GetSubscriptionLicenseDetails(id);
+
+                return SuccessResult(subscriptionLicenseDetails);
+            }
+            catch
+            {
+                return BadRequest(GetErrorMessageObject("Failed to Get Subscription License Details"));
+            }
+        }
+
+        [HttpGet("validate/{id}")]
+        public IActionResult ValidateSubscription(Guid id)
+        {
+            try
+            {
+                if (!UserIsAdmin() && AceUser.OrganizationId != id)
+                    return BadRequest(GetErrorMessageObject($"User '{AceUser.UserName}' does not have access to this organization."));
+
+                var validation = _organizationRepository.GetSubscriptionValidation(id);
+
+                return SuccessResult(validation);
+            }
+            catch
+            {
+                return BadRequest(GetErrorMessageObject("Failed to get Subscription Validation"));
             }
         }
 

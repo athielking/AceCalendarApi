@@ -108,6 +108,7 @@ namespace AssetCalendarApi.Controllers
                 return BadRequest(GetErrorMessageObject("Failed to retrieve data for calendar. Calendar Id not set"));
             try { 
                 var result = _calendarRepository.GetDataForRange(date, CalendarId, endDate, idWorker);
+                _signalRService.CheckSubscriptionAsync(AceUser.OrganizationId);
 
                 return SuccessResult(result);
             }
@@ -256,12 +257,56 @@ namespace AssetCalendarApi.Controllers
                 foreach (var calendarUser in calendarUsers)
                     _signalRService.SendUserDataUpdatedAsync(calendarUser.UserId);
 
+                _signalRService.CheckSubscriptionAsync(AceUser.OrganizationId);
+
+                return Ok();
+            }
+            catch(ApplicationException ex)
+            {
+                return BadRequest(GetErrorMessageObject(ex.Message));
+            }
+            catch
+            {
+                return BadRequest(GetErrorMessageObject("Failed to update calendar"));
+            }
+        }
+
+        [HttpGet("activateCalendarRecord/{organizationId}/{calendarId}")]
+        public IActionResult ActivateCalendarRecord(Guid organizationId, Guid calendarId)
+        {
+            try
+            {
+                if (!UserIsAdmin() && AceUser.OrganizationId != organizationId)
+                    return BadRequest(GetErrorMessageObject($"User '{AceUser.UserName}' does not have access to this organization."));
+
+                _calendarRepository.ActivateCalendarRecord(calendarId);
+
                 return Ok();
             }
             catch
             {
-                return BadRequest(GetErrorMessageObject("Failed to Update Calendar"));
             }
+
+            return BadRequest(GetErrorMessageObject("Failed to Activate Calendar Record"));
+        }
+
+        [HttpGet("inactivateCalendarRecord/{organizationId}/{calendarId}")]
+        public IActionResult InactivateCalendarRecord(Guid organizationId, Guid calendarId)
+        {
+            try
+            {
+                if (!UserIsAdmin() && AceUser.OrganizationId != organizationId)
+                    return BadRequest(GetErrorMessageObject($"User '{AceUser.UserName}' does not have access to this organization."));
+
+                _calendarRepository.InactivateCalendarRecord(calendarId);
+
+                return Ok();
+            }
+            catch
+            {
+            }
+
+            return BadRequest(GetErrorMessageObject("Failed to Inactivate Calendar Record"));
         }
 
         #endregion

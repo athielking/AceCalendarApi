@@ -17,17 +17,19 @@ namespace AssetCalendarApi.Repository
         private readonly WorkerRepository _workerRepository;
         private readonly JobRepository _jobRepository;
         private readonly TagRepository _tagRepository;
+        private readonly OrganizationRepository _organizationRepository;
 
         #endregion
 
         #region Constructor
 
-        public CalendarRepository(AssetCalendarDbContext dbContext, WorkerRepository workerRepository, JobRepository jobRepository, TagRepository tagRepository)
+        public CalendarRepository(AssetCalendarDbContext dbContext, WorkerRepository workerRepository, JobRepository jobRepository, TagRepository tagRepository, OrganizationRepository organizationRepository)
         {
             _dbContext = dbContext;
             _workerRepository = workerRepository;
             _jobRepository = jobRepository;
             _tagRepository = tagRepository;
+            _organizationRepository = organizationRepository;
         }
 
         #endregion
@@ -88,7 +90,7 @@ namespace AssetCalendarApi.Repository
         {
             return _dbContext.CalendarUsers
                 .Include(u => u.Calendar)
-                .Where(u => u.UserId == userId)
+                .Where(u => u.UserId == userId && !u.Calendar.Inactive)
                 .Select(u => AutoMapper.Mapper.Map<CalendarViewModel>(u.Calendar))
                 .Where(c => c.OrganizationId == organizationId);
         }
@@ -147,10 +149,16 @@ namespace AssetCalendarApi.Repository
         {
             //TODO:
             //Subscription Check here? Do they have enough calendars left to add one?
-
-            var existing = _dbContext.Calendars.Where(c => c.OrganizationId == new Guid(model.OrganizationId));
+            var id = new Guid(model.OrganizationId);
+            var existing = _dbContext.Calendars.Where(c => c.OrganizationId == id);
             if (existing.Any(c => c.CalendarName == model.CalendarName))
                 throw new InvalidOperationException($"Cannot add duplicate calendar {model.CalendarName} to organiztion {model.OrganizationId}");
+
+            var calendars = GetCalendarsForOrganization(id).Where(c => !c.Inactive);
+            var license = _organizationRepository.GetSubscriptionLicenseDetails(id);
+
+            if (calendars.Count() >= license.Calendars)
+                throw new ApplicationException($"Current subscription does not allow more than {license.Calendars} active calendar(s)");
 
             var calendar = new Calendar()
             {
@@ -182,14 +190,50 @@ namespace AssetCalendarApi.Repository
         {
             var calendar = _dbContext.Calendars.FirstOrDefault(c => c.Id == id);
 
+            if(calendar.Inactive && editCalendarModel.IsActive)
+            {
+                var calendars = GetCalendarsForOrganization(calendar.OrganizationId).Where(c => !c.Inactive);
+                var license = _organizationRepository.GetSubscriptionLicenseDetails(calendar.OrganizationId);
+
+                if (calendars.Count() >= license.Calendars)
+                    throw new ApplicationException($"Cannot activate calendar. Current subscription does not allow more than {license.Calendars} calendar(s)");
+            }
+
             if (calendar == null)
                 throw new ApplicationException("Calendar not Found");
 
             calendar.CalendarName = editCalendarModel.CalendarName;
+            calendar.Inactive = !editCalendarModel.IsActive;
 
             _dbContext.Calendars.Update(calendar);
             _dbContext.SaveChanges();
-        } 
+        }
+
+        public void ActivateCalendarRecord(Guid calendarId)
+        {
+            var calendar = _dbContext.Calendars.FirstOrDefault(c => c.Id == calendarId);
+
+            if (calendar == null)
+                throw new ApplicationException("Calendar not Found");
+
+            calendar.Inactive = false;
+
+            _dbContext.Calendars.Update(calendar);
+            _dbContext.SaveChanges();
+        }
+
+        public void InactivateCalendarRecord(Guid calendarId)
+        {
+            var calendar = _dbContext.Calendars.FirstOrDefault(c => c.Id == calendarId);
+
+            if (calendar == null)
+                throw new ApplicationException("Calendar not Found");
+
+            calendar.Inactive = true;
+
+            _dbContext.Calendars.Update(calendar);
+            _dbContext.SaveChanges();
+        }
 
         #endregion
     }
