@@ -15,7 +15,7 @@ using AssetCalendarApi.Tools;
 namespace AssetCalendarApi.Controllers
 {
     [Route("api/[controller]")]
-    [Authorize(Roles="Admin")]
+    [Authorize(Roles="Admin, Organization Admin")]
     public class UserController : ApiBaseController
     {
 
@@ -51,6 +51,9 @@ namespace AssetCalendarApi.Controllers
         {
             try
             {
+                if (!UserIsAdmin() && AceUser.OrganizationId != id)
+                    return BadRequest(GetErrorMessageObject($"User '{AceUser.UserName}' does not have access to this organization."));
+
                 if (!ModelState.IsValid)
                     return BadRequest(GetErrorMessageObject(GetModelStateErrors()));
 
@@ -64,9 +67,12 @@ namespace AssetCalendarApi.Controllers
                     var license = _organizationRepository.GetSubscriptionLicenseDetails(id);
                     var users = _organizationRepository.GetOrganizationUsers(id).Where(u => u.IsEditor());
 
-                    if (users.Count() >= license.EditingUsers)
+                    if (users.Count() >= license.EditingUsers && !UserIsAdmin())
                         return BadRequest(GetErrorMessageObject($"Cannot add user. Current subscription does not allow more than {license.EditingUsers} Editing Users"));
                 }
+
+                if (UserViewModel.RoleIsAdmin(addUserModel.Role) && !UserIsAdmin())
+                    return BadRequest(GetErrorMessageObject("Only admin users can grant admin permissions"));
 
                 var result = _userManager.CreateAsync(new AceUser()
                 {
@@ -98,6 +104,9 @@ namespace AssetCalendarApi.Controllers
         {
             try
             {
+                if (!UserIsAdmin() && AceUser.OrganizationId != id)
+                    return BadRequest(GetErrorMessageObject($"User '{AceUser.UserName}' does not have access to this organization."));
+
                 if (!ModelState.IsValid)
                     return BadRequest(GetErrorMessageObject(GetModelStateErrors()));
 
@@ -114,9 +123,12 @@ namespace AssetCalendarApi.Controllers
                     var license = _organizationRepository.GetSubscriptionLicenseDetails(id);
                     var users = _organizationRepository.GetOrganizationUsers(id).Where(u => u.IsEditor());
 
-                    if (users.Count() >= license.EditingUsers)
+                    if (users.Count() >= license.EditingUsers && !UserIsAdmin())
                         return BadRequest(GetErrorMessageObject($"Cannot edit user. Current subscription does not allow more than {license.EditingUsers} Editing Users"));
                 }
+
+                if(userVm.IsAdmin() && !UserIsAdmin())
+                    return BadRequest(GetErrorMessageObject("Only admin users can grant admin permissions"));
 
                 user.FirstName = editUserModel.FirstName;
                 user.LastName = editUserModel.LastName;
@@ -147,6 +159,9 @@ namespace AssetCalendarApi.Controllers
         {
             try
             {
+                if (!UserIsAdmin() && AceUser.OrganizationId != id)
+                    return BadRequest(GetErrorMessageObject($"User '{AceUser.UserName}' does not have access to this organization."));
+
                 var user = _userManager.FindByIdAsync(id.ToString()).Result;
                 var result = _userManager.DeleteAsync(user).Result;
 

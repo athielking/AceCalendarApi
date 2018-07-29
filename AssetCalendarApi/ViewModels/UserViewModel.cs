@@ -22,9 +22,19 @@ namespace AssetCalendarApi.ViewModels
             Claims = new List<string>();
         }
 
+        public bool IsAdmin()
+        {
+            return RoleIsAdmin(this.Role);
+        }
+
         public bool IsEditor()
         {
             return UserViewModel.RoleIsEditor(this.Role);
+        }
+
+        public static bool RoleIsAdmin(string role)
+        {
+            return role == "Admin";
         }
 
         public static bool RoleIsEditor(string role )
