@@ -101,11 +101,14 @@ namespace AssetCalendarApi.Controllers
 
         public override void OnActionExecuting(ActionExecutingContext context)
         {
-            AceUser = _userManager.FindByNameAsync(User.Identity.Name).Result;
-
-            if(Request.Headers.ContainsKey("SelectedCalendar"))
+            if(User.Identity.Name != null)
             {
-                CalendarId = new Guid(Request.Headers["SelectedCalendar"].First());
+                AceUser = _userManager.FindByNameAsync(User.Identity.Name).Result;
+
+                if(Request.Headers.ContainsKey("SelectedCalendar"))
+                {
+                    CalendarId = new Guid(Request.Headers["SelectedCalendar"].First());
+                }
             }
 
             base.OnActionExecuting(context);
