@@ -64,6 +64,18 @@ namespace AssetCalendarApi.ViewModels
             set;
         }
 
+        public int Calendars
+        {
+            get;
+            set;
+        }
+
+        public int Users
+        {
+            get;
+            set;
+        }
+
         #endregion
 
 
