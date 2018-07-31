@@ -11,5 +11,7 @@ namespace AssetCalendarApi.ViewModels
         public string Name { get; set; }
         public string BillingScheme { get; set; }
         public decimal Amount { get; set; }
+        public int Calendars { get; set; }
+        public int Users { get; set; }
     }
 }

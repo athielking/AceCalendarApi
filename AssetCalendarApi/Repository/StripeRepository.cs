@@ -48,7 +48,7 @@ namespace AssetCalendarApi.Repository
 
         #region Private Methods
 
-        private StripeSubscription CreateSubscription(string customerId, bool includeTrial)
+        private StripeSubscription CreateSubscription(string customerId, bool includeTrial, SetProductPlanRequest setProductPlanRequest = null)
         {
             var planService = new StripePlanService(StripeSK);
 
@@ -65,7 +65,7 @@ namespace AssetCalendarApi.Repository
                 {
                     new StripeSubscriptionItemOption()
                     {
-                        PlanId = plans.OrderBy(p => p.Amount).First().Id,
+                        PlanId = setProductPlanRequest != null ? setProductPlanRequest.PlanId : plans.OrderBy(p => p.Amount).First().Id,
                         Quantity = 1
                     }
                 },
@@ -112,14 +112,16 @@ namespace AssetCalendarApi.Repository
             return new SubscriptionViewDetailsModel()
             {
                 SubscriptionId = subscription.Id,
-                ProductName = product.Name,
+                ProductName = subscription.StripePlan.Nickname,
                 IsActive = subscription.Status == "active",
                 DaysLeft = daysLeftInCurrentPeriod > 0 ? daysLeftInCurrentPeriod : 0,
                 IsTrial = subscription.Status == "trialing",
                 CancelAtPeriodEnd = subscription.CancelAtPeriodEnd,
                 CurrentPeriodEnd = subscription.CurrentPeriodEnd,
                 HasDefaultPaymentMethod = defaultSource != null,
-                DefaultPaymentMethod = defaultSource != null ? $"{defaultSource.Card.Brand} {defaultSource.Card.Last4}" : string.Empty
+                DefaultPaymentMethod = defaultSource != null ? $"{defaultSource.Card.Brand} {defaultSource.Card.Last4}" : string.Empty,
+                Calendars = subscription.StripePlan.Metadata.ContainsKey("Calendars") ? Int32.Parse(subscription.StripePlan.Metadata["Calendars"]) : 0,
+                Users = subscription.StripePlan.Metadata.ContainsKey("Users") ? Int32.Parse(subscription.StripePlan.Metadata["Users"]) : 0
             };
         }
 
@@ -323,15 +325,25 @@ namespace AssetCalendarApi.Repository
 
             if (subscription == null)
             {
-                CreateSubscription(customerId, false);
+                CreateSubscription(customerId, false, setProductPlanRequest);
                 return;
             }
 
             var subscriptionService = new StripeSubscriptionService(StripeSK);
 
+            var stripeSubscription = subscriptionService.Get(subscription.SubscriptionId);
+
             subscriptionService.Update(subscription.SubscriptionId, new StripeSubscriptionUpdateOptions()
             {
-                CancelAtPeriodEnd = false
+                CancelAtPeriodEnd = false,
+                Items = new List<StripeSubscriptionItemUpdateOption>()
+                {
+                    new StripeSubscriptionItemUpdateOption()
+                    {
+                        Id = stripeSubscription.Items.Data[0].Id,
+                        PlanId = setProductPlanRequest.PlanId,
+                    }
+                }
             });
         }
 

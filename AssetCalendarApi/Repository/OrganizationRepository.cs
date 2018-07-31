@@ -414,6 +414,8 @@ namespace AssetCalendarApi.Repository
                 Amount = p.Amount ?? 0,
                 Id = p.Id,
                 Name = p.Nickname,
+                Calendars = p.Metadata.ContainsKey("Calendars") ? Int32.Parse(p.Metadata["Calendars"]) : 0,
+                Users = p.Metadata.ContainsKey("Users") ? Int32.Parse(p.Metadata["Users"]) : 0,
                 BillingScheme = p.IntervalCount > 1 ?
                    $"{p.IntervalCount} {p.Interval}s" :
                    p.Interval
