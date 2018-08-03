@@ -46,6 +46,53 @@ namespace AssetCalendarApi.Controllers
 
         #region Public Methods
 
+        [AllowAnonymous]
+        [HttpPost("register")]
+        public async Task<IActionResult> RegisterNewAccount([FromBody]RegisterUserViewModel model)
+        {
+            try
+            {
+                var addUserModel = model.UserModel;
+
+                if (!ModelState.IsValid)
+                    return BadRequest(GetErrorMessageObject(GetModelStateErrors()));
+
+                var user = await _userManager.FindByNameAsync(model.UserModel.Username);
+                if (user != null)
+                    return BadRequest("Username is already in use.");
+
+                var org = _organizationRepository.AddOrganization(model.OrganizationModel);
+                _organizationRepository.StartTrial(org.Id);
+
+                var result = _userManager.CreateAsync(new AceUser()
+                {
+                    OrganizationId = org.Id,
+                    UserName = addUserModel.Username,
+                    FirstName = addUserModel.FirstName,
+                    LastName = addUserModel.LastName,
+                    Email = addUserModel.Email,
+                    EmailConfirmed = false
+                }, addUserModel.Password).Result;
+
+                if (!result.Succeeded)
+                    return BadRequest(GetErrorMessageObject(result.Errors.First().Description));
+
+                var addedUser = _userManager.FindByNameAsync(addUserModel.Username).Result;
+
+                if (_roleManager.RoleExistsAsync(addUserModel.Role).Result)
+                    await _userManager.AddToRoleAsync(addedUser, addUserModel.Role);
+
+                var token = await _userManager.GenerateEmailConfirmationTokenAsync(addedUser);
+
+
+                return Ok();
+            }
+            catch(Exception ex)
+            {
+                return BadRequest(GetErrorMessageObject("Failed to Register User"));
+            }
+        }
+
         [HttpPost("addUserToOrganization/{id}")]
         public async Task<IActionResult> AddUserToOrganization(Guid id, [FromBody]AddUserModel addUserModel)
         {

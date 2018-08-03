@@ -1,0 +1,22 @@
+﻿@model AssetCalendarApi.ViewModels.ConfirmEmailViewModel
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Confirm Ace Calendar Email</title>
+</head>
+<body>
+
+    <div>
+        <h2>Thank you for registering with Ace Calendar</h2>
+        <h2>Please Confirm your email address below</h2>
+
+        <hr />
+
+        @Html.ActionLink("Confirm Email", $"https://app.acecalendar.io/api/user/register", new { userName = Model.Username, code = Model.Code });
+    </div>
+
+</body>
+</html>
