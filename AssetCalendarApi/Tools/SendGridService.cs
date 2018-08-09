@@ -1,10 +1,12 @@
 ﻿using AssetCalendarApi.Data.Models;
+using AssetCalendarApi.ViewModels;
 using Microsoft.Extensions.Configuration;
 using SendGrid;
 using SendGrid.Helpers.Mail;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace AssetCalendarApi.Tools
@@ -12,12 +14,15 @@ namespace AssetCalendarApi.Tools
     public class SendGridService
     {
         private readonly IConfiguration _configuration;
+        private readonly RazorService _razorService;
+
         private readonly string _apiKey;
 
-        public SendGridService(IConfiguration configuration)
+        public SendGridService(IConfiguration configuration, RazorService razorService)
         {
             _configuration = configuration;
             _apiKey = _configuration["SendGrid_API"];
+            _razorService = razorService;
         }
 
         public void SendEmailConfirmationEmail( AceUser user, string code)
@@ -28,13 +33,18 @@ namespace AssetCalendarApi.Tools
             {
                 From = new EmailAddress("registration@acecalendar.io", "Ace Calendar Team"),
                 Subject = "Email Confirmation",
-
+                HtmlContent = GetEmailConfirmationEmailMessageHtml(user, code).Result,
             };
+
+            msg.AddTo(user.Email);
+            client.SendEmailAsync(msg);
         }
 
-        private string GetEmailConfirmationEmailMessageHtml(AceUser user, string code)
+        private async Task<string> GetEmailConfirmationEmailMessageHtml(AceUser user, string code)
         {
-            return code;
+            var model = new ConfirmEmailViewModel() { Username = user.UserName, Code = code };
+
+            return await _razorService.RenderView("ConfirmEmailView", model);
         }
     }
 }

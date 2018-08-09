@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Identity;
 using AssetCalendarApi.Data.Models;
 using Microsoft.AspNetCore.Authorization;
 using AssetCalendarApi.Tools;
+using System.Web;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -23,7 +24,9 @@ namespace AssetCalendarApi.Controllers
 
         private readonly OrganizationRepository _organizationRepository;
         private readonly SignalRService _signalRService;
+        private readonly SendGridService _sendGridService;
         private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly SignInManager<AceUser> _signInManager;
 
         #endregion
 
@@ -33,13 +36,18 @@ namespace AssetCalendarApi.Controllers
         (
             OrganizationRepository organizationRepository,
             SignalRService signalRService,
+            SendGridService sendGridService,
             UserManager<AceUser> userManager,
-            RoleManager<IdentityRole> roleManager
+            RoleManager<IdentityRole> roleManager,
+            SignInManager<AceUser> signInManager
         ) : base(userManager)
         {
             _organizationRepository = organizationRepository;
             _signalRService = signalRService;
+            _sendGridService = sendGridService;
             _roleManager = roleManager;
+            _signInManager = signInManager;
+
         }
 
         #endregion
@@ -59,7 +67,11 @@ namespace AssetCalendarApi.Controllers
 
                 var user = await _userManager.FindByNameAsync(model.UserModel.Username);
                 if (user != null)
-                    return BadRequest("Username is already in use.");
+                    return BadRequest(GetErrorMessageObject("Username is already in use."));
+
+                user = await _userManager.FindByEmailAsync(model.UserModel.Email);
+                if (user != null)
+                    return BadRequest(GetErrorMessageObject("An already exists for that email address"));
 
                 var org = _organizationRepository.AddOrganization(model.OrganizationModel);
                 _organizationRepository.StartTrial(org.Id);
@@ -83,7 +95,9 @@ namespace AssetCalendarApi.Controllers
                     await _userManager.AddToRoleAsync(addedUser, addUserModel.Role);
 
                 var token = await _userManager.GenerateEmailConfirmationTokenAsync(addedUser);
+                var safeToken = HttpUtility.UrlEncode(token);
 
+                _sendGridService.SendEmailConfirmationEmail(addedUser, safeToken);
 
                 return Ok();
             }
@@ -91,6 +105,23 @@ namespace AssetCalendarApi.Controllers
             {
                 return BadRequest(GetErrorMessageObject("Failed to Register User"));
             }
+        }
+
+        [AllowAnonymous]
+        [HttpGet("register")]
+        public async Task<IActionResult> ConfirmEmail(string userName, string code)
+        {
+            var user = await _userManager.FindByNameAsync(userName);
+
+            if( user == null )
+                return BadRequest(GetErrorMessageObject($"Unable to locate user {userName} to confirm"));
+
+            var result = await _userManager.ConfirmEmailAsync(user, code);
+
+            if (!result.Succeeded)
+                return BadRequest(GetErrorMessageObject("Failed to confirm email."));
+
+            return RedirectPermanent("https://app.acecalendar.io");
         }
 
         [HttpPost("addUserToOrganization/{id}")]

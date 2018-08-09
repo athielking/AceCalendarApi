@@ -114,6 +114,8 @@ namespace AssetCalendarApi
             services.AddScoped<SignalRService>();
             services.AddScoped<StripeRepository>();
             services.AddScoped<JwtTokenService>();
+            services.AddScoped<SendGridService>();
+            services.AddScoped<RazorService>();
 
             services.AddTransient<AssetCalendarSeeder>();
         }
