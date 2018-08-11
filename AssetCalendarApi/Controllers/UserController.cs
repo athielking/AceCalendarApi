@@ -62,16 +62,13 @@ namespace AssetCalendarApi.Controllers
             {
                 var addUserModel = model.UserModel;
 
-                if (!ModelState.IsValid)
-                    return BadRequest(GetErrorMessageObject(GetModelStateErrors()));
-
                 var user = await _userManager.FindByNameAsync(model.UserModel.Username);
                 if (user != null)
                     return BadRequest(GetErrorMessageObject("Username is already in use."));
 
                 user = await _userManager.FindByEmailAsync(model.UserModel.Email);
                 if (user != null)
-                    return BadRequest(GetErrorMessageObject("An already exists for that email address"));
+                    return BadRequest(new { errorMessage = "An account already exists for that email address", resendEmail = !user.EmailConfirmed, resetPassword = user.EmailConfirmed });
 
                 var org = _organizationRepository.AddOrganization(model.OrganizationModel);
                 _organizationRepository.StartTrial(org.Id);
@@ -123,6 +120,24 @@ namespace AssetCalendarApi.Controllers
 
             return RedirectPermanent("https://app.acecalendar.io");
         }
+
+        [AllowAnonymous]
+        [HttpPost("resendEmail/{email}")]
+        public async Task<IActionResult> ResendConfirmationEmail(string email)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+
+            if (user.EmailConfirmed)
+                return Ok();
+
+            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+            var safeToken = HttpUtility.UrlEncode(token);
+
+            _sendGridService.SendEmailConfirmationEmail(user, safeToken);
+
+            return Ok();
+        }
+
 
         [HttpPost("addUserToOrganization/{id}")]
         public async Task<IActionResult> AddUserToOrganization(Guid id, [FromBody]AddUserModel addUserModel)
