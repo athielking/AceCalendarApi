@@ -109,7 +109,7 @@ namespace AssetCalendarApi.Repository
 
             var defaultSource = customer.Sources.SingleOrDefault(source => source.Id == customer.DefaultSourceId);
 
-            return new SubscriptionViewDetailsModel()
+            var subscriptionViewDetailsModel = new SubscriptionViewDetailsModel()
             {
                 SubscriptionId = subscription.Id,
                 ProductName = subscription.StripePlan.Nickname,
@@ -123,6 +123,15 @@ namespace AssetCalendarApi.Repository
                 Calendars = subscription.StripePlan.Metadata.ContainsKey("Calendars") ? Int32.Parse(subscription.StripePlan.Metadata["Calendars"]) : 0,
                 Users = subscription.StripePlan.Metadata.ContainsKey("Users") ? Int32.Parse(subscription.StripePlan.Metadata["Users"]) : 0
             };
+
+            if( customer.Metadata.ContainsKey("DemoUser") && customer.Metadata["DemoUser"] == "True" )
+            {
+                subscriptionViewDetailsModel.IsActive = true;
+                subscriptionViewDetailsModel.Calendars = 99;
+                subscriptionViewDetailsModel.Users = 99;
+            }
+
+            return subscriptionViewDetailsModel;
         }
 
         public SubscriptionLicenseDetailsViewModel GetSubscriptionLicenseDetailsViewModel(string customerId)
@@ -139,11 +148,19 @@ namespace AssetCalendarApi.Repository
 
             var subscription = customer.Subscriptions.FirstOrDefault();
 
-            return new SubscriptionLicenseDetailsViewModel()
+            var subscriptionLicenseDetailsViewModel = new SubscriptionLicenseDetailsViewModel()
             {
                 Calendars = subscription.StripePlan.Metadata.ContainsKey("Calendars") ? Int32.Parse(subscription.StripePlan.Metadata["Calendars"]) : 0,
                 EditingUsers = subscription.StripePlan.Metadata.ContainsKey("Users") ? Int32.Parse(subscription.StripePlan.Metadata["Users"]) : 0
             };
+
+            if (customer.Metadata.ContainsKey("DemoUser") && customer.Metadata["DemoUser"] == "True")
+            {
+                subscriptionLicenseDetailsViewModel.Calendars = 99;
+                subscriptionLicenseDetailsViewModel.EditingUsers = 99;
+            }
+
+            return subscriptionLicenseDetailsViewModel;
         }
 
         public BillingInformationViewModel GetCustomerBillingInformation(string customerId)
