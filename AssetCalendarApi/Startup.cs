@@ -123,12 +123,8 @@ namespace AssetCalendarApi
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
-            var origin = "http://localhost:4200";
-            if (env.IsProduction())
-                origin = "https://acecalendar.io";
-            else if (env.IsStaging())
-                origin = "http://demo.acecalendar.io";
-
+            var origin = _configuration["CORS_Origin"];
+            
             app.UseCors(
                     options => options.WithOrigins(origin)
                         .AllowAnyHeader()
