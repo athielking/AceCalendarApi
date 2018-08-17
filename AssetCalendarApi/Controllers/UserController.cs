@@ -138,6 +138,19 @@ namespace AssetCalendarApi.Controllers
             return Ok();
         }
 
+        public async Task<IActionResult> ResetPassword(string userName, string email)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null)
+                return BadRequest(GetErrorMessageObject("An account with that email address does not exist"));
+
+            if (user.UserName != userName)
+                return BadRequest(GetErrorMessageObject("An account with that username and email combination does not exist"));
+
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+
+            return Ok();
+        }
 
         [HttpPost("addUserToOrganization/{id}")]
         public async Task<IActionResult> AddUserToOrganization(Guid id, [FromBody]AddUserModel addUserModel)

@@ -40,11 +40,32 @@ namespace AssetCalendarApi.Tools
             client.SendEmailAsync(msg);
         }
 
+        public void SendPasswordResetEmail(AceUser user, string code)
+        {
+            var client = new SendGridClient(_apiKey);
+            var msg = new SendGridMessage()
+            {
+                From = new EmailAddress("registration@acecalendar.io", "Ace Calendar Team"),
+                Subject = "Password Reset",
+                HtmlContent = GetPasswordResetEmailMessageHtml(user, code).Result,
+            };
+
+            msg.AddTo(user.Email);
+            client.SendEmailAsync(msg);
+        }
+
         private async Task<string> GetEmailConfirmationEmailMessageHtml(AceUser user, string code)
         {
             var model = new ConfirmEmailViewModel() { Username = user.UserName, Code = code };
 
             return await _razorService.RenderView("ConfirmEmailView", model);
+        }
+
+        private async Task<string> GetPasswordResetEmailMessageHtml(AceUser user, string code)
+        {
+            var model = new ConfirmEmailViewModel() { Username = user.UserName, Code = code };
+
+            return await _razorService.RenderView("ResetPasswordEmailView", model);
         }
     }
 }
