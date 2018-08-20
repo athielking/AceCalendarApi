@@ -1,7 +1,9 @@
 ﻿using AssetCalendarApi.Data.Models;
 using AssetCalendarApi.Filters;
 using AssetCalendarApi.Repository;
+using AssetCalendarApi.Tools;
 using AssetCalendarApi.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -14,6 +16,7 @@ using System.Linq;
 using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
+using System.Web;
 
 namespace AssetCalendarApi.Controllers
 {
@@ -31,6 +34,8 @@ namespace AssetCalendarApi.Controllers
 
         private OrganizationRepository _organizationRepository;
         private CalendarRepository _calendarRepository;
+        private SendGridService _sendGridService;
+
         #endregion
 
         #region Constructor
@@ -41,6 +46,7 @@ namespace AssetCalendarApi.Controllers
             UserManager<AceUser> userManager,
             OrganizationRepository organizationRepository,
             CalendarRepository calendarRepository,
+            SendGridService sendGridService,
             ILogger<AuthController> logger,
             IConfiguration configuration
         )
@@ -51,6 +57,7 @@ namespace AssetCalendarApi.Controllers
             _configuration = configuration;
             _organizationRepository = organizationRepository;
             _calendarRepository = calendarRepository;
+            _sendGridService = sendGridService;
         }
 
         #endregion
@@ -117,6 +124,44 @@ namespace AssetCalendarApi.Controllers
             }
 
             return BadRequest("Failed to Change Password");
+        }
+
+        [AllowAnonymous]
+        [HttpPost("api/auth/resetPassword")]
+        public async Task<IActionResult> ResetPassword([FromBody]ResetPasswordViewModel model)
+        {
+
+            var user = await _userManager.FindByNameAsync(model.UserName);
+            if (user == null)
+                return BadRequest(new { errorMessage = "Unable to locate user" });
+
+            var result = await _userManager.ResetPasswordAsync(user, model.Code, model.Password);
+
+            if (!result.Succeeded)
+                return BadRequest(new { errorMessage = result.Errors.First().Description });
+
+            var signInResult = await _signInManager.PasswordSignInAsync(user, model.Password, false, false);
+            if (result.Succeeded)
+                return GenerateJwtToken(user);
+
+            return BadRequest(new { errorMessage = "Failed to sign in" });
+        }
+
+        [AllowAnonymous]
+        [HttpGet("api/auth/resetPassword")]
+        public async Task<IActionResult> ResetPassword(string userName, string email)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null)
+                return BadRequest(new { errorMessage = "An account with that email address does not exist" });
+
+            if (user.UserName != userName)
+                return BadRequest(new { errorMessage = "An account with that username and email combination does not exist" });
+
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            _sendGridService.SendPasswordResetEmail(user, HttpUtility.UrlEncode(token));
+
+            return Ok();
         }
 
         [HttpGet("api/auth/validate/{id}")]

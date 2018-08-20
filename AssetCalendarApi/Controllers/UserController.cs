@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Identity;
 using AssetCalendarApi.Data.Models;
 using Microsoft.AspNetCore.Authorization;
 using AssetCalendarApi.Tools;
+using System.Web;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -23,7 +24,9 @@ namespace AssetCalendarApi.Controllers
 
         private readonly OrganizationRepository _organizationRepository;
         private readonly SignalRService _signalRService;
+        private readonly SendGridService _sendGridService;
         private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly SignInManager<AceUser> _signInManager;
 
         #endregion
 
@@ -33,18 +36,121 @@ namespace AssetCalendarApi.Controllers
         (
             OrganizationRepository organizationRepository,
             SignalRService signalRService,
+            SendGridService sendGridService,
             UserManager<AceUser> userManager,
-            RoleManager<IdentityRole> roleManager
+            RoleManager<IdentityRole> roleManager,
+            SignInManager<AceUser> signInManager
         ) : base(userManager)
         {
             _organizationRepository = organizationRepository;
             _signalRService = signalRService;
+            _sendGridService = sendGridService;
             _roleManager = roleManager;
+            _signInManager = signInManager;
+
         }
 
         #endregion
 
         #region Public Methods
+
+        [AllowAnonymous]
+        [HttpPost("register")]
+        public async Task<IActionResult> RegisterNewAccount([FromBody]RegisterUserViewModel model)
+        {
+            try
+            {
+                var addUserModel = model.UserModel;
+
+                var user = await _userManager.FindByNameAsync(model.UserModel.Username);
+                if (user != null)
+                    return BadRequest(GetErrorMessageObject("Username is already in use."));
+
+                user = await _userManager.FindByEmailAsync(model.UserModel.Email);
+                if (user != null)
+                    return BadRequest(new { errorMessage = "An account already exists for that email address", resendEmail = !user.EmailConfirmed, resetPassword = user.EmailConfirmed });
+
+                var org = _organizationRepository.AddOrganization(model.OrganizationModel);
+                _organizationRepository.StartTrial(org.Id);
+
+                var result = _userManager.CreateAsync(new AceUser()
+                {
+                    OrganizationId = org.Id,
+                    UserName = addUserModel.Username,
+                    FirstName = addUserModel.FirstName,
+                    LastName = addUserModel.LastName,
+                    Email = addUserModel.Email,
+                    EmailConfirmed = false
+                }, addUserModel.Password).Result;
+
+                if (!result.Succeeded)
+                    return BadRequest(GetErrorMessageObject(result.Errors.First().Description));
+
+                var addedUser = _userManager.FindByNameAsync(addUserModel.Username).Result;
+
+                if (_roleManager.RoleExistsAsync(addUserModel.Role).Result)
+                    await _userManager.AddToRoleAsync(addedUser, addUserModel.Role);
+
+                var token = await _userManager.GenerateEmailConfirmationTokenAsync(addedUser);
+                var safeToken = HttpUtility.UrlEncode(token);
+
+                _sendGridService.SendEmailConfirmationEmail(addedUser, safeToken);
+
+                return Ok();
+            }
+            catch(Exception ex)
+            {
+                return BadRequest(GetErrorMessageObject("Failed to Register User"));
+            }
+        }
+
+        [AllowAnonymous]
+        [HttpGet("register")]
+        public async Task<IActionResult> ConfirmEmail(string userName, string code)
+        {
+            var user = await _userManager.FindByNameAsync(userName);
+
+            if( user == null )
+                return BadRequest(GetErrorMessageObject($"Unable to locate user {userName} to confirm"));
+
+            var result = await _userManager.ConfirmEmailAsync(user, code);
+
+            if (!result.Succeeded)
+                return BadRequest(GetErrorMessageObject("Failed to confirm email."));
+
+            return RedirectPermanent("https://app.acecalendar.io");
+        }
+
+        [AllowAnonymous]
+        [HttpPost("resendEmail/{email}")]
+        public async Task<IActionResult> ResendConfirmationEmail(string email)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+
+            if (user.EmailConfirmed)
+                return Ok();
+
+            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+            var safeToken = HttpUtility.UrlEncode(token);
+
+            _sendGridService.SendEmailConfirmationEmail(user, safeToken);
+
+            return Ok();
+        }
+
+        public async Task<IActionResult> ResetPassword(string userName, string email)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null)
+                return BadRequest(GetErrorMessageObject("An account with that email address does not exist"));
+
+            if (user.UserName != userName)
+                return BadRequest(GetErrorMessageObject("An account with that username and email combination does not exist"));
+
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+
+            return Ok();
+        }
 
         [HttpPost("addUserToOrganization/{id}")]
         public async Task<IActionResult> AddUserToOrganization(Guid id, [FromBody]AddUserModel addUserModel)
