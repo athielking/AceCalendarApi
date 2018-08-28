@@ -123,10 +123,10 @@ namespace AssetCalendarApi
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
-            var origin = _configuration["CORS_Origin"];
+            var origins = _configuration["CORS_Origin"].Split(',');
             
             app.UseCors(
-                    options => options.WithOrigins(origin)
+                    options => options.WithOrigins(origins)
                         .AllowAnyHeader()
                         .AllowAnyMethod()
                         .AllowCredentials());
