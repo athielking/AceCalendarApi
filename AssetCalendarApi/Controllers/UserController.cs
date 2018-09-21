@@ -23,6 +23,7 @@ namespace AssetCalendarApi.Controllers
         #region Data Members
 
         private readonly OrganizationRepository _organizationRepository;
+        private readonly CalendarRepository _calendarRepository;
         private readonly SignalRService _signalRService;
         private readonly SendGridService _sendGridService;
         private readonly RoleManager<IdentityRole> _roleManager;
@@ -35,6 +36,7 @@ namespace AssetCalendarApi.Controllers
         public UserController
         (
             OrganizationRepository organizationRepository,
+            CalendarRepository calendarRepository,
             SignalRService signalRService,
             SendGridService sendGridService,
             UserManager<AceUser> userManager,
@@ -43,11 +45,11 @@ namespace AssetCalendarApi.Controllers
         ) : base(userManager)
         {
             _organizationRepository = organizationRepository;
+            _calendarRepository = calendarRepository;
             _signalRService = signalRService;
             _sendGridService = sendGridService;
             _roleManager = roleManager;
             _signInManager = signInManager;
-
         }
 
         #endregion
@@ -87,6 +89,9 @@ namespace AssetCalendarApi.Controllers
                     return BadRequest(GetErrorMessageObject(result.Errors.First().Description));
 
                 var addedUser = _userManager.FindByNameAsync(addUserModel.Username).Result;
+                var calendar = _organizationRepository.AddCalendar(org.Id, "Default Calendar");
+
+                _calendarRepository.AssignCalendarUsers(calendar.Id, new List<string>() { addedUser.Id });
 
                 if (_roleManager.RoleExistsAsync(addUserModel.Role).Result)
                     await _userManager.AddToRoleAsync(addedUser, addUserModel.Role);
@@ -117,6 +122,8 @@ namespace AssetCalendarApi.Controllers
 
             if (!result.Succeeded)
                 return BadRequest(GetErrorMessageObject("Failed to confirm email."));
+
+
 
             return RedirectPermanent("https://app.acecalendar.io");
         }

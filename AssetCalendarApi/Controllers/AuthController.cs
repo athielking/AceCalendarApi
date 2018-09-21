@@ -91,6 +91,17 @@ namespace AssetCalendarApi.Controllers
                 if (result.Succeeded)
                 {
                     var user = await _userManager.FindByNameAsync(model.UserName);
+
+                    if (!user.EmailConfirmed)
+                    {
+                        var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                        var safeToken = HttpUtility.UrlEncode(token);
+
+                        _sendGridService.SendEmailConfirmationEmail(user, safeToken);
+                        return BadRequest( new { errorMessage = "Email Not Confirmed. A new confirmation email has been sent. " });
+                    }
+                        
+
                     return GenerateJwtToken(user);
                 }
             }
@@ -99,7 +110,7 @@ namespace AssetCalendarApi.Controllers
                 _logger.LogError($"Exception thrown while logging in: {ex}");
             }
 
-            return BadRequest("Failed to login");
+            return BadRequest( new { errorMessage = "Failed to login. Please Check Your Credentials and Try Again" });
         }
 
         [HttpPost("api/auth/changePassword")]
