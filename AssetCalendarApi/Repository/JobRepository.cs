@@ -337,8 +337,11 @@ namespace AssetCalendarApi.Repository
             var start = viewDate.StartOfWeek();
             var end = viewDate.EndOfWeek();
             var jobDays = _dbContext.DaysJobs.Where(d => d.IdJob == jobId && d.Date.Date >= start.Date && d.Date.Date <= end.Date);
+            var offDays = _dbContext.DayOffWorkers.Where(d => d.IdWorker == workerId && d.Date.Date >= start.Date && d.Date.Date <= end.Date);
 
-            foreach (var jobDay in jobDays)
+            var daysToMove = jobDays.Where(d => !offDays.Any(od => od.Date.Date == d.Date.Date));
+
+            foreach (var jobDay in daysToMove)
                 MoveWorkerToJob(jobId, workerId, jobDay.Date, calendarId, false);
 
             _dbContext.SaveChanges();
