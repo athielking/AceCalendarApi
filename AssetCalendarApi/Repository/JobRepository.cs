@@ -354,8 +354,9 @@ namespace AssetCalendarApi.Repository
 
             var jobDays = _dbContext.DaysJobs.Where(d => d.IdJob == jobId && d.Date.Date >= start.Date && d.Date.Date <= end.Date);
             var workingDays = _dbContext.DaysJobsWorkers.Include(djw => djw.DayJob).Where(djw => djw.IdWorker == workerId).Select(djw => djw.DayJob).Where(dj => dj.Date.Date != date.Date );
+            var offDays = _dbContext.DayOffWorkers.Where(d => d.IdWorker == workerId && d.Date.Date >= start.Date && d.Date.Date <= end.Date);
 
-            var availableDays = jobDays.Where(d => !workingDays.Any(wd => wd.Date.Date == d.Date.Date));
+            var availableDays = jobDays.Where(d => !workingDays.Any(wd => wd.Date.Date == d.Date.Date) && !offDays.Any(od => od.Date.Date == d.Date.Date));
 
             foreach (var jobDay in availableDays)
                 MoveWorkerToJob(jobId, workerId, jobDay.Date, calendarId, false);
